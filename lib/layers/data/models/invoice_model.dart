@@ -1,11 +1,15 @@
-class SalesModel {
+import 'package:nilesoft_erp/layers/data/models/base_model.dart';
+
+class SalesModel implements BaseModel {
   SalesHeadModel? salesHeadModel;
   List<SalesDtlModel> salesdtlModel = [];
   SalesModel({this.salesHeadModel, salesdtlModel});
   SalesModel.fromMap(Map<String, dynamic> res) {
     salesHeadModel = res["salesHeadModel"];
   }
-  Map<String, dynamic> toJson() {
+
+  @override
+  Map<String, dynamic> toMap() {
     List salesdtlModel = this.salesdtlModel.map((i) => i.toMap()).toList();
 
     return {
@@ -35,13 +39,14 @@ class SalesModel {
   }
 }
 
-class SalesHeadModel {
+class SalesHeadModel implements BaseModel {
   String? accid;
   String? clientName;
   String? descr;
   String? invoiceno;
   String? cashaccid;
   String? visaid;
+  int? id;
   String? invenid;
   // String? invTime;
   // String? docdate;
@@ -61,6 +66,7 @@ class SalesHeadModel {
       {this.accid,
       this.clientName,
       this.descr,
+      this.id,
       this.invType,
       this.sent,
       // this.coinPrice,
@@ -80,6 +86,7 @@ class SalesHeadModel {
   SalesHeadModel.fromMap(Map<String, dynamic> res)
       : accid = res["accid"],
         descr = res["descr"],
+        id = res["id"],
         docDate = res["docdate"],
         invType = res["invtype"],
         sent = res["sent"],
@@ -97,6 +104,7 @@ class SalesHeadModel {
       "descr": descr,
       // "invtime": invTime,
       "sent": sent,
+      "id": id,
       //  "docdate": docdate,
       // "invtype": invType,
       // "cashaccid": cashaccid,
@@ -114,7 +122,7 @@ class SalesHeadModel {
   }
 }
 
-class SalesDtlModel {
+class SalesDtlModel implements BaseModel {
   String? id;
   String? itemId;
   String? itemName;

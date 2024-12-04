@@ -1,15 +1,9 @@
 // ignore_for_file: file_names
 
-import 'package:nilesoft_erp/layers/data/models/cashin_model.dart';
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
-import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
-import 'package:nilesoft_erp/layers/data/models/item_seerials_model.dart';
-import 'package:nilesoft_erp/layers/data/models/items_model.dart';
-import 'package:nilesoft_erp/layers/data/models/order_head_model.dart';
-import 'package:nilesoft_erp/layers/data/models/reinvoice_model.dart';
-import 'package:nilesoft_erp/layers/data/models/serials_model.dart';
-import 'package:nilesoft_erp/layers/data/models/settings_model.dart';
+import 'package:nilesoft_erp/layers/data/models/base_model.dart';
+
 import 'package:sqflite/sqflite.dart';
+// ignore: depend_on_referenced_packages
 import 'package:path/path.dart';
 
 class DatabaseHelper {
@@ -220,110 +214,6 @@ CREATE TABLE settings (
     }, version: 1);
   }
 
-  Future<int> insertInvoiceHead(SalesHeadModel salesModel) async {
-    int result = await db.insert('salesInvoiceHead', salesModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
-  Future<int> insertRsalseHead(RSalesHeadModel salesModel) async {
-    int result = await db.insert('ResalesInvoiceHead', salesModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
-  Future<int> insertpurHead(SalesHeadModel salesModel) async {
-    int result = await db.insert('purInvoiceHead', salesModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
-  Future<int> insertSettings(SettingsModel settingsModel) async {
-    int result = await db.insert('settings', settingsModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
-  Future<int> insertitemsserials(ItemsSerialsModel salesModel) async {
-    int result = await db.insert('itemsserials', salesModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
-  Future<int> insertInvoiceDtl(SalesDtlModel salesModel) async {
-    int result = await db.insert('salesInvoiceDtl', salesModel.toMap());
-
-    return result;
-  }
-
-  Future<int> insertRsalesDtl(RSalesDtlModel salesModel) async {
-    int result = await db.insert('ResalesInvoiceDtl', salesModel.toMap());
-
-    return result;
-  }
-
-  Future<int> insertpureDtl(SalesDtlModel salesModel) async {
-    int result = await db.insert('purInvoiceDtl', salesModel.toMap());
-
-    return result;
-  }
-
-  Future<void> deleteDtl(String id) async {
-    await db.delete(
-      'salesInvoiceDtl',
-      where: "id =" + id,
-      //whereArgs: [id],
-    );
-  }
-
-  Future<void> deletepurDtl(String id) async {
-    await db.delete(
-      'purInvoiceDtl',
-      where: "id =" + id,
-      //whereArgs: [id],
-    );
-  }
-
-  Future<void> deleteSerial(String id, String serialNumber) async {
-    await db.delete(
-      'serials',
-      where: "invid ='" + id + "' and serialNumber= '" + serialNumber + "'",
-      //whereArgs: [id],
-    );
-  }
-
-  Future<int> insertOrderHead(OrderHeadModel orderModel) async {
-    int result = await db.insert('orderHead', orderModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
-  Future<int> insertOrderDtl(OrderDtlModel orderDtlModel) async {
-    int result = await db.insert('orderDtl', orderDtlModel.toMap());
-
-    return result;
-  }
-
-  Future<int> insertItems(ItemsModel itemsModel) async {
-    int result = await db.insert('items', itemsModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
-  Future<int> insertCustomer(CustomersModel customersModel) async {
-    int result = await db.insert('Customers', customersModel.toMap());
-
-    // print(result);
-    return result;
-  }
-
   Future<void> deleteSettings() async {
     await db.delete(
       'settings',
@@ -332,104 +222,62 @@ CREATE TABLE settings (
     );
   }
 
-  Future<int> insertCashIn(CashinModel cashinModel) async {
-    int result = await db.insert('cashIn', cashinModel.toMap());
-
+  Future<int> insertRecord<T extends BaseModel>(
+      T model, String tableName) async {
+    int result = await db.insert(tableName, model.toMap());
     return result;
   }
 
-  Future<int> insertCashIndtl(CashInDtl cashinModel) async {
-    int result = await db.insert('cashInDtl', cashinModel.toMap());
+  Future<int> insertListRecords<T extends BaseModel>(
+      List<T> models, String tableName) async {
+    int insertedCount = 0;
 
+    await db.transaction((txn) async {
+      for (var model in models) {
+        await txn.insert(tableName, model.toMap());
+        insertedCount++;
+      }
+    });
+
+    return insertedCount;
+  }
+
+  Future<List<T>> getAllRecords<T extends BaseModel>(
+      String tableName, T Function(Map<String, dynamic>) fromMap) async {
+    final List<Map<String, dynamic>> result = await db.query(tableName);
+    return result.map((map) => fromMap(map)).toList();
+  }
+
+  Future<T?> getRecordById<T extends BaseModel>(String tableName, int id,
+      T Function(Map<String, dynamic>) fromMap) async {
+    final List<Map<String, dynamic>> result =
+        await db.query(tableName, where: 'id = ?', whereArgs: [id]);
+
+    if (result.isNotEmpty) {
+      return fromMap(result.first);
+    } else {
+      return null;
+    }
+  }
+
+  Future<int> updateRecord<T extends BaseModel>(
+      T model, String tableName, int id) async {
+    int result = await db.update(
+      tableName,
+      model.toMap(),
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     return result;
   }
 
-  Future<int> insertSerials(SerialsModel serialsModel) async {
-    int result = await db.insert('serials', serialsModel.toMap());
+  Future<int> deleteRecord(String tableName, int id) async {
+    int result = await db.delete(
+      tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
 
     return result;
   }
-
-  Future<void> deleteCustomers() async {
-    await db.delete(
-      'Customers',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-  }
-
-  Future<void> deleteitems() async {
-    await db.delete(
-      'items',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-  }
-
-  Future<void> deleteData() async {
-    await db.delete(
-      'salesInvoiceHead',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'ResalesInvoiceHead',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'salesInvoiceDtl',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'ResalesInvoiceDtl',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'purInvoiceHead',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'purInvoiceDtl',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'orderHead',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'orderDtl',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'cashIn',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-    await db.delete(
-      'cashInDtl',
-      where: "1 = 1",
-      //whereArgs: [id],
-    );
-  }
-
-  Future<List<SalesHeadModel>> retrieveUsers() async {
-    final List<Map<String, Object?>> queryResult =
-        await db.rawQuery('select * from salesInvoiceDtl');
-    print(queryResult);
-    return queryResult.map((i) => SalesHeadModel.fromMap(i)).toList();
-  }
-
-  // Future<List<CashinModel>> retrieveUsers2() async {
-  //   final List<Map<String, Object?>> queryResult =
-  //       await db.rawQuery('select * from cashIn');
-  //   print(queryResult);
-  //   return queryResult.map((i) => CashinModel.fromMap(i)).toList();
-  // }
 }

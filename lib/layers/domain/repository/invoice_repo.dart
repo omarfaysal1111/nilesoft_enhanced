@@ -1,11 +1,14 @@
 import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
 
 abstract class InvoiceRepo {
-  Future<List<SalesModel>> getInvoices();
-  Future<SalesModel> getInvoiceById({required int id});
-  Future<void> createInvoice({required SalesModel invoice});
+  Future<List<SalesModel>> getInvoices({required String tableName});
+  Future<SalesModel> getInvoiceById(
+      {required int id, required String tableName});
+  Future<void> createInvoice(
+      {required SalesModel invoice, required String tableName});
   Future<List<SalesModel>> previewallInvoices();
   Future<SalesModel> previewsingleInvoice({required SalesModel invoice});
-  Future<void> editInvoice({required SalesModel invoice});
+  Future<void> editInvoice(
+      {required SalesModel invoice, required String tableName});
   Future<void> deleteInvoice({required int id});
 }

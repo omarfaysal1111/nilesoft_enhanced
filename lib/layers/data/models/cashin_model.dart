@@ -1,4 +1,6 @@
 // ignore_for_file: file_names
+import 'package:nilesoft_erp/layers/data/models/base_model.dart';
+
 class CashinModelSend {
   CashinModel? cashinModelHead;
   List<CashInDtl> cashInDtl = [];
@@ -24,7 +26,7 @@ class CashinModelSend {
   }
 }
 
-class CashinModel {
+class CashinModel implements BaseModel {
   int? id;
   String? docDate;
   String? accId;
@@ -47,7 +49,11 @@ class CashinModel {
     this.accId,
     this.descr,
   });
-
+  CashinModel.fromMap(Map<String, dynamic> res) {
+    id = res['id'];
+    docDate = res['name'];
+    accId = res["accid"];
+  }
   Map<String, Object?> toMap() {
     return {"docDate": docDate, "total": total, "descr": descr, "docno": docNo};
   }

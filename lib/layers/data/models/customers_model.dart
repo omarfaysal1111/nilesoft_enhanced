@@ -1,5 +1,7 @@
 // ignore_for_file: file_names
-class CustomersModel {
+import 'package:nilesoft_erp/layers/data/models/base_model.dart';
+
+class CustomersModel implements BaseModel {
   String? id;
   String? name;
   int? type;
