@@ -29,10 +29,17 @@ class InvoicePage extends StatelessWidget {
   }
 }
 
+final TextEditingController desc = TextEditingController();
+
 List<ItemsModel> myClients = [];
 List<CustomersModel>? customers;
 List<SalesDtlModel>? dtl;
 CustomersModel? selected;
+int editindex = -1;
+double total = 0;
+double dis = 0;
+double tax = 0;
+double net = 0;
 
 class InvoicePageContent extends StatelessWidget {
   const InvoicePageContent(
@@ -169,6 +176,7 @@ class InvoicePageContent extends StatelessWidget {
                   width: width * 0.9,
                   child: CustomTextField(
                     hintText: "البيان",
+                    controller: desc,
                     onChanged: (value) {},
                   )),
               SizedBox(height: height * 0.02),
@@ -182,14 +190,14 @@ class InvoicePageContent extends StatelessWidget {
                       onPressed: () {
                         SalesHeadModel salesHeadModel = SalesHeadModel(
                           accid: selected!.id,
-                          dis1: 1,
+                          dis1: dis,
                           invoiceno: "",
                           sent: 0,
-                          net: 1,
-                          tax: 1,
-                          total: 1,
+                          net: net,
+                          tax: tax,
+                          total: total,
                           clientName: selected!.name,
-                          descr: "",
+                          descr: desc.text,
                         );
 
                         bloc.add(SaveButtonClicked(
@@ -210,7 +218,9 @@ class InvoicePageContent extends StatelessWidget {
                             builder: (dialogContext) {
                               return BlocProvider.value(
                                 value: BlocProvider.of<InvoiceBloc>(context),
-                                child: const AddnewPopup(),
+                                child: const AddnewPopup(
+                                  isEdit: false,
+                                ),
                               );
                             },
                           );
@@ -222,11 +232,30 @@ class InvoicePageContent extends StatelessWidget {
               ),
               SizedBox(height: height * 0.02),
               Expanded(
-                child: BlocBuilder<InvoiceBloc, InvoiceState>(
+                child: BlocConsumer<InvoiceBloc, InvoiceState>(
+                  listener: (context, state) {
+                    if (state is AddNewInvoiceState) {
+                      final myDtl = state.chosenItems;
+                      total = 0;
+                      net = 0;
+                      dis = 0;
+                      tax = 0;
+                      for (var i = 0; i < myDtl.length; i++) {
+                        net = net +
+                            ((myDtl[i].qty)! * (myDtl[i].price)! -
+                                (myDtl[i].disam)! +
+                                (myDtl[i].tax)!);
+                        dis = dis + myDtl[i].disam!;
+                        tax = tax + myDtl[i].tax!;
+                        total = total + myDtl[i].price!;
+                      }
+                    }
+                  },
                   builder: (context, state) {
                     if (state is AddNewInvoiceState) {
                       final chosenClients = state.chosenItems;
                       dtl = chosenClients;
+
                       if (chosenClients.isEmpty) {
                         return const Center(child: Text("No chosen clients."));
                       }
@@ -254,6 +283,7 @@ class InvoicePageContent extends StatelessWidget {
                                 // bloc.add(EditPressed(
                                 //     salesDtlModel: chosenClients[index],
                                 //     index: index));
+                                editindex = index;
                                 showDialog(
                                   context: context,
                                   builder: (dialogContext) {
@@ -262,7 +292,9 @@ class InvoicePageContent extends StatelessWidget {
                                         ..add(EditPressed(
                                             salesDtlModel: chosenClients[index],
                                             index: index)),
-                                      child: const AddnewPopup(),
+                                      child: const AddnewPopup(
+                                        isEdit: true,
+                                      ),
                                     );
                                   },
                                 );
@@ -291,11 +323,11 @@ class InvoicePageContent extends StatelessWidget {
                   topRight: Radius.circular(16.0),
                 ),
               ),
-              child: const SummaryCard(
-                total: "200",
-                discount: "0",
-                tax: "0",
-                net: "200",
+              child: SummaryCard(
+                total: total.toString(),
+                discount: dis.toString(),
+                tax: tax.toString(),
+                net: net.toString(),
               ),
             ),
           ),

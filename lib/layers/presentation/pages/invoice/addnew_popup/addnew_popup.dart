@@ -17,7 +17,8 @@ List<ItemsModel> myItems = [];
 ItemsModel? selectedItem;
 
 class AddnewPopup extends StatelessWidget {
-  const AddnewPopup({super.key});
+  const AddnewPopup({super.key, required this.isEdit});
+  final bool isEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -256,16 +257,19 @@ class AddnewPopup extends StatelessWidget {
                       text: "موافق",
                       onPressed: () {
                         if (selectedItem != null) {
-                          bloc.add(AddClientToInvoiceEvent(SalesDtlModel(
-                            price: double.tryParse(priceControlleer.text),
-                            disam: double.tryParse(disControlleer.text),
-                            disratio: double.tryParse(disRatioControlleer.text),
-                            id: selectedItem!.itemid,
-                            itemId: selectedItem!.itemid,
-                            itemName: selectedItem!.name,
-                            qty: double.tryParse(qtyControlleer.text),
-                            tax: double.tryParse(taxControlleer.text),
-                          )));
+                          bloc.add(AddClientToInvoiceEvent(
+                              SalesDtlModel(
+                                price: double.tryParse(priceControlleer.text),
+                                disam: double.tryParse(disControlleer.text),
+                                disratio:
+                                    double.tryParse(disRatioControlleer.text),
+                                id: selectedItem!.itemid,
+                                itemId: selectedItem!.itemid,
+                                itemName: selectedItem!.name,
+                                qty: double.tryParse(qtyControlleer.text),
+                                tax: double.tryParse(taxControlleer.text),
+                              ),
+                              isEdit));
                         }
                         Navigator.pop(context); // Close the popup
                       },

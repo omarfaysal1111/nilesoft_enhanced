@@ -115,6 +115,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   void _onAddClientToInvoice(
       AddClientToInvoiceEvent event, Emitter<InvoiceState> emit) {
     chosenItems.add(event.item); // Update the central list
-    emit(AddNewInvoiceState(chosenItems: chosenItems)); // Emit updated state
+    emit(AddNewInvoiceState(
+        chosenItems: chosenItems, isEdit: event.isEdit)); // Emit updated state
   }
 }

@@ -41,6 +41,13 @@ class OnDiscountChanged extends InvoiceEvent {
   OnDiscountChanged(this.price, {required this.amount, required this.ratio});
 }
 
+class OnEditSuccess extends InvoiceEvent {
+  final SalesDtlModel salesDtlModel;
+  final int index;
+
+  OnEditSuccess({required this.salesDtlModel, required this.index});
+}
+
 class OnDiscountRatioChanged extends InvoiceEvent {
   final double amount;
   final double ratio;
@@ -53,8 +60,7 @@ class OnDiscountRatioChanged extends InvoiceEvent {
 class AddClientToInvoiceEvent extends InvoiceEvent {
   final SalesDtlModel item;
   final bool isEdit;
-
-  AddClientToInvoiceEvent(this.item, this.isEdit);
+  AddClientToInvoiceEvent({required this.item, required this.isEdit});
 }
 
 class InvoicePageLoded extends InvoiceEvent {}
