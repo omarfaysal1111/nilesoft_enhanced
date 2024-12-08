@@ -4,15 +4,17 @@ class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
   final Color color;
+  final Color? fontColor;
   final double borderRadius;
 
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.color = const Color(0xff39B3BD), // Default color
-    this.borderRadius = 8.0, // Default border radius
-  }) : super(key: key);
+    this.borderRadius = 8.0,
+    this.fontColor, // Default border radius
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +29,8 @@ class CustomButton extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: fontColor ?? Colors.white,
           fontSize: 16,
           fontFamily: 'Almarai',
           fontWeight: FontWeight.w800,

@@ -15,7 +15,7 @@ class CustomersRepoImpl implements CustomerRepo {
 
   @override
   Future<void> deleteCustomer({required int id}) {
-    // TODO: implement deleteCustomer
+    //
     throw UnimplementedError();
   }
 
@@ -41,5 +41,19 @@ class CustomersRepoImpl implements CustomerRepo {
     DatabaseConstants.startDB(_databaseHelper);
     return await _databaseHelper.getAllRecords(
         tableName, CustomersModel.fromMap);
+  }
+
+  @override
+  Future<void> addAllCustomers(
+      {required List<CustomersModel> customers,
+      required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.insertListRecords(customers, tableName);
+  }
+
+  @override
+  Future<void> deleteAllCustomers({required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.deleteAllRecord(tableName);
   }
 }

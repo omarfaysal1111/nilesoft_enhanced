@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
@@ -11,7 +12,9 @@ class InvoiceRepoImpl implements InvoiceRepo {
       {required SalesModel invoice, required String tableName}) async {
     _databaseHelper.initDB().whenComplete(
       () {
-        print("Started");
+        if (kDebugMode) {
+          print("Started");
+        }
       },
     );
     await _databaseHelper.insertRecord<SalesHeadModel>(
@@ -48,13 +51,28 @@ class InvoiceRepoImpl implements InvoiceRepo {
 
   @override
   Future<List<SalesModel>> previewallInvoices() {
-    // TODO: implement previewallInvoices
+    //
     throw UnimplementedError();
   }
 
   @override
   Future<SalesModel> previewsingleInvoice({required SalesModel invoice}) {
-    // TODO: implement previewsingleInvoice
+    //
     throw UnimplementedError();
+  }
+
+  @override
+  Future<void> addInvoiceDtl(
+      {required List<SalesDtlModel> invoiceDtl,
+      required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.insertListRecords<SalesDtlModel>(
+        invoiceDtl, DatabaseConstants.salesInvoiceDtlTable);
+  }
+
+  @override
+  Future<void> addInvoiceHead(
+      {required SalesHeadModel invoiceHead, required String tableName}) async {
+    await _databaseHelper.insertRecord<SalesHeadModel>(invoiceHead, tableName);
   }
 }

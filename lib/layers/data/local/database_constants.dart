@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 
 class DatabaseConstants {
@@ -16,10 +17,12 @@ class DatabaseConstants {
   static const String customersTable = "Customers";
   static const String settingsTable = "settings";
   static const String itemsTable = "items";
-  static void startDB(DatabaseHelper _databaseHelper) {
-    _databaseHelper.initDB().whenComplete(
+  static Future<void> startDB(DatabaseHelper databaseHelper) async {
+    await databaseHelper.initDB().whenComplete(
       () {
-        print("Started");
+        if (kDebugMode) {
+          print("Started");
+        }
       },
     );
   }

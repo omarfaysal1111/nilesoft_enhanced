@@ -5,10 +5,10 @@ class OvalButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const OvalButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

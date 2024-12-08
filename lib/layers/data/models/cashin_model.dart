@@ -54,6 +54,7 @@ class CashinModel implements BaseModel {
     docDate = res['name'];
     accId = res["accid"];
   }
+  @override
   Map<String, Object?> toMap() {
     return {"docDate": docDate, "total": total, "descr": descr, "docno": docNo};
   }

@@ -24,6 +24,7 @@ class SettingsModel implements BaseModel {
     invoiceSerial = res["invoiceserial"];
   }
 
+  @override
   Map<String, Object?> toMap() {
     return {
       "mobileUserId": mobileUserId,

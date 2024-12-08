@@ -6,8 +6,10 @@ abstract class CustomerRepo {
       {required int id, required String tableName});
   Future<void> createCustomer(
       {required CustomersModel customer, required String tableName});
-
+  Future<void> addAllCustomers(
+      {required List<CustomersModel> customers, required String tableName});
   Future<void> editCustomers(
       {required CustomersModel customer, required String tableName});
   Future<void> deleteCustomer({required int id});
+  Future<void> deleteAllCustomers({required String tableName});
 }

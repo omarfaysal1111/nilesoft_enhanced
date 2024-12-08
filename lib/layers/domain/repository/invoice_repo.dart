@@ -11,4 +11,8 @@ abstract class InvoiceRepo {
   Future<void> editInvoice(
       {required SalesModel invoice, required String tableName});
   Future<void> deleteInvoice({required int id});
+  Future<void> addInvoiceHead(
+      {required SalesHeadModel invoiceHead, required String tableName});
+  Future<void> addInvoiceDtl(
+      {required List<SalesDtlModel> invoiceDtl, required String tableName});
 }

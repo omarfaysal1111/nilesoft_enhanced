@@ -30,8 +30,8 @@ class SqrButton extends StatelessWidget {
             Image.asset(img),
             Text(
               text,
-              style:
-                  TextStyle(fontFamily: 'Almarai', fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontFamily: 'Almarai', fontWeight: FontWeight.bold),
             )
           ],
         ),

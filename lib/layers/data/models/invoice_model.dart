@@ -97,6 +97,7 @@ class SalesHeadModel implements BaseModel {
         net = res["net"],
         invoiceno = res["invoiceno"];
 
+  @override
   Map<String, Object?> toMap() {
     return {
       "accid": accid,
@@ -154,6 +155,7 @@ class SalesDtlModel implements BaseModel {
         tax = res["tax"],
         sent = res["sent"];
 
+  @override
   Map<String, Object?> toMap() {
     return {
       "id": id,

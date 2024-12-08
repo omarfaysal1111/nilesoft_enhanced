@@ -41,4 +41,17 @@ class ItemsRepoImpl implements ItemsRepo {
     DatabaseConstants.startDB(_databaseHelper);
     return await _databaseHelper.getAllRecords(tableName, ItemsModel.fromMap);
   }
+
+  @override
+  Future<void> addAllItems(
+      {required List<ItemsModel> items, required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.insertListRecords(items, tableName);
+  }
+
+  @override
+  Future<void> deleteAllItems({required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.deleteAllRecord(tableName);
+  }
 }

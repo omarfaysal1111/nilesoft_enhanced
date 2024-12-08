@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nilesoft_erp/layers/data/remote/data_sources.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/home_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/login/bloc/login_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/login/bloc/login_event.dart';
@@ -53,6 +53,7 @@ class LoginPage extends StatelessWidget {
                     width: width * (353 / 393),
                     height: height * (56 / 852),
                     child: CustomTextField(
+                      onChanged: (val) {},
                       hintText: "اسم المستخدم",
                       controller: emailController,
                     ),
@@ -64,6 +65,7 @@ class LoginPage extends StatelessWidget {
                     width: width * (353 / 393),
                     height: height * (56 / 852),
                     child: CustomTextField(
+                      onChanged: (val) {},
                       hintText: "كلمة السر",
                       controller: passwordController,
                     ),
@@ -74,27 +76,32 @@ class LoginPage extends StatelessWidget {
                   SizedBox(
                       width: width * (353 / 393),
                       height: height * (56 / 852),
-                      child: BlocBuilder<LoginBloc, LoginState>(
-                          builder: (context, state) {
+                      child: BlocConsumer<LoginBloc, LoginState>(
+                          listener: (context, state) {
+                        if (state.isSuccess) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider(
+                                create: (context) => HomeBloc(),
+                                child: const HomePage(),
+                              ),
+                            ),
+                          );
+                        }
+                      }, builder: (context, state) {
                         if (state.isSubmitting) {
-                          return SizedBox(
+                          return const SizedBox(
                               width: 80,
                               height: 80,
-                              child: const CircularProgressIndicator());
+                              child: CircularProgressIndicator());
                         }
                         return CustomButton(
                             text: "تسجيل الدخول",
                             onPressed: () {
-                              loginBloc
-                                  .add(LoginEmailChanged(emailController.text));
-                              loginBloc.add(LoginPasswordChanged(
-                                  passwordController.text));
                               loginBloc.add(LoginSubmitted(
                                   email: emailController.text,
                                   password: passwordController.text));
-                              if (state.isSuccess) {
-                                MainFun.navTo(context, HomePage());
-                              }
                             });
                       }))
                 ],

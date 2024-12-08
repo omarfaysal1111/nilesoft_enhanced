@@ -15,7 +15,7 @@ class CashinRepoImpl implements CashinRepo {
 
   @override
   Future<void> deleteCashIn({required int id}) {
-    // TODO: implement deleteCashIn
+    //
     throw UnimplementedError();
   }
 
@@ -37,7 +37,7 @@ class CashinRepoImpl implements CashinRepo {
 
   @override
   Future<List<CashinModel>> getCashIns({required String tableName}) {
-    // TODO: implement getCashIns
+    //
     throw UnimplementedError();
   }
 }

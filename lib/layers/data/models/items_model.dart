@@ -13,11 +13,12 @@ class ItemsModel implements BaseModel {
   ItemsModel.fromMap(Map<String, dynamic> res) {
     itemid = res['itemid'];
     name = res['name'];
-    price = res['price'];
-    qty = res['qty'];
+    price = double.parse(res['price'].toString());
+    qty = double.parse(res['qty'].toString());
     hasSerial = res['hasSerial'];
     barcode = res['barcode'];
   }
+  @override
   Map<String, Object?> toMap() {
     return {
       "itemid": itemid,

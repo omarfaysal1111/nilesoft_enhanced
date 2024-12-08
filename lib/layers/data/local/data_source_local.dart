@@ -280,4 +280,10 @@ CREATE TABLE settings (
 
     return result;
   }
+
+  Future<int> deleteAllRecord(String tableName) async {
+    int result = await db.delete(tableName, where: '1 = 1');
+
+    return result;
+  }
 }

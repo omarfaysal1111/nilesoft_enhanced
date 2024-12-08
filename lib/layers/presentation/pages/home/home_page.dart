@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/oval_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/sqr_button.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final homeBloc = context.read<HomeBloc>();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           "Nilesoft",
           style: TextStyle(fontFamily: "Almarai", fontWeight: FontWeight.w700),
         ),
@@ -30,7 +38,21 @@ class HomePage extends StatelessWidget {
                 text: "سند قبض نقدي",
               ),
               SqrButton(
-                onClick: () {},
+                onClick: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (context) =>
+                            InvoiceBloc()..add(InitializeDataEvent()),
+                        child: const InvoicePage(
+                          extraTitle: "المبيعات",
+                          invoiceType: 1,
+                        ),
+                      ),
+                    ),
+                  );
+                },
                 height: 151,
                 width: 164,
                 img: "assets/invoice.png",
@@ -79,8 +101,48 @@ class HomePage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              OvalButton(text: "تحديث", onPressed: () {}),
-              SizedBox(
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  BlocConsumer<HomeBloc, HomeState>(listener: (context, state) {
+                    // if (state.isUpdateSubmitted) {
+                    //  const CircularProgressIndicator();
+                    // }
+                  }, builder: (BuildContext context, HomeState state) {
+                    if (state.isUpdateSubmitted) {
+                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("جاري تحديث البيانات"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      });
+                      return const CircularProgressIndicator();
+                    }
+                    if (state.isUpdateSucc) {
+                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("تم تحديث البيانات"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      });
+                    }
+                    return OvalButton(
+                        text: "تحديث",
+                        onPressed: () {
+                          homeBloc.add(UpdatingSumbittedEvent());
+                        });
+                  }),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  OvalButton(text: "ارسال", onPressed: () {}),
+                ],
+              ),
+              const SizedBox(
                 width: 20,
               ),
               SqrButton(
