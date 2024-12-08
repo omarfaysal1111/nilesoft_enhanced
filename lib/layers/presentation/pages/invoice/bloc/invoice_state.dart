@@ -12,6 +12,12 @@ class InvoicePageLoading extends InvoiceState {}
 
 class InvoiceLoading extends InvoiceState {}
 
+class EditState extends InvoiceState {
+  final SalesDtlModel salesDtlModel;
+  final int index;
+  EditState({required this.salesDtlModel, required this.index});
+}
+
 class InvoiceError extends InvoiceState {
   final String message;
 

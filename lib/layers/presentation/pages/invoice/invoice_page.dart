@@ -250,7 +250,23 @@ class InvoicePageContent extends StatelessWidget {
                               onDelete: () {
                                 // Implement deletion logic
                               },
-                              onEdit: () {},
+                              onEdit: () {
+                                // bloc.add(EditPressed(
+                                //     salesDtlModel: chosenClients[index],
+                                //     index: index));
+                                showDialog(
+                                  context: context,
+                                  builder: (dialogContext) {
+                                    return BlocProvider(
+                                      create: (context) => InvoiceBloc()
+                                        ..add(EditPressed(
+                                            salesDtlModel: chosenClients[index],
+                                            index: index)),
+                                      child: const AddnewPopup(),
+                                    );
+                                  },
+                                );
+                              },
                             );
                           },
                         ),

@@ -61,6 +61,25 @@ class AddnewPopup extends StatelessWidget {
                       disControlleer.text = state.amount.toString();
                       disRatioControlleer.text = state.ratio.toString();
                     }
+                    if (state is EditState) {
+                      selectedItem = selectedItem = ItemsModel(
+                        "itemid",
+                        state.salesDtlModel.itemName,
+                        1,
+                        12,
+                        "barcode",
+                        0,
+                      );
+                      //selectedItem!.name = state.salesDtlModel.itemName;
+                      disControlleer.text =
+                          state.salesDtlModel.disam.toString();
+                      disRatioControlleer.text =
+                          state.salesDtlModel.disratio.toString();
+                      priceControlleer.text =
+                          state.salesDtlModel.price.toString();
+                      taxControlleer.text = state.salesDtlModel.tax.toString();
+                      qtyControlleer.text = state.salesDtlModel.qty.toString();
+                    }
                   },
                   builder: (context, state) {
                     if (state is InvoiceLoading) {
