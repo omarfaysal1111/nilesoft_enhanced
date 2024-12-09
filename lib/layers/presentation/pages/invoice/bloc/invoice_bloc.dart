@@ -27,6 +27,8 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<OnDiscountChanged>(_onDisChanged);
     on<OnDiscountRatioChanged>(_onDisRatioChanged);
     on<EditPressed>(_onEditPressed);
+
+    on<EditInvoiceItemEvent>((event, emit) {});
   }
   void _onEditPressed(EditPressed event, Emitter<InvoiceState> emit) {
     emit(EditState(index: event.index, salesDtlModel: event.salesDtlModel));

@@ -31,33 +31,38 @@ class CustomTextField extends StatelessWidget {
       });
     }
 
-    return TextField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      textAlign: TextAlign.right,
-      onChanged: onTextChanged,
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: const TextStyle(
-          color: Color(0xff434343),
-          fontWeight: FontWeight.bold,
-          fontFamily: 'Almarai',
-          fontSize: 16,
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        obscureText: obscureText,
+        textAlign: TextAlign.right,
+        onChanged: onTextChanged,
+        decoration: InputDecoration(
+          hintText: hintText,
+          labelText: hintText,
+          alignLabelWithHint: true,
+          labelStyle: const TextStyle(
+            color: Color(0xff434343),
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Almarai',
+            fontSize: 16,
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Colors.blue, width: 2),
+          ),
         ),
       ),
     );

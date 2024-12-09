@@ -56,6 +56,12 @@ class AddClientToInvoiceEvent extends InvoiceEvent {
   AddClientToInvoiceEvent(this.item);
 }
 
+class EditInvoiceItemEvent extends InvoiceEvent {
+  final SalesDtlModel updatedItem;
+  final int index;
+  EditInvoiceItemEvent(this.updatedItem, this.index);
+}
+
 class InvoicePageLoded extends InvoiceEvent {}
 
 class CustomerSelectedEvent extends InvoiceEvent {

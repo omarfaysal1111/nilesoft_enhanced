@@ -75,70 +75,60 @@ class AddnewPopup extends StatelessWidget {
                     } else if (state is InvoiceLoaded) {
                       // Populate clients and reset values
                       myItems = state.clients;
-                      final selectedValue = state.clients.any((client) =>
-                              client.name == state.selectedClient?.name)
-                          ? state.selectedClient?.name
+                      final selectedValue = state.clients
+                              .any((client) => client == state.selectedClient)
+                          ? state.selectedClient
                           : null;
 
-                      return DropdownButtonFormField<String>(
+                      return DropdownButtonFormField<ItemsModel>(
                         value: selectedValue,
                         items: state.clients.map((client) {
-                          return DropdownMenuItem<String>(
-                            value: client.name,
+                          return DropdownMenuItem<ItemsModel>(
+                            value: client,
                             child: Text(client.name!),
                           );
                         }).toList(),
                         onChanged: (value) {
                           if (value != null) {
-                            selectedItem = ItemsModel(
-                              "itemid",
-                              value,
-                              1,
-                              12,
-                              "barcode",
-                              0,
-                            );
+                            selectedItem = value;
+
                             bloc.add(ClientSelectedEvent(selectedItem!));
                           }
                         },
-                        decoration: const InputDecoration(
-                          labelText: "اختر الصنف",
-                          labelStyle: TextStyle(
-                            fontFamily: 'Almarai',
-                          ),
-                          border: OutlineInputBorder(),
-                        ),
+                        decoration: InputDecoration(
+                            labelText: "اختر الصنف",
+                            labelStyle: const TextStyle(fontFamily: 'Almarai'),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                  color: Colors.grey.shade400, width: 1),
+                            )),
                       );
                     }
                     // Fallback Dropdown
-                    return DropdownButtonFormField<String>(
-                      value: selectedItem?.name,
+                    return DropdownButtonFormField<ItemsModel>(
+                      value: selectedItem,
                       items: myItems.map((client) {
-                        return DropdownMenuItem<String>(
-                          value: client.name,
+                        return DropdownMenuItem<ItemsModel>(
+                          value: client,
                           child: Text(client.name!),
                         );
                       }).toList(),
                       onChanged: (value) {
                         if (value != null) {
-                          selectedItem = ItemsModel(
-                            "itemid",
-                            value,
-                            1,
-                            12,
-                            "barcode",
-                            0,
-                          );
+                          selectedItem = value;
+
                           bloc.add(ClientSelectedEvent(selectedItem!));
                         }
                       },
-                      decoration: const InputDecoration(
-                        labelText: "اختر الصنف",
-                        labelStyle: TextStyle(
-                          fontFamily: 'Almarai',
-                        ),
-                        border: OutlineInputBorder(),
-                      ),
+                      decoration: InputDecoration(
+                          labelText: "اختر الصنف",
+                          labelStyle: const TextStyle(fontFamily: 'Almarai'),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(
+                                color: Colors.grey.shade400, width: 1),
+                          )),
                     );
                   },
                 ),
@@ -243,13 +233,14 @@ class AddnewPopup extends StatelessWidget {
                             price: double.tryParse(priceControlleer.text),
                             disam: double.tryParse(disControlleer.text),
                             disratio: double.tryParse(disRatioControlleer.text),
-                            id: selectedItem!.itemid,
-                            itemId: selectedItem!.itemid,
-                            itemName: selectedItem!.name,
+                            id: selectedItem?.itemid.toString(),
+                            itemId: selectedItem!.itemid.toString(),
+                            itemName: selectedItem!.name.toString(),
                             qty: double.tryParse(qtyControlleer.text),
                             tax: double.tryParse(taxControlleer.text),
                           )));
                         }
+
                         Navigator.pop(context); // Close the popup
                       },
                       color: const Color(0xff39B3BD),

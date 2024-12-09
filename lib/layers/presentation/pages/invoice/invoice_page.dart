@@ -146,9 +146,15 @@ class InvoicePageContent extends StatelessWidget {
                                         CustomersModel("id", value, "type")));
                               }
                             },
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               labelText: "اختر العميل",
-                              border: OutlineInputBorder(),
+                              labelStyle:
+                                  const TextStyle(fontFamily: 'Almarai'),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                    color: Colors.grey.shade400, width: 1),
+                              ),
                             ),
                           );
                         }
@@ -176,9 +182,14 @@ class InvoicePageContent extends StatelessWidget {
                                       CustomersModel("id", value, "type")));
                             }
                           },
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: "اختر العميل",
-                            border: OutlineInputBorder(),
+                            labelStyle: const TextStyle(fontFamily: 'Almarai'),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                  color: Colors.grey.shade400, width: 1),
+                            ),
                           ),
                         );
                       },
@@ -200,7 +211,8 @@ class InvoicePageContent extends StatelessWidget {
                     SizedBox(
                       width: width * 0.4,
                       child: CustomButton(
-                        text: "حفظ",
+                        color: Colors.black87,
+                        text: "حفظ الفاتورة",
                         onPressed: () {
                           SalesHeadModel salesHeadModel = SalesHeadModel(
                             accid: selected!.id,
@@ -223,7 +235,7 @@ class InvoicePageContent extends StatelessWidget {
                     SizedBox(
                       width: width * 0.4,
                       child: CustomButton(
-                        text: "اضافة",
+                        text: "اضافة صنف",
                         onPressed: () {
                           bloc.add(FetchClientsEvent());
                           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -248,13 +260,15 @@ class InvoicePageContent extends StatelessWidget {
                 Expanded(
                   child: BlocConsumer<InvoiceBloc, InvoiceState>(
                     listener: (context, state) {
+                      if (state is InvoiceEdittedState) {
+                        dtl?[state.index] = state.editedItem;
+                      }
                       if (state is InvoiceInitial) {
                         dtl = [];
                       }
 
                       if (state is AddNewInvoiceState) {
                         final myDtl = state.chosenItems;
-
                         total = 0;
                         net = 0;
                         dis = 0;
@@ -282,19 +296,19 @@ class InvoicePageContent extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 140.0),
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: chosenClients.length,
+                            itemCount: dtl?.length ?? 0,
                             itemBuilder: (context, index) {
                               return InfoCard(
-                                title: chosenClients[index].itemName.toString(),
-                                price: chosenClients[index].price.toString(),
-                                discount: chosenClients[index].disam.toString(),
-                                quantity: chosenClients[index].qty.toString(),
-                                tax: chosenClients[index].tax.toString(),
-                                total: ((chosenClients[index].qty)! *
-                                            (chosenClients[index].price)! -
-                                        (chosenClients[index].disam)! +
-                                        (chosenClients[index].tax)!)
-                                    .toString(),
+                                title: dtl![index].itemName.toString(),
+                                price: dtl![index].price.toString(),
+                                discount: dtl![index].disam.toString(),
+                                quantity: dtl![index].qty.toString(),
+                                tax: dtl![index].tax.toString(),
+                                total:
+                                    ((dtl![index].qty)! * (dtl![index].price)! -
+                                            (dtl![index].disam)! +
+                                            (dtl![index].tax)!)
+                                        .toString(),
                                 onDelete: () {
                                   // Implement deletion logic
                                 },
@@ -349,50 +363,75 @@ class InvoicePageContent extends StatelessWidget {
                           ),
                         );
                       }
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 140.0),
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: dtl?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            return InfoCard(
-                              title: dtl![index].itemName.toString(),
-                              price: dtl![index].price.toString(),
-                              discount: dtl![index].disam.toString(),
-                              quantity: dtl![index].qty.toString(),
-                              tax: dtl![index].tax.toString(),
-                              total:
-                                  ((dtl![index].qty)! * (dtl![index].price)! -
-                                          (dtl![index].disam)! +
-                                          (dtl![index].tax)!)
-                                      .toString(),
-                              onDelete: () {
-                                // Implement deletion logic
-                              },
-                              onEdit: () {
-                                // bloc.add(EditPressed(
-                                //     salesDtlModel: chosenClients[index],
-                                //     index: index));
-                                editindex = index;
-                                showDialog(
-                                  context: context,
-                                  builder: (dialogContext) {
-                                    return BlocProvider(
-                                      create: (context) => InvoiceBloc()
-                                        ..add(EditPressed(
-                                            salesDtlModel: dtl![index],
-                                            index: index)),
-                                      child: const AddnewPopup(
-                                        isEdit: true,
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
+                      // ignore: prefer_is_empty
+                      return dtl!.length == 0
+                          ? const Column(
+                              children: [
+                                Icon(
+                                  Icons.arrow_outward_rounded,
+                                  applyTextScaling: true,
+                                  weight: 900,
+                                  size: 72,
+                                  color: Color.fromARGB(255, 91, 89, 89),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(top: 20.0),
+                                  child: Text(
+                                    "قم بإضافة الاصناف الي الفاتورة",
+                                    style: TextStyle(
+                                        fontFamily: 'Almarai',
+                                        fontWeight: FontWeight.w900,
+                                        color: Color.fromARGB(255, 91, 89, 89),
+                                        fontSize: 22),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.only(bottom: 140.0),
+                              child: ListView.builder(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                itemCount: dtl?.length ?? 0,
+                                itemBuilder: (context, index) {
+                                  return InfoCard(
+                                    title: dtl![index].itemName.toString(),
+                                    price: dtl![index].price.toString(),
+                                    discount: dtl![index].disam.toString(),
+                                    quantity: dtl![index].qty.toString(),
+                                    tax: dtl![index].tax.toString(),
+                                    total: ((dtl![index].qty)! *
+                                                (dtl![index].price)! -
+                                            (dtl![index].disam)! +
+                                            (dtl![index].tax)!)
+                                        .toString(),
+                                    onDelete: () {
+                                      // Implement deletion logic
+                                    },
+                                    onEdit: () {
+                                      // bloc.add(EditPressed(
+                                      //     salesDtlModel: chosenClients[index],
+                                      //     index: index));
+                                      editindex = index;
+                                      showDialog(
+                                        context: context,
+                                        builder: (dialogContext) {
+                                          return BlocProvider(
+                                            create: (context) => InvoiceBloc()
+                                              ..add(EditPressed(
+                                                  salesDtlModel: dtl![index],
+                                                  index: index)),
+                                            child: const AddnewPopup(
+                                              isEdit: true,
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                             );
-                          },
-                        ),
-                      );
                     },
                   ),
                 ),
