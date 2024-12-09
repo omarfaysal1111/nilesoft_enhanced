@@ -39,6 +39,7 @@ class InfoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
                       width: 20,
@@ -54,7 +55,6 @@ class InfoCard extends StatelessWidget {
                       width: 10,
                     ),
                     SizedBox(
-                      width: 20,
                       child: IconButton(
                         onPressed: onEdit,
                         icon: const Icon(

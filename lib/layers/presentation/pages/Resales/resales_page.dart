@@ -8,23 +8,19 @@ import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dar
 import 'package:nilesoft_erp/layers/presentation/components/info_card.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/summaray_card.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/addnew_popup/addnew_popup.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/Resales_popup/resales_popup.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 
-class InvoicePage extends StatelessWidget {
-  const InvoicePage(
-      {super.key, required this.extraTitle, required this.invoiceType});
-  final String extraTitle;
-  final int invoiceType;
+class ResalesPage extends StatelessWidget {
+  const ResalesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => InvoiceBloc()..add(InitializeDataEvent()),
-      child:
-          InvoicePageContent(extraTitle: extraTitle, invoiceType: invoiceType),
+      create: (context) => ResalesBloc()..add(ReInitializeDataEvent()),
+      child: ResalesPageContent(),
     );
   }
 }
@@ -41,15 +37,12 @@ double dis = 0;
 double tax = 0;
 double net = 0;
 
-class InvoicePageContent extends StatelessWidget {
-  const InvoicePageContent(
-      {super.key, required this.extraTitle, required this.invoiceType});
-  final String extraTitle;
-  final int invoiceType;
+class ResalesPageContent extends StatelessWidget {
+  const ResalesPageContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final bloc = context.read<InvoiceBloc>();
+    final bloc = context.read<ResalesBloc>();
 
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
@@ -67,14 +60,14 @@ class InvoicePageContent extends StatelessWidget {
         backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.white,
-          title: Row(
+          title: const Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Directionality(
                 textDirection: TextDirection.rtl,
                 child: Text(
-                  "فاتورة $extraTitle",
-                  style: const TextStyle(
+                  "فاتورة مردودات مبيعات",
+                  style: TextStyle(
                     fontFamily: 'Almarai',
                     fontWeight: FontWeight.bold,
                   ),
@@ -94,9 +87,9 @@ class InvoicePageContent extends StatelessWidget {
                   height: 57,
                   child: Directionality(
                     textDirection: TextDirection.rtl,
-                    child: BlocConsumer<InvoiceBloc, InvoiceState>(
+                    child: BlocConsumer<ResalesBloc, ResalesState>(
                       listener: (context, state) {
-                        if (state is SaveSuccess) {
+                        if (state is ReSaveSuccess) {
                           total = 0;
                           net = 0;
                           dis = 0;
@@ -113,15 +106,15 @@ class InvoicePageContent extends StatelessWidget {
                         }
                       },
                       builder: (context, state) {
-                        if (state is InvoiceInitial) {
+                        if (state is ResalesInitial) {
                           return const Center(
                               child: CircularProgressIndicator());
-                        } else if (state is InvoiceError) {
+                        } else if (state is ResalesError) {
                           return Text(
                             state.message,
                             style: const TextStyle(color: Colors.red),
                           );
-                        } else if (state is InvoicePageLoaded) {
+                        } else if (state is ResalesPageLoaded) {
                           customers = state.customers;
                           return DropdownButtonFormField<String>(
                             value: state.selectedCustomer?.name,
@@ -141,7 +134,7 @@ class InvoicePageContent extends StatelessWidget {
                             onChanged: (value) {
                               if (value != null) {
                                 selected = CustomersModel("id", value, "type");
-                                bloc.add(CustomerSelectedEvent(
+                                bloc.add(ReCustomerSelectedEvent(
                                     selectedCustomer:
                                         CustomersModel("id", value, "type")));
                               }
@@ -177,7 +170,7 @@ class InvoicePageContent extends StatelessWidget {
                           onChanged: (value) {
                             if (value != null) {
                               selected = CustomersModel("id", value, "type");
-                              bloc.add(CustomerSelectedEvent(
+                              bloc.add(ReCustomerSelectedEvent(
                                   selectedCustomer:
                                       CustomersModel("id", value, "type")));
                             }
@@ -246,7 +239,7 @@ class InvoicePageContent extends StatelessWidget {
                               descr: desc.text,
                             );
 
-                            bloc.add(SaveButtonClicked(
+                            bloc.add(ReSaveButtonClicked(
                                 salesHeadModel: salesHeadModel,
                                 salesDtlModel: dtl!));
                           }
@@ -258,13 +251,13 @@ class InvoicePageContent extends StatelessWidget {
                       child: CustomButton(
                         text: "اضافة صنف",
                         onPressed: () {
-                          bloc.add(FetchClientsEvent());
+                          bloc.add(ReFetchClientsEvent());
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             showDialog(
                               context: context,
                               builder: (dialogContext) {
                                 return BlocProvider.value(
-                                  value: BlocProvider.of<InvoiceBloc>(context),
+                                  value: BlocProvider.of<ResalesBloc>(context),
                                   child: const AddnewPopup(
                                     isEdit: false,
                                   ),
@@ -279,17 +272,17 @@ class InvoicePageContent extends StatelessWidget {
                 ),
                 SizedBox(height: height * 0.02),
                 Expanded(
-                  child: BlocConsumer<InvoiceBloc, InvoiceState>(
+                  child: BlocConsumer<ResalesBloc, ResalesState>(
                     listener: (context, state) {
-                      if (state is InvoiceEdittedState) {
+                      if (state is ResalesEdittedState) {
                         dtl?[state.index] = state.editedItem;
-                        bloc.add(InvoicePageLoded());
+                        bloc.add(ResalesPageLoded());
                       }
-                      if (state is InvoiceInitial) {
+                      if (state is ResalesInitial) {
                         dtl = [];
                       }
 
-                      if (state is AddNewInvoiceState) {
+                      if (state is AddNewResalesState) {
                         final myDtl = state.chosenItems;
                         total = 0;
                         net = 0;
@@ -307,7 +300,7 @@ class InvoicePageContent extends StatelessWidget {
                       }
                     },
                     builder: (context, state) {
-                      if (state is AddNewInvoiceState) {
+                      if (state is AddNewResalesState) {
                         final chosenClients = state.chosenItems;
                         dtl = chosenClients;
 
@@ -336,7 +329,7 @@ class InvoicePageContent extends StatelessWidget {
                                 },
                                 onEdit: () {
                                   editindex = index;
-                                  bloc.add(EditPressed(
+                                  bloc.add(ReEditPressed(
                                       salesDtlModel: dtl![index],
                                       index: index));
                                   WidgetsBinding.instance
@@ -345,7 +338,7 @@ class InvoicePageContent extends StatelessWidget {
                                       context: context,
                                       builder: (dialogContext) {
                                         return BlocProvider.value(
-                                          value: BlocProvider.of<InvoiceBloc>(
+                                          value: BlocProvider.of<ResalesBloc>(
                                               context),
                                           child: AddnewPopup(
                                             isEdit: true,
@@ -360,7 +353,7 @@ class InvoicePageContent extends StatelessWidget {
                             },
                           ),
                         );
-                      } else if (state is InvoiceLoaded) {
+                      } else if (state is ResalesLoaded) {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 140.0),
                           child: ListView.builder(
@@ -386,7 +379,7 @@ class InvoicePageContent extends StatelessWidget {
                                   //     salesDtlModel: chosenClients[index],
                                   //     index: index));
                                   editindex = index;
-                                  bloc.add(EditPressed(
+                                  bloc.add(ReEditPressed(
                                       salesDtlModel: dtl![index],
                                       index: index));
                                   WidgetsBinding.instance
@@ -395,7 +388,7 @@ class InvoicePageContent extends StatelessWidget {
                                       context: context,
                                       builder: (dialogContext) {
                                         return BlocProvider.value(
-                                          value: BlocProvider.of<InvoiceBloc>(
+                                          value: BlocProvider.of<ResalesBloc>(
                                               context),
                                           child: const AddnewPopup(
                                             isEdit: true,
@@ -461,7 +454,7 @@ class InvoicePageContent extends StatelessWidget {
                                       //     index: index));
                                       editindex = index;
                                       editindex = index;
-                                      bloc.add(EditPressed(
+                                      bloc.add(ReEditPressed(
                                           salesDtlModel: dtl![index],
                                           index: index));
                                       WidgetsBinding.instance
@@ -471,7 +464,7 @@ class InvoicePageContent extends StatelessWidget {
                                           builder: (dialogContext) {
                                             return BlocProvider.value(
                                               value:
-                                                  BlocProvider.of<InvoiceBloc>(
+                                                  BlocProvider.of<ResalesBloc>(
                                                       context),
                                               child: const AddnewPopup(
                                                 isEdit: true,

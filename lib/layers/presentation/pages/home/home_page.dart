@@ -6,6 +6,9 @@ import 'package:nilesoft_erp/layers/presentation/components/sqr_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/cashin_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart';
@@ -92,7 +95,18 @@ class HomePage extends StatelessWidget {
                 text: "استعراض \nالمستندات",
               ),
               SqrButton(
-                onClick: () {},
+                onClick: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (context) =>
+                            ResalesBloc()..add(ReInitializeDataEvent()),
+                        child: const ResalesPage(),
+                      ),
+                    ),
+                  );
+                },
                 height: 151,
                 width: 164,
                 img: "assets/resale.png",

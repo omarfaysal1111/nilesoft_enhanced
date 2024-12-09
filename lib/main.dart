@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/login/bloc/login_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/login/login_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/main_preview_page.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -23,10 +24,11 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: Provider<LoginBloc>(
-        create: (_) => LoginBloc(),
-        child: const LoginPage(),
-      ),
+      home: MainPreviewPage(),
+      // home: Provider<LoginBloc>(
+      //   create: (_) => LoginBloc(),
+      //   child: const LoginPage(),
+      // ),
     );
   }
 }

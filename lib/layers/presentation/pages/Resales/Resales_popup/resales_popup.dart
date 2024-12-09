@@ -4,9 +4,10 @@ import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/data/models/items_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
+
+import '../bloc/resales_bloc.dart';
 
 final priceControlleer = TextEditingController();
 final disControlleer = TextEditingController();
@@ -24,7 +25,7 @@ class AddnewPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bloc = context.read<InvoiceBloc>();
+    final bloc = context.read<ResalesBloc>();
     double width = MediaQuery.sizeOf(context).width;
 
     return PopScope(
@@ -47,7 +48,7 @@ class AddnewPopup extends StatelessWidget {
               // Dropdown for "اختر العميل"
               Directionality(
                 textDirection: TextDirection.rtl,
-                child: BlocConsumer<InvoiceBloc, InvoiceState>(
+                child: BlocConsumer<ResalesBloc, ResalesState>(
                   listener: (context, state) => _handleStateChange(state),
                   builder: (context, state) {
                     return _buildDropdown(state, bloc);
@@ -77,8 +78,8 @@ class AddnewPopup extends StatelessWidget {
     myItems = [];
   }
 
-  void _handleStateChange(InvoiceState state) {
-    if (state is EditState) {
+  void _handleStateChange(ResalesState state) {
+    if (state is ReEditState) {
       idx = state.index;
       myItems = state.items;
       // Populate controllers
@@ -92,20 +93,20 @@ class AddnewPopup extends StatelessWidget {
       selectedItem = myItems.firstWhere(
         (item) => item.name == state.salesDtlModel.itemName,
       );
-    } else if (state is DiscountChanged) {
+    } else if (state is ReDiscountChanged) {
       disControlleer.text = state.amount.toString();
       disRatioControlleer.text = state.ratio.toString();
-    } else if (state is DiscountRatioChanged) {
+    } else if (state is ReDiscountRatioChanged) {
       disControlleer.text = state.amount.toString();
       disRatioControlleer.text = state.ratio.toString();
     }
   }
 
-  Widget _buildDropdown(InvoiceState state, InvoiceBloc bloc) {
-    if (state is EditState) {
+  Widget _buildDropdown(ResalesState state, ResalesBloc bloc) {
+    if (state is ReEditState) {
       _handleStateChange(state);
     }
-    if (state is InvoiceLoaded) {
+    if (state is ResalesLoaded) {
       myItems = state.clients;
       final selectedValue = state.clients
               .any((client) => client.name == state.selectedClient?.name)
@@ -123,14 +124,14 @@ class AddnewPopup extends StatelessWidget {
         onChanged: (value) {
           if (value != null) {
             selectedItem = value;
-            bloc.add(ClientSelectedEvent(selectedItem!));
+            bloc.add(ReClientSelectedEvent(selectedItem!));
           }
         },
         decoration: _dropdownDecoration(),
       );
-    } else if (state is InvoiceLoading) {
+    } else if (state is ResalesLoading) {
       return const Center(child: CircularProgressIndicator());
-    } else if (state is InvoiceError) {
+    } else if (state is ResalesError) {
       return Text(
         state.message,
         style: const TextStyle(color: Colors.red),
@@ -148,7 +149,7 @@ class AddnewPopup extends StatelessWidget {
       onChanged: (value) {
         if (value != null) {
           selectedItem = value;
-          bloc.add(ClientSelectedEvent(selectedItem!));
+          bloc.add(ReClientSelectedEvent(selectedItem!));
         }
       },
       decoration: _dropdownDecoration(),
@@ -166,7 +167,7 @@ class AddnewPopup extends StatelessWidget {
     );
   }
 
-  Widget _buildTextFields(InvoiceBloc bloc) {
+  Widget _buildTextFields(ResalesBloc bloc) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -230,30 +231,30 @@ class AddnewPopup extends StatelessWidget {
     );
   }
 
-  void _handleDiscountChange(InvoiceBloc bloc, String val) {
+  void _handleDiscountChange(ResalesBloc bloc, String val) {
     double? price = double.tryParse(priceControlleer.text);
     double? discount = double.tryParse(val);
     double? discountRatio = double.tryParse(disRatioControlleer.text);
 
     if (price != null && discount != null) {
-      bloc.add(OnDiscountChanged(price,
+      bloc.add(ReOnDiscountChanged(price,
           amount: discount, ratio: discountRatio ?? 0.0));
     }
   }
 
-  void _handleDiscountRatioChange(InvoiceBloc bloc, String value) {
+  void _handleDiscountRatioChange(ResalesBloc bloc, String value) {
     double? price = double.tryParse(priceControlleer.text);
     double? discount = double.tryParse(disControlleer.text);
     double? ratio = double.tryParse(value);
 
     if (price != null && ratio != null) {
-      bloc.add(OnDiscountRatioChanged(
+      bloc.add(ReOnDiscountRatioChanged(
           price: price, amount: discount ?? 0.0, ratio: ratio));
     }
   }
 
   Widget _buildFooterButtons(
-      BuildContext context, double width, InvoiceBloc bloc) {
+      BuildContext context, double width, ResalesBloc bloc) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -282,7 +283,7 @@ class AddnewPopup extends StatelessWidget {
     );
   }
 
-  void _handleConfirm(BuildContext context, InvoiceBloc bloc) {
+  void _handleConfirm(BuildContext context, ResalesBloc bloc) {
     SalesDtlModel salesDtlModel = SalesDtlModel(
       price: double.tryParse(priceControlleer.text),
       disam: double.tryParse(disControlleer.text),
@@ -295,9 +296,9 @@ class AddnewPopup extends StatelessWidget {
     );
 
     if (isEdit) {
-      bloc.add(EditInvoiceItemEvent(salesDtlModel, idx));
+      bloc.add(ReEditResalesItemEvent(salesDtlModel, idx));
     } else if (selectedItem != null) {
-      bloc.add(AddClientToInvoiceEvent(salesDtlModel));
+      bloc.add(ReAddClientToResalesEvent(salesDtlModel));
     }
     Navigator.pop(context);
   }

@@ -25,7 +25,7 @@ class LoginPage extends StatelessWidget {
         children: [
           Container(
             width: width,
-            height: height * (595 / 852),
+            height: height * (500 / 852),
             decoration: const BoxDecoration(
                 borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(30),
@@ -33,12 +33,8 @@ class LoginPage extends StatelessWidget {
                 color: Colors.white),
             child: SingleChildScrollView(
               child: Column(
-                // mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    height: height * (88 / 852),
-                  ),
                   const Text(
                     "تسجيل الدخول",
                     style: TextStyle(
@@ -49,17 +45,21 @@ class LoginPage extends StatelessWidget {
                   SizedBox(
                     height: height * (118 / 852),
                   ),
-                  SizedBox(
-                    width: width * (353 / 393),
-                    height: height * (56 / 852),
-                    child: CustomTextField(
-                      onChanged: (val) {},
-                      hintText: "اسم المستخدم",
-                      controller: emailController,
+                  SingleChildScrollView(
+                    child: SizedBox(
+                      width: width * (353 / 393),
+                      height: height * (56 / 852),
+                      child: CustomTextField(
+                        onChanged: (val) {},
+                        hintText: "اسم المستخدم",
+                        controller: emailController,
+                      ),
                     ),
                   ),
-                  SizedBox(
-                    height: height * (20 / 852),
+                  SingleChildScrollView(
+                    child: SizedBox(
+                      height: height * (20 / 852),
+                    ),
                   ),
                   SizedBox(
                     width: width * (353 / 393),
