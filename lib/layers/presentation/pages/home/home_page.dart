@@ -3,6 +3,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/oval_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/sqr_button.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Cashin/cashin_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart';
@@ -19,9 +22,16 @@ class HomePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          "Nilesoft",
-          style: TextStyle(fontFamily: "Almarai", fontWeight: FontWeight.w700),
+        backgroundColor: Colors.white,
+        title: const Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              "Nilesoft",
+              style:
+                  TextStyle(fontFamily: "Almarai", fontWeight: FontWeight.w700),
+            ),
+          ],
         ),
       ),
       body: Column(
@@ -31,7 +41,18 @@ class HomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               SqrButton(
-                onClick: () {},
+                onClick: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (context) =>
+                            CashinBloc()..add(FetchCashinClientsEvent()),
+                        child: const CashinPage(),
+                      ),
+                    ),
+                  );
+                },
                 height: 151,
                 width: 164,
                 img: "assets/mobilecash.png",

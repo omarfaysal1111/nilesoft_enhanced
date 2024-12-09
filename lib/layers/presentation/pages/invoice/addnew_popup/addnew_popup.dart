@@ -15,6 +15,7 @@ final taxControlleer = TextEditingController();
 final qtyControlleer = TextEditingController();
 List<ItemsModel> myItems = [];
 ItemsModel? selectedItem;
+int idx = 0;
 
 class AddnewPopup extends StatelessWidget {
   const AddnewPopup({super.key, required this.isEdit});
@@ -61,25 +62,6 @@ class AddnewPopup extends StatelessWidget {
                     if (state is DiscountRatioChanged) {
                       disControlleer.text = state.amount.toString();
                       disRatioControlleer.text = state.ratio.toString();
-                    }
-                    if (state is EditState) {
-                      selectedItem = selectedItem = ItemsModel(
-                        "itemid",
-                        state.salesDtlModel.itemName,
-                        1,
-                        12,
-                        "barcode",
-                        0,
-                      );
-                      //selectedItem!.name = state.salesDtlModel.itemName;
-                      disControlleer.text =
-                          state.salesDtlModel.disam.toString();
-                      disRatioControlleer.text =
-                          state.salesDtlModel.disratio.toString();
-                      priceControlleer.text =
-                          state.salesDtlModel.price.toString();
-                      taxControlleer.text = state.salesDtlModel.tax.toString();
-                      qtyControlleer.text = state.salesDtlModel.qty.toString();
                     }
                   },
                   builder: (context, state) {
@@ -257,19 +239,16 @@ class AddnewPopup extends StatelessWidget {
                       text: "موافق",
                       onPressed: () {
                         if (selectedItem != null) {
-                          bloc.add(AddClientToInvoiceEvent(
-                              SalesDtlModel(
-                                price: double.tryParse(priceControlleer.text),
-                                disam: double.tryParse(disControlleer.text),
-                                disratio:
-                                    double.tryParse(disRatioControlleer.text),
-                                id: selectedItem!.itemid,
-                                itemId: selectedItem!.itemid,
-                                itemName: selectedItem!.name,
-                                qty: double.tryParse(qtyControlleer.text),
-                                tax: double.tryParse(taxControlleer.text),
-                              ),
-                              isEdit));
+                          bloc.add(AddClientToInvoiceEvent(SalesDtlModel(
+                            price: double.tryParse(priceControlleer.text),
+                            disam: double.tryParse(disControlleer.text),
+                            disratio: double.tryParse(disRatioControlleer.text),
+                            id: selectedItem!.itemid,
+                            itemId: selectedItem!.itemid,
+                            itemName: selectedItem!.name,
+                            qty: double.tryParse(qtyControlleer.text),
+                            tax: double.tryParse(taxControlleer.text),
+                          )));
                         }
                         Navigator.pop(context); // Close the popup
                       },

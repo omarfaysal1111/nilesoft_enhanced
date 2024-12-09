@@ -60,7 +60,9 @@ class OnDiscountRatioChanged extends InvoiceEvent {
 class AddClientToInvoiceEvent extends InvoiceEvent {
   final SalesDtlModel item;
   final bool isEdit;
-  AddClientToInvoiceEvent({required this.item, required this.isEdit});
+  final int index;
+  AddClientToInvoiceEvent(
+      {required this.item, required this.isEdit, required this.index});
 }
 
 class InvoicePageLoded extends InvoiceEvent {}

@@ -62,6 +62,6 @@ class InvoicePageLoaded extends InvoiceState {
 
 class AddNewInvoiceState extends InvoiceState {
   final List<SalesDtlModel> chosenItems; // Chosen clients for the invoice
-  final bool isEdit;
-  AddNewInvoiceState({required this.chosenItems, required this.isEdit});
+
+  AddNewInvoiceState({required this.chosenItems});
 }
