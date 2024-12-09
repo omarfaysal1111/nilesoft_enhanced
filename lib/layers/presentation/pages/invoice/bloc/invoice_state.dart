@@ -15,7 +15,9 @@ class InvoiceLoading extends InvoiceState {}
 class EditState extends InvoiceState {
   final SalesDtlModel salesDtlModel;
   final int index;
-  EditState({required this.salesDtlModel, required this.index});
+  final List<ItemsModel> items;
+  EditState(
+      {required this.salesDtlModel, required this.index, required this.items});
 }
 
 class InvoiceError extends InvoiceState {

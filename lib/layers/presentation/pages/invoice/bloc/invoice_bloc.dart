@@ -27,11 +27,22 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<OnDiscountChanged>(_onDisChanged);
     on<OnDiscountRatioChanged>(_onDisRatioChanged);
     on<EditPressed>(_onEditPressed);
-
-    on<EditInvoiceItemEvent>((event, emit) {});
+    on<EditInvoiceItemEvent>(_onEdit);
   }
-  void _onEditPressed(EditPressed event, Emitter<InvoiceState> emit) {
-    emit(EditState(index: event.index, salesDtlModel: event.salesDtlModel));
+  Future<void> _onEditPressed(
+      EditPressed event, Emitter<InvoiceState> emit) async {
+    ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();
+    List<ItemsModel> items = await customersRepoImpl.getItems(
+        tableName: DatabaseConstants.itemsTable);
+    emit(EditState(
+        index: event.index, salesDtlModel: event.salesDtlModel, items: items));
+  }
+
+  void _onEdit(EditInvoiceItemEvent event, Emitter<InvoiceState> emit) {
+    chosenItems[event.index] = event.updatedItem;
+    emit(AddNewInvoiceState(
+      chosenItems: chosenItems,
+    )); // Emit updated state
   }
 
   Future<void> _onFetchClients(

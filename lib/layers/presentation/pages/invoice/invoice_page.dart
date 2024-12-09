@@ -214,21 +214,42 @@ class InvoicePageContent extends StatelessWidget {
                         color: Colors.black87,
                         text: "حفظ الفاتورة",
                         onPressed: () {
-                          SalesHeadModel salesHeadModel = SalesHeadModel(
-                            accid: selected!.id,
-                            dis1: dis,
-                            invoiceno: "",
-                            sent: 0,
-                            net: net,
-                            tax: tax,
-                            total: total,
-                            clientName: selected!.name,
-                            descr: desc.text,
-                          );
+                          if (selected == null) {
+                            SchedulerBinding.instance.addPostFrameCallback((_) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("برجاء اختيار العميل"),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            });
+                          } else if (dtl == [] || dtl!.isEmpty) {
+                            SchedulerBinding.instance.addPostFrameCallback((_) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content:
+                                      Text("برجاء اضافة صنف واحد علي الاقل"),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            });
+                          } else {
+                            SalesHeadModel salesHeadModel = SalesHeadModel(
+                              accid: selected!.id,
+                              dis1: dis,
+                              invoiceno: "",
+                              sent: 0,
+                              net: net,
+                              tax: tax,
+                              total: total,
+                              clientName: selected!.name,
+                              descr: desc.text,
+                            );
 
-                          bloc.add(SaveButtonClicked(
-                              salesHeadModel: salesHeadModel,
-                              salesDtlModel: dtl!));
+                            bloc.add(SaveButtonClicked(
+                                salesHeadModel: salesHeadModel,
+                                salesDtlModel: dtl!));
+                          }
                         },
                       ),
                     ),
@@ -261,7 +282,9 @@ class InvoicePageContent extends StatelessWidget {
                   child: BlocConsumer<InvoiceBloc, InvoiceState>(
                     listener: (context, state) {
                       if (state is InvoiceEdittedState) {
+                        print("i'm Here");
                         dtl?[state.index] = state.editedItem;
+                        bloc.add(InvoicePageLoded());
                       }
                       if (state is InvoiceInitial) {
                         dtl = [];
@@ -312,7 +335,28 @@ class InvoicePageContent extends StatelessWidget {
                                 onDelete: () {
                                   // Implement deletion logic
                                 },
-                                onEdit: () {},
+                                onEdit: () {
+                                  editindex = index;
+                                  bloc.add(EditPressed(
+                                      salesDtlModel: dtl![index],
+                                      index: index));
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (dialogContext) {
+                                        return BlocProvider.value(
+                                          value: BlocProvider.of<InvoiceBloc>(
+                                              context),
+                                          child: AddnewPopup(
+                                            isEdit: true,
+                                            toEdit: dtl?[index],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  });
+                                },
                               );
                             },
                           ),
@@ -343,20 +387,24 @@ class InvoicePageContent extends StatelessWidget {
                                   //     salesDtlModel: chosenClients[index],
                                   //     index: index));
                                   editindex = index;
-                                  showDialog(
-                                    context: context,
-                                    builder: (dialogContext) {
-                                      return BlocProvider(
-                                        create: (context) => InvoiceBloc()
-                                          ..add(EditPressed(
-                                              salesDtlModel: dtl![index],
-                                              index: index)),
-                                        child: const AddnewPopup(
-                                          isEdit: true,
-                                        ),
-                                      );
-                                    },
-                                  );
+                                  bloc.add(EditPressed(
+                                      salesDtlModel: dtl![index],
+                                      index: index));
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (dialogContext) {
+                                        return BlocProvider.value(
+                                          value: BlocProvider.of<InvoiceBloc>(
+                                              context),
+                                          child: const AddnewPopup(
+                                            isEdit: true,
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  });
                                 },
                               );
                             },
@@ -364,7 +412,7 @@ class InvoicePageContent extends StatelessWidget {
                         );
                       }
                       // ignore: prefer_is_empty
-                      return dtl!.length == 0
+                      return dtl == null || dtl?.length == 0
                           ? const Column(
                               children: [
                                 Icon(
@@ -413,20 +461,26 @@ class InvoicePageContent extends StatelessWidget {
                                       //     salesDtlModel: chosenClients[index],
                                       //     index: index));
                                       editindex = index;
-                                      showDialog(
-                                        context: context,
-                                        builder: (dialogContext) {
-                                          return BlocProvider(
-                                            create: (context) => InvoiceBloc()
-                                              ..add(EditPressed(
-                                                  salesDtlModel: dtl![index],
-                                                  index: index)),
-                                            child: const AddnewPopup(
-                                              isEdit: true,
-                                            ),
-                                          );
-                                        },
-                                      );
+                                      editindex = index;
+                                      bloc.add(EditPressed(
+                                          salesDtlModel: dtl![index],
+                                          index: index));
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (dialogContext) {
+                                            return BlocProvider.value(
+                                              value:
+                                                  BlocProvider.of<InvoiceBloc>(
+                                                      context),
+                                              child: const AddnewPopup(
+                                                isEdit: true,
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      });
                                     },
                                   );
                                 },
