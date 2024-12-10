@@ -44,7 +44,7 @@ class DocInfoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  customerName,
+                  "MOB12-00012",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16.0,

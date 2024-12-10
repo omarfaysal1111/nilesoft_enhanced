@@ -15,6 +15,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/main_preview_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -88,7 +89,13 @@ class HomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               SqrButton(
-                onClick: () {},
+                onClick: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MainPreviewPage(),
+                      ));
+                },
                 height: 151,
                 width: 164,
                 img: "assets/preview.png",

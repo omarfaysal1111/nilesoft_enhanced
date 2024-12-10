@@ -73,6 +73,23 @@ class InvoiceRepoImpl implements InvoiceRepo {
   @override
   Future<void> addInvoiceHead(
       {required SalesHeadModel invoiceHead, required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
     await _databaseHelper.insertRecord<SalesHeadModel>(invoiceHead, tableName);
+  }
+
+  @override
+  Future<List<SalesHeadModel>> getInvoicesHead(
+      {required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getAllRecords(
+        tableName, SalesHeadModel.fromMap);
+  }
+
+  @override
+  Future<List<SalesDtlModel>> getInvoicesDtl(
+      {required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getAllRecords(
+        tableName, SalesDtlModel.fromMap);
   }
 }
