@@ -43,6 +43,7 @@ double tax = 0;
 double net = 0;
 int headid = 0;
 String docNo = "";
+bool isEditting = false;
 
 class InvoicePageContent extends StatelessWidget {
   const InvoicePageContent(
@@ -101,6 +102,17 @@ class InvoicePageContent extends StatelessWidget {
                       listener: (context, state) {
                         if (state is InvoiceToEdit) {
                           dtl = state.salesDtlModel;
+                          isEditting = true;
+                          final myDtl = state.salesDtlModel;
+                          for (var i = 0; i < myDtl.length; i++) {
+                            net = net +
+                                ((myDtl[i].qty)! * (myDtl[i].price)! -
+                                    (myDtl[i].disam)! +
+                                    (myDtl[i].tax)!);
+                            dis = dis + dtl![i].disam!;
+                            tax = tax + dtl![i].tax!;
+                            total = total + dtl![i].price!;
+                          }
                         }
                         if (state is SaveSuccess) {
                           total = 0;
@@ -111,6 +123,21 @@ class InvoicePageContent extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text("تم حفظ الفاتورة"),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          });
+                          Navigator.pop(context);
+                        }
+                        if (state is UpdateSucc) {
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          tax = 0;
+                          SchedulerBinding.instance.addPostFrameCallback((_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("تم تعديل الفاتورة"),
                                 duration: Duration(seconds: 2),
                               ),
                             );
@@ -221,44 +248,96 @@ class InvoicePageContent extends StatelessWidget {
                         color: Colors.black87,
                         text: "حفظ الفاتورة",
                         onPressed: () {
-                          if (selected == null) {
-                            SchedulerBinding.instance.addPostFrameCallback((_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("برجاء اختيار العميل"),
-                                  duration: Duration(seconds: 2),
-                                ),
+                          if (!isEditting) {
+                            if (selected == null) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("برجاء اختيار العميل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else if (dtl == [] ||
+                                dtl == null ||
+                                dtl!.isEmpty) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text("برجاء اضافة صنف واحد علي الاقل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else {
+                              String formattedDate =
+                                  intl.DateFormat('dd-MM-yyyy')
+                                      .format(DateTime.now());
+                              SalesHeadModel salesHeadModel = SalesHeadModel(
+                                accid: selected!.id,
+                                dis1: dis,
+                                invoiceno: docNo,
+                                sent: 0,
+                                net: net,
+                                docDate: formattedDate,
+                                tax: tax,
+                                total: total,
+                                clientName: selected!.name,
+                                descr: desc.text,
                               );
-                            });
-                          } else if (dtl == [] || dtl == null || dtl!.isEmpty) {
-                            SchedulerBinding.instance.addPostFrameCallback((_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text("برجاء اضافة صنف واحد علي الاقل"),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            });
-                          } else {
-                            String formattedDate = intl.DateFormat('dd-MM-yyyy')
-                                .format(DateTime.now());
-                            SalesHeadModel salesHeadModel = SalesHeadModel(
-                              accid: selected!.id,
-                              dis1: dis,
-                              invoiceno: docNo,
-                              sent: 0,
-                              net: net,
-                              docDate: formattedDate,
-                              tax: tax,
-                              total: total,
-                              clientName: selected!.name,
-                              descr: desc.text,
-                            );
 
-                            bloc.add(SaveButtonClicked(
-                                salesHeadModel: salesHeadModel,
-                                salesDtlModel: dtl!));
+                              bloc.add(SaveButtonClicked(
+                                  salesHeadModel: salesHeadModel,
+                                  salesDtlModel: dtl!));
+                            }
+                          } else {
+                            if (selected == null) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("برجاء اختيار العميل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else if (dtl == [] ||
+                                dtl == null ||
+                                dtl!.isEmpty) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text("برجاء اضافة صنف واحد علي الاقل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else {
+                              String formattedDate =
+                                  intl.DateFormat('dd-MM-yyyy')
+                                      .format(DateTime.now());
+                              SalesHeadModel salesHeadModel = SalesHeadModel(
+                                accid: selected!.id,
+                                dis1: dis,
+                                invoiceno: docNo,
+                                sent: 0,
+                                id: int.parse(dtl![0].id.toString()),
+                                net: net,
+                                docDate: formattedDate,
+                                tax: tax,
+                                total: total,
+                                clientName: selected!.name,
+                                descr: desc.text,
+                              );
+
+                              bloc.add(OnUpdateInvoice(
+                                  headModel: salesHeadModel, dtlModel: dtl!));
+                            }
                           }
                         },
                       ),

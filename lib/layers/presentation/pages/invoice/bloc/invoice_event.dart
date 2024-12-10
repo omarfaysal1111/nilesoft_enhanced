@@ -25,6 +25,13 @@ class EditPressed extends InvoiceEvent {
   EditPressed({required this.salesDtlModel, required this.index});
 }
 
+class OnUpdateInvoice extends InvoiceEvent {
+  final SalesHeadModel headModel;
+  final List<SalesDtlModel> dtlModel;
+
+  OnUpdateInvoice({required this.headModel, required this.dtlModel});
+}
+
 class ClientSelectedEvent extends InvoiceEvent {
   final ItemsModel selectedClient;
 

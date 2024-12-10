@@ -30,6 +30,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<EditPressed>(_onEditPressed);
     on<EditInvoiceItemEvent>(_onEdit);
     on<OnInvoiceToEdit>(_onInvoiceToEdit);
+    on<OnUpdateInvoice>(_onUpdatingInvoice);
   }
   Future<void> _onEditPressed(
       EditPressed event, Emitter<InvoiceState> emit) async {
@@ -41,7 +42,11 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   }
 
   void _onEdit(EditInvoiceItemEvent event, Emitter<InvoiceState> emit) {
-    chosenItems[event.index] = event.updatedItem;
+    if (chosenItems.isEmpty) {
+      chosenItems.add(event.updatedItem);
+    } else {
+      chosenItems[event.index] = event.updatedItem;
+    }
     emit(AddNewInvoiceState(
       chosenItems: chosenItems,
     )); // Emit updated state
@@ -139,6 +144,15 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
           id: id,
           docNo: await generateDocNumber()));
     }
+  }
+
+  Future<void> _onUpdatingInvoice(
+      OnUpdateInvoice event, Emitter<InvoiceState> emit) async {
+    emit(UpdatingInvoice());
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    await invoiceRepoImpl.updateSalesHead(head: event.headModel);
+    await invoiceRepoImpl.updateSalesDtl(dtl: event.dtlModel);
+    emit(UpdateSucc());
   }
 
   Future<String> generateDocNumber() async {

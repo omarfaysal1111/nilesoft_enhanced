@@ -271,6 +271,17 @@ CREATE TABLE settings (
     return result;
   }
 
+  Future<int> updateRecordStringId<T extends BaseModel>(
+      T model, String tableName, String id) async {
+    int result = await db.update(
+      tableName,
+      model.toMap(),
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return result;
+  }
+
   Future<int> deleteRecord(String tableName, int id) async {
     int result = await db.delete(
       tableName,

@@ -114,4 +114,20 @@ class InvoiceRepoImpl implements InvoiceRepo {
     DatabaseConstants.startDB(_databaseHelper);
     return await _databaseHelper.getLatestId(tableNAme);
   }
+
+  @override
+  Future<void> updateSalesDtl({required List<SalesDtlModel> dtl}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    for (var i = 0; i < dtl.length; i++) {
+      await _databaseHelper.updateRecordStringId(
+          dtl[i], DatabaseConstants.salesInvoiceDtlTable, dtl[i].id.toString());
+    }
+  }
+
+  @override
+  Future<void> updateSalesHead({required SalesHeadModel head}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.updateRecord(
+        head, DatabaseConstants.salesInvoiceHeadTable, head.id!);
+  }
 }

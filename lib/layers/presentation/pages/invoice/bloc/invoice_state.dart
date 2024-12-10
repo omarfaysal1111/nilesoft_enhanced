@@ -77,6 +77,10 @@ class InvoicePageLoaded extends InvoiceState {
       {required this.customers, this.selectedCustomer, this.docNo, this.id});
 }
 
+class UpdatingInvoice extends InvoiceState {}
+
+class UpdateSucc extends InvoiceState {}
+
 class AddNewInvoiceState extends InvoiceState {
   final List<SalesDtlModel> chosenItems; // Chosen clients for the invoice
 
