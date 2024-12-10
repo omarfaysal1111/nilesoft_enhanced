@@ -19,7 +19,7 @@ class SalesPreviewPage extends StatelessWidget {
             Directionality(
               textDirection: TextDirection.rtl,
               child: Text(
-                "استعراض المستندات",
+                "استعراض فواتير المبيعات",
                 style: TextStyle(
                   fontFamily: 'Almarai',
                   fontWeight: FontWeight.bold,
@@ -30,32 +30,34 @@ class SalesPreviewPage extends StatelessWidget {
           ],
         ),
       ),
-      body: Expanded(
-        child: BlocConsumer<PreviewBloc, PreviewState>(
-          listener: (BuildContext context, PreviewState state) {},
-          builder: (BuildContext context, PreviewState state) {
-            if (state is DocPreviewLoaded) {
-              if (state is DocPreviewInitial) {
-                return const Text(
-                  "جاري التحميل",
-                  style: TextStyle(
-                      fontFamily: 'Almarai', fontWeight: FontWeight.w700),
-                );
-              }
-              return ListView.builder(
-                  itemCount: state.salesModel.length,
-                  itemBuilder: (context, index) {
-                    return DocInfoCard(
+      body: BlocConsumer<PreviewBloc, PreviewState>(
+        listener: (BuildContext context, PreviewState state) {},
+        builder: (BuildContext context, PreviewState state) {
+          if (state is DocPreviewInitial) {
+            return const Text(
+              "جاري التحميل",
+              style:
+                  TextStyle(fontFamily: 'Almarai', fontWeight: FontWeight.w700),
+            );
+          }
+          if (state is DocPreviewLoaded) {
+            return ListView.builder(
+                itemCount: state.salesModel.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: DocInfoCard(
                         customerName:
                             state.salesModel[index].clientName.toString(),
-                        dateValue: 1,
+                        dateValue: state.salesModel[index].docDate.toString(),
                         netValue: state.salesModel[index].net ?? 0,
-                        onViewPressed: () {});
-                  });
-            }
-            return const Text("data");
-          },
-        ),
+                        docNumber: state.salesModel[index].invoiceno.toString(),
+                        onViewPressed: () {}),
+                  );
+                });
+          }
+          return const Text("data");
+        },
       ),
     );
   }

@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 class DocInfoCard extends StatelessWidget {
   final String customerName;
-  final double dateValue;
+  final String dateValue;
   final double netValue;
   final VoidCallback onViewPressed;
+  final String docNumber;
 
   const DocInfoCard({
     super.key,
@@ -12,6 +13,7 @@ class DocInfoCard extends StatelessWidget {
     required this.dateValue,
     required this.netValue,
     required this.onViewPressed,
+    required this.docNumber,
   });
 
   @override
@@ -44,7 +46,7 @@ class DocInfoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "MOB12-00012",
+                  docNumber,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16.0,
@@ -71,7 +73,7 @@ class DocInfoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  dateValue.toStringAsFixed(1),
+                  dateValue,
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 14.0,
@@ -122,7 +124,7 @@ class DocInfoCard extends StatelessWidget {
                 ElevatedButton(
                   onPressed: onViewPressed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
+                    backgroundColor: const Color(0xff39B3BD),
                     padding: const EdgeInsets.symmetric(
                         vertical: 8.0, horizontal: 24.0),
                     shape: RoundedRectangleBorder(

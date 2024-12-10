@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/data/models/items_model.dart';
@@ -234,12 +235,15 @@ class InvoicePageContent extends StatelessWidget {
                               );
                             });
                           } else {
+                            String formattedDate = intl.DateFormat('dd-MM-yyyy')
+                                .format(DateTime.now());
                             SalesHeadModel salesHeadModel = SalesHeadModel(
                               accid: selected!.id,
                               dis1: dis,
                               invoiceno: "",
                               sent: 0,
                               net: net,
+                              docDate: formattedDate,
                               tax: tax,
                               total: total,
                               clientName: selected!.name,

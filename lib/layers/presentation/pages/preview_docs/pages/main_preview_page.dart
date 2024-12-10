@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_card.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/preview_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/preview_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/preview_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/sales_preview_page.dart';
 
 class MainPreviewPage extends StatelessWidget {
@@ -40,17 +40,15 @@ class MainPreviewPage extends StatelessWidget {
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider(
-                        create: (context) =>
-                            PreviewBloc()..add(OnPreviewInitial()),
-                        child: const SalesPreviewPage(
-                         
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider(
+                          create: (context) =>
+                              PreviewBloc()..add(OnPreviewInitial()),
+                          child: const SalesPreviewPage(),
                         ),
                       ),
-                    ),
-                  );
+                    );
                   },
                   child: const RectCard(
                       text: "فواتير المبيعات", icon: "assets/invoice.png"),
