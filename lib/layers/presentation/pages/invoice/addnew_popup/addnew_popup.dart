@@ -18,9 +18,11 @@ ItemsModel? selectedItem;
 int idx = 0;
 
 class AddnewPopup extends StatelessWidget {
-  const AddnewPopup({super.key, required this.isEdit, this.toEdit});
+  const AddnewPopup(
+      {super.key, required this.isEdit, this.toEdit, required this.headId});
   final bool isEdit;
   final SalesDtlModel? toEdit;
+  final int headId;
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +289,7 @@ class AddnewPopup extends StatelessWidget {
       price: double.tryParse(priceControlleer.text),
       disam: double.tryParse(disControlleer.text),
       disratio: double.tryParse(disRatioControlleer.text),
-      id: selectedItem?.itemid.toString(),
+      id: headId.toString(),
       itemId: selectedItem?.itemid.toString(),
       itemName: selectedItem?.name.toString(),
       qty: double.tryParse(qtyControlleer.text),

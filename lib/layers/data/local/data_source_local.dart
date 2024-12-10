@@ -281,6 +281,24 @@ CREATE TABLE settings (
     return result;
   }
 
+  Future<int?> getLatestId(String tableName) async {
+    final List<Map<String, dynamic>> result =
+        await db.rawQuery('SELECT MAX(id) as latestId FROM $tableName');
+
+    if (result.isNotEmpty && result.first['latestId'] != null) {
+      return result.first['latestId'] as int;
+    }
+    return null; // Return null if the table is empty or no ID exists
+  }
+
+  Future<List<T>> getRecordsById<T extends BaseModel>(String tableName,
+      String id, T Function(Map<String, dynamic>) fromMap) async {
+    final List<Map<String, dynamic>> result =
+        await db.query(tableName, where: 'id = ?', whereArgs: [id]);
+
+    return result.map((map) => fromMap(map)).toList();
+  }
+
   Future<int> deleteAllRecord(String tableName) async {
     int result = await db.delete(tableName, where: '1 = 1');
 

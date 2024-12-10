@@ -12,6 +12,12 @@ class InitializeDataEvent extends InvoiceEvent {
   InitializeDataEvent();
 }
 
+class OnInvoiceToEdit extends InvoiceEvent {
+  final int id;
+
+  OnInvoiceToEdit(this.id);
+}
+
 class EditPressed extends InvoiceEvent {
   final SalesDtlModel salesDtlModel;
   final int index;

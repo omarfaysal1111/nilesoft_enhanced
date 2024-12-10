@@ -6,11 +6,11 @@ class RectCard extends StatelessWidget {
   final Color iconBackgroundColor;
 
   const RectCard({
-    Key? key,
+    super.key,
     required this.text,
     required this.icon,
     this.iconBackgroundColor = Colors.teal,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

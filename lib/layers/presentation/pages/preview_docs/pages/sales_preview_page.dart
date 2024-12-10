@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/invoice_info.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/preview_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/preview_state.dart';
 
@@ -52,7 +55,22 @@ class SalesPreviewPage extends StatelessWidget {
                         dateValue: state.salesModel[index].docDate.toString(),
                         netValue: state.salesModel[index].net ?? 0,
                         docNumber: state.salesModel[index].invoiceno.toString(),
-                        onViewPressed: () {}),
+                        onViewPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider(
+                                create: (context) => InvoiceBloc()
+                                  ..add(OnInvoiceToEdit(
+                                      state.salesModel[index].id!)),
+                                child: const InvoicePageContent(
+                                  extraTitle: "المبيعات",
+                                  invoiceType: 0,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
                   );
                 });
           }

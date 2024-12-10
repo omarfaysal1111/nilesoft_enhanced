@@ -151,7 +151,8 @@ class SalesDtlModel implements BaseModel {
         itemName = res["itemName"],
         qty = res["qty"],
         price = res["price"],
-        // discount = res["discount"],
+        disam = res["disam"],
+        disratio = res["disratio"],
         tax = res["tax"],
         sent = res["sent"];
 

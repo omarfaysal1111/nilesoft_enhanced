@@ -59,14 +59,22 @@ class InvoiceLoaded extends InvoiceState {
 class InvoiceEdittedState extends InvoiceState {
   final SalesDtlModel editedItem;
   final int index;
-
   InvoiceEdittedState({required this.editedItem, required this.index});
+}
+
+class InvoiceToEdit extends InvoiceState {
+  final List<SalesDtlModel> salesDtlModel;
+  final SalesHeadModel salesHeadModel;
+  InvoiceToEdit({required this.salesDtlModel, required this.salesHeadModel});
 }
 
 class InvoicePageLoaded extends InvoiceState {
   final List<CustomersModel> customers;
   final CustomersModel? selectedCustomer;
-  InvoicePageLoaded({required this.customers, this.selectedCustomer});
+  final String? docNo;
+  final int? id;
+  InvoicePageLoaded(
+      {required this.customers, this.selectedCustomer, this.docNo, this.id});
 }
 
 class AddNewInvoiceState extends InvoiceState {

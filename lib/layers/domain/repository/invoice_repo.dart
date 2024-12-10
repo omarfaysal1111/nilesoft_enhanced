@@ -17,4 +17,9 @@ abstract class InvoiceRepo {
       {required List<SalesDtlModel> invoiceDtl, required String tableName});
   Future<List<SalesHeadModel>> getInvoicesHead({required String tableName});
   Future<List<SalesDtlModel>> getInvoicesDtl({required String tableName});
+  Future<SalesHeadModel?> getSingleInvoiceHead(
+      {required String tableName, required int id});
+  Future<List<SalesDtlModel>?> getSingleInvoiceDtl(
+      {required String tableName, required String id});
+  Future<int?> getLatestId({required String tableNAme});
 }

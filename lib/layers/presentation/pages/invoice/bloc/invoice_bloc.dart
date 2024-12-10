@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
@@ -12,7 +13,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_stat
 class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   final List<SalesDtlModel> chosenItems =
       []; // Central storage of chosen clients
-
+  String myDocNo = "";
   InvoiceBloc() : super(InvoiceInitial()) {
     on<SaveButtonClicked>(_onSaveClicked);
     on<FetchClientsEvent>(_onFetchClients);
@@ -28,6 +29,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<OnDiscountRatioChanged>(_onDisRatioChanged);
     on<EditPressed>(_onEditPressed);
     on<EditInvoiceItemEvent>(_onEdit);
+    on<OnInvoiceToEdit>(_onInvoiceToEdit);
   }
   Future<void> _onEditPressed(
       EditPressed event, Emitter<InvoiceState> emit) async {
@@ -73,26 +75,98 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
 
   Future<void> _onFetchCutomers(
       FetchCustomersEvent event, Emitter<InvoiceState> emit) async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    DatabaseConstants.startDB(dbHelper);
     emit(InvoicePageLoading());
     try {
       CustomersRepoImpl customersRepoImpl = CustomersRepoImpl();
       List<CustomersModel> customers = await customersRepoImpl.getCustomers(
           tableName: DatabaseConstants.customersTable);
-      emit(InvoicePageLoaded(customers: customers));
+      String s2 =
+          "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
+      List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+      int id = 1;
+      if (queryResult2[0]["latestId"].toString() == "null" ||
+          queryResult2[0]["latestId"].toString() == "" ||
+          // ignore: unnecessary_null_comparison
+          queryResult2[0]["latestId"].toString() == null) {
+        id = 1;
+      } else {
+        id += int.parse(queryResult2[0]["latestId"].toString().trim());
+      }
+      emit(InvoicePageLoaded(
+          customers: customers, docNo: await generateDocNumber(), id: id));
     } catch (error) {
       emit(InvoiceError("Failed to fetch clients"));
     }
   }
 
-  void _onCutomersSelected(
-      CustomerSelectedEvent event, Emitter<InvoiceState> emit) {
+  Future<void> _onInvoiceToEdit(
+      OnInvoiceToEdit event, Emitter<InvoiceState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    SalesHeadModel? salesHeadModel = await invoiceRepoImpl.getSingleInvoiceHead(
+        tableName: DatabaseConstants.salesInvoiceHeadTable, id: event.id);
+    List<SalesDtlModel>? salesDtlModel =
+        await invoiceRepoImpl.getSingleInvoiceDtl(
+            tableName: DatabaseConstants.salesInvoiceDtlTable,
+            id: event.id.toString());
+    emit(InvoiceToEdit(
+        salesDtlModel: salesDtlModel!, salesHeadModel: salesHeadModel!));
+  }
+
+  Future<void> _onCutomersSelected(
+      CustomerSelectedEvent event, Emitter<InvoiceState> emit) async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    DatabaseConstants.startDB(dbHelper);
+
     final currentState = state;
     if (currentState is InvoicePageLoaded) {
+      String s2 =
+          "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
+      List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+      int id = 1;
+      if (queryResult2[0]["latestId"].toString() == "null" ||
+          queryResult2[0]["latestId"].toString() == "" ||
+          // ignore: unnecessary_null_comparison
+          queryResult2[0]["latestId"].toString() == null) {
+        id = 1;
+      } else {
+        id += int.parse(queryResult2[0]["latestId"].toString().trim());
+      }
       emit(InvoicePageLoaded(
-        customers: currentState.customers,
-        selectedCustomer: event.selectedCustomer,
-      ));
+          customers: currentState.customers,
+          selectedCustomer: event.selectedCustomer,
+          id: id,
+          docNo: await generateDocNumber()));
     }
+  }
+
+  Future<String> generateDocNumber() async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    DatabaseConstants.startDB(dbHelper);
+    String docNumber = "Mob";
+    int nextId = 0;
+    String strId = "";
+    String s1 = "select mobileUserId as m from settings";
+    List<Map<String, Object?>> queryResult1 = await dbHelper.db.rawQuery(s1);
+    docNumber = "MOB${queryResult1[0]["m"]}";
+    String s2 =
+        "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
+    List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+
+    if (queryResult2[0]["latestId"].toString() != "null") {
+      nextId = int.parse(queryResult2[0]["latestId"].toString());
+    }
+
+    nextId = nextId + 1;
+    strId = nextId.toString().trim();
+    int c = 5 - strId.length;
+    for (var i = 0; i < c; i++) {
+      strId = "0$strId";
+    }
+    docNumber = "$docNumber-$strId";
+    myDocNo = docNumber;
+    return docNumber;
   }
 
   void _onClientSelected(

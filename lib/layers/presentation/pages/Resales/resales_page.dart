@@ -20,7 +20,7 @@ class ResalesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => ResalesBloc()..add(ReInitializeDataEvent()),
-      child: ResalesPageContent(),
+      child: const ResalesPageContent(),
     );
   }
 }

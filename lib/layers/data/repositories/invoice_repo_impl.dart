@@ -92,4 +92,26 @@ class InvoiceRepoImpl implements InvoiceRepo {
     return await _databaseHelper.getAllRecords(
         tableName, SalesDtlModel.fromMap);
   }
+
+  @override
+  Future<List<SalesDtlModel>?> getSingleInvoiceDtl(
+      {required String tableName, required String id}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getRecordsById(
+        tableName, id, SalesDtlModel.fromMap);
+  }
+
+  @override
+  Future<SalesHeadModel?> getSingleInvoiceHead(
+      {required String tableName, required int id}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getRecordById(
+        tableName, id, SalesHeadModel.fromMap);
+  }
+
+  @override
+  Future<int?> getLatestId({required String tableNAme}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getLatestId(tableNAme);
+  }
 }
