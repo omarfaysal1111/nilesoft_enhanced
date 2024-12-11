@@ -11,7 +11,7 @@ class ItemsModel implements BaseModel {
   ItemsModel(this.itemid, this.name, this.price, this.qty, this.barcode,
       this.hasSerial);
   ItemsModel.fromMap(Map<String, dynamic> res) {
-    itemid = res['itemid'];
+    itemid = res['id'] ?? res["itemid"];
     name = res['name'];
     price = double.parse(res['price'].toString());
     qty = double.parse(res['qty'].toString());

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
@@ -88,6 +89,16 @@ class LoginPage extends StatelessWidget {
                               ),
                             ),
                           );
+                        }
+                        if (state.isFailure) {
+                          SchedulerBinding.instance.addPostFrameCallback((_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(state.errorMessage),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          });
                         }
                       }, builder: (context, state) {
                         if (state.isSubmitting) {

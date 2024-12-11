@@ -12,6 +12,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/Resales_popup/res
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
+import 'package:intl/intl.dart' as intl;
 
 class ResalesPage extends StatelessWidget {
   const ResalesPage({super.key});
@@ -36,6 +37,9 @@ double total = 0;
 double dis = 0;
 double tax = 0;
 double net = 0;
+int headid = 0;
+String docNo = "";
+bool isEditting = false;
 
 class ResalesPageContent extends StatelessWidget {
   const ResalesPageContent({super.key});
@@ -55,6 +59,7 @@ class ResalesPageContent extends StatelessWidget {
         dis = 0;
         tax = 0;
         dtl = [];
+        isEditting = false;
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -89,6 +94,35 @@ class ResalesPageContent extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     child: BlocConsumer<ResalesBloc, ResalesState>(
                       listener: (context, state) {
+                        if (state is ResaleToEdit) {
+                          dtl = state.salesDtlModel;
+                          isEditting = true;
+                          final myDtl = state.salesDtlModel;
+                          for (var i = 0; i < myDtl.length; i++) {
+                            net = net +
+                                ((myDtl[i].qty)! * (myDtl[i].price)! -
+                                    (myDtl[i].disam)! +
+                                    (myDtl[i].tax)!);
+                            dis = dis + dtl![i].disam!;
+                            tax = tax + dtl![i].tax!;
+                            total = total + dtl![i].price!;
+                          }
+                        }
+                        if (state is ResaleUpdateSucc) {
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          tax = 0;
+                          SchedulerBinding.instance.addPostFrameCallback((_) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text("تم تعديل الفاتورة"),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          });
+                          Navigator.pop(context);
+                        }
                         if (state is ReSaveSuccess) {
                           total = 0;
                           net = 0;
@@ -116,6 +150,8 @@ class ResalesPageContent extends StatelessWidget {
                           );
                         } else if (state is ResalesPageLoaded) {
                           customers = state.customers;
+                          headid = state.id!;
+                          docNo = state.docNo.toString();
                           return DropdownButtonFormField<String>(
                             value: state.selectedCustomer?.name,
                             items: state.customers.map((client) {
@@ -207,41 +243,96 @@ class ResalesPageContent extends StatelessWidget {
                         color: Colors.black87,
                         text: "حفظ الفاتورة",
                         onPressed: () {
-                          if (selected == null) {
-                            SchedulerBinding.instance.addPostFrameCallback((_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("برجاء اختيار العميل"),
-                                  duration: Duration(seconds: 2),
-                                ),
+                          if (!isEditting) {
+                            if (selected == null) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("برجاء اختيار العميل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else if (dtl == [] ||
+                                dtl == null ||
+                                dtl!.isEmpty) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text("برجاء اضافة صنف واحد علي الاقل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else {
+                              String formattedDate =
+                                  intl.DateFormat('dd-MM-yyyy')
+                                      .format(DateTime.now());
+                              SalesHeadModel salesHeadModel = SalesHeadModel(
+                                accid: selected!.id,
+                                dis1: dis,
+                                invoiceno: docNo,
+                                sent: 0,
+                                net: net,
+                                docDate: formattedDate,
+                                tax: tax,
+                                total: total,
+                                clientName: selected!.name,
+                                descr: desc.text,
                               );
-                            });
-                          } else if (dtl == [] || dtl == null || dtl!.isEmpty) {
-                            SchedulerBinding.instance.addPostFrameCallback((_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text("برجاء اضافة صنف واحد علي الاقل"),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            });
-                          } else {
-                            SalesHeadModel salesHeadModel = SalesHeadModel(
-                              accid: selected!.id,
-                              dis1: dis,
-                              invoiceno: "",
-                              sent: 0,
-                              net: net,
-                              tax: tax,
-                              total: total,
-                              clientName: selected!.name,
-                              descr: desc.text,
-                            );
 
-                            bloc.add(ReSaveButtonClicked(
-                                salesHeadModel: salesHeadModel,
-                                salesDtlModel: dtl!));
+                              bloc.add(ReSaveButtonClicked(
+                                  salesHeadModel: salesHeadModel,
+                                  salesDtlModel: dtl!));
+                            }
+                          } else {
+                            if (selected == null) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("برجاء اختيار العميل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else if (dtl == [] ||
+                                dtl == null ||
+                                dtl!.isEmpty) {
+                              SchedulerBinding.instance
+                                  .addPostFrameCallback((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text("برجاء اضافة صنف واحد علي الاقل"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              });
+                            } else {
+                              String formattedDate =
+                                  intl.DateFormat('dd-MM-yyyy')
+                                      .format(DateTime.now());
+                              SalesHeadModel salesHeadModel = SalesHeadModel(
+                                accid: selected!.id,
+                                dis1: dis,
+                                invoiceno: docNo,
+                                sent: 0,
+                                id: int.parse(dtl![0].id.toString()),
+                                net: net,
+                                docDate: formattedDate,
+                                tax: tax,
+                                total: total,
+                                clientName: selected!.name,
+                                descr: desc.text,
+                              );
+
+                              bloc.add(OnUpdateResale(
+                                  headModel: salesHeadModel, dtlModel: dtl!));
+                            }
                           }
                         },
                       ),
@@ -258,7 +349,8 @@ class ResalesPageContent extends StatelessWidget {
                               builder: (dialogContext) {
                                 return BlocProvider.value(
                                   value: BlocProvider.of<ResalesBloc>(context),
-                                  child: const AddnewPopup(
+                                  child: AddnewPopup(
+                                    id: headid,
                                     isEdit: false,
                                   ),
                                 );
@@ -342,6 +434,7 @@ class ResalesPageContent extends StatelessWidget {
                                               context),
                                           child: AddnewPopup(
                                             isEdit: true,
+                                            id: headid,
                                             toEdit: dtl?[index],
                                           ),
                                         );
@@ -390,8 +483,9 @@ class ResalesPageContent extends StatelessWidget {
                                         return BlocProvider.value(
                                           value: BlocProvider.of<ResalesBloc>(
                                               context),
-                                          child: const AddnewPopup(
+                                          child: AddnewPopup(
                                             isEdit: true,
+                                            id: headid,
                                           ),
                                         );
                                       },
@@ -466,9 +560,8 @@ class ResalesPageContent extends StatelessWidget {
                                               value:
                                                   BlocProvider.of<ResalesBloc>(
                                                       context),
-                                              child: const AddnewPopup(
-                                                isEdit: true,
-                                              ),
+                                              child: AddnewPopup(
+                                                  isEdit: true, id: headid),
                                             );
                                           },
                                         );

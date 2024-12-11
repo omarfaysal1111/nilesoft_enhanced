@@ -6,12 +6,14 @@ class LoginState extends Equatable {
   final bool isSubmitting;
   final bool isSuccess;
   final bool isFailure;
+  final String errorMessage;
 
   const LoginState({
     required this.email,
     required this.password,
     required this.isSubmitting,
     required this.isSuccess,
+    required this.errorMessage,
     required this.isFailure,
   });
 
@@ -20,6 +22,7 @@ class LoginState extends Equatable {
       email: '',
       password: '',
       isSubmitting: false,
+      errorMessage: '',
       isSuccess: false,
       isFailure: false,
     );
@@ -30,6 +33,7 @@ class LoginState extends Equatable {
     String? password,
     bool? isSubmitting,
     bool? isSuccess,
+    String? errorMessage,
     bool? isFailure,
   }) {
     return LoginState(
@@ -37,6 +41,7 @@ class LoginState extends Equatable {
       password: password ?? this.password,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       isSuccess: isSuccess ?? this.isSuccess,
+      errorMessage: errorMessage ?? '',
       isFailure: isFailure ?? this.isFailure,
     );
   }

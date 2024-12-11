@@ -181,7 +181,11 @@ class HomePage extends StatelessWidget {
                   const SizedBox(
                     height: 20,
                   ),
-                  OvalButton(text: "ارسال", onPressed: () {}),
+                  OvalButton(
+                      text: "ارسال",
+                      onPressed: () {
+                        homeBloc.add(SenddingSumbittedEvent());
+                      }),
                 ],
               ),
               const SizedBox(

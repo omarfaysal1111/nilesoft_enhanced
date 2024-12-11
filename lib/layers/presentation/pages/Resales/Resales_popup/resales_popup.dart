@@ -6,6 +6,7 @@ import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dar
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart';
 
 import '../bloc/resales_bloc.dart';
 
@@ -19,10 +20,11 @@ ItemsModel? selectedItem;
 int idx = 0;
 
 class AddnewPopup extends StatelessWidget {
-  const AddnewPopup({super.key, required this.isEdit, this.toEdit});
+  const AddnewPopup(
+      {super.key, required this.isEdit, this.toEdit, required this.id});
   final bool isEdit;
   final SalesDtlModel? toEdit;
-
+  final int id;
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<ResalesBloc>();
@@ -288,7 +290,7 @@ class AddnewPopup extends StatelessWidget {
       price: double.tryParse(priceControlleer.text),
       disam: double.tryParse(disControlleer.text),
       disratio: double.tryParse(disRatioControlleer.text),
-      id: selectedItem?.itemid.toString(),
+      id: headid.toString(),
       itemId: selectedItem?.itemid.toString(),
       itemName: selectedItem?.name.toString(),
       qty: double.tryParse(qtyControlleer.text),

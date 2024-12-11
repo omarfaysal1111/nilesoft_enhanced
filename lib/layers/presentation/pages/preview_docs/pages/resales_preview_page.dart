@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/invoice_info.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_state.dart';
 
-class SalesPreviewPage extends StatelessWidget {
-  const SalesPreviewPage({super.key});
+class ReSalesPreviewPage extends StatelessWidget {
+  const ReSalesPreviewPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,7 @@ class SalesPreviewPage extends StatelessWidget {
             Directionality(
               textDirection: TextDirection.rtl,
               child: Text(
-                "استعراض فواتير المبيعات",
+                "استعراض مردودات المبيعات",
                 style: TextStyle(
                   fontFamily: 'Almarai',
                   fontWeight: FontWeight.bold,
@@ -33,17 +33,17 @@ class SalesPreviewPage extends StatelessWidget {
           ],
         ),
       ),
-      body: BlocConsumer<PreviewBloc, PreviewState>(
-        listener: (BuildContext context, PreviewState state) {},
-        builder: (BuildContext context, PreviewState state) {
-          if (state is DocPreviewInitial) {
+      body: BlocConsumer<RePreviewBloc, RePreviewState>(
+        listener: (BuildContext context, RePreviewState state) {},
+        builder: (BuildContext context, RePreviewState state) {
+          if (state is ReDocPreviewInitial) {
             return const Text(
               "جاري التحميل",
               style:
                   TextStyle(fontFamily: 'Almarai', fontWeight: FontWeight.w700),
             );
           }
-          if (state is DocPreviewLoaded) {
+          if (state is ReDocPreviewLoaded) {
             return ListView.builder(
                 itemCount: state.salesModel.length,
                 itemBuilder: (context, index) {
@@ -60,13 +60,10 @@ class SalesPreviewPage extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (_) => BlocProvider(
-                                create: (context) => InvoiceBloc()
-                                  ..add(OnInvoiceToEdit(
+                                create: (context) => ResalesBloc()
+                                  ..add(OnResaleToEdit(
                                       state.salesModel[index].id!)),
-                                child: const InvoicePageContent(
-                                  extraTitle: "المبيعات",
-                                  invoiceType: 0,
-                                ),
+                                child: const ResalesPageContent(),
                               ),
                             ),
                           );

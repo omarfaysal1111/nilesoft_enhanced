@@ -42,7 +42,9 @@ dependencies:
   flutter_bloc: 
   equatable:
   provider: 
+  uuid:
   intl:
+  unique_identifier:
 dev_dependencies:
   flutter_test:
     sdk: flutter

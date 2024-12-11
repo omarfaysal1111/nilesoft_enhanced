@@ -57,9 +57,10 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     emit(InvoiceLoading());
     try {
       ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();
-      List<ItemsModel> customers = await customersRepoImpl.getItems(
+      List<ItemsModel> items = await customersRepoImpl.getItems(
           tableName: DatabaseConstants.itemsTable);
-      emit(InvoiceLoaded(clients: customers));
+
+      emit(InvoiceLoaded(clients: items));
     } catch (error) {
       emit(InvoiceError("Failed to fetch clients"));
     }
@@ -150,8 +151,11 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
       OnUpdateInvoice event, Emitter<InvoiceState> emit) async {
     emit(UpdatingInvoice());
     InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
-    await invoiceRepoImpl.updateSalesHead(head: event.headModel);
-    await invoiceRepoImpl.updateSalesDtl(dtl: event.dtlModel);
+    await invoiceRepoImpl.updateSalesHead(
+        head: event.headModel,
+        tableName: DatabaseConstants.salesInvoiceHeadTable);
+    await invoiceRepoImpl.updateSalesDtl(
+        dtl: event.dtlModel, tableName: DatabaseConstants.salesInvoiceDtlTable);
     emit(UpdateSucc());
   }
 

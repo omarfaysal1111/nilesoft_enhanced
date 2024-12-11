@@ -12,6 +12,19 @@ class ReInitializeDataEvent extends ResalesEvent {
   ReInitializeDataEvent();
 }
 
+class OnUpdateResale extends ResalesEvent {
+  final SalesHeadModel headModel;
+  final List<SalesDtlModel> dtlModel;
+
+  OnUpdateResale({required this.headModel, required this.dtlModel});
+}
+
+class OnResaleToEdit extends ResalesEvent {
+  final int id;
+
+  OnResaleToEdit(this.id);
+}
+
 class ReEditPressed extends ResalesEvent {
   final SalesDtlModel salesDtlModel;
   final int index;

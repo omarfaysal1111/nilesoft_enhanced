@@ -3,7 +3,7 @@ import 'package:nilesoft_erp/layers/data/models/base_model.dart';
 class SalesModel implements BaseModel {
   SalesHeadModel? salesHeadModel;
   List<SalesDtlModel> salesdtlModel = [];
-  SalesModel({this.salesHeadModel, salesdtlModel});
+  SalesModel({this.salesHeadModel, required this.salesdtlModel});
   SalesModel.fromMap(Map<String, dynamic> res) {
     salesHeadModel = res["salesHeadModel"];
   }
@@ -17,6 +17,7 @@ class SalesModel implements BaseModel {
       //    "clientName": salesHeadModel!.clientName,
       "descr": salesHeadModel!.descr,
       "guidetype": "1",
+      "mobile_uuid": salesHeadModel!.mobile_uuid,
       // "invtime": salesHeadModel!.invTime,
       // "docdate": salesHeadModel!.docdate,
       // "invtype": salesHeadModel!.invType,
@@ -47,6 +48,8 @@ class SalesHeadModel implements BaseModel {
   String? cashaccid;
   String? visaid;
   int? id;
+  // ignore: non_constant_identifier_names
+  String? mobile_uuid;
   String? invenid;
   // String? invTime;
   // String? docdate;
@@ -77,6 +80,8 @@ class SalesHeadModel implements BaseModel {
       this.cashaccid,
       this.visaid,
       this.invenid,
+      // ignore: non_constant_identifier_names
+      this.mobile_uuid,
       this.net,
       this.total,
       this.invoiceno
@@ -116,6 +121,7 @@ class SalesHeadModel implements BaseModel {
       "invtype": invType,
       "invoiceno": invoiceno,
       "tax": tax,
+      "mobile_uuid": mobile_uuid,
       "net": net,
       // "visaid": visaId,
       // "sent": sent
@@ -160,7 +166,20 @@ class SalesDtlModel implements BaseModel {
   Map<String, Object?> toMap() {
     return {
       "id": id,
-      "itemId": itemId,
+      "itemid": itemId,
+      // "itemName": itemName,
+      "qty": qty,
+      "disam": disam,
+      "disratio": disratio,
+      "price": price,
+      "tax": tax,
+    };
+  }
+
+  Map<String, Object?> toJson() {
+    return {
+      "id": id,
+      "itemid": itemId,
       "itemName": itemName,
       "qty": qty,
       "disam": disam,

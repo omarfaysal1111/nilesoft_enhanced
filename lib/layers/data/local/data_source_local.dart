@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/models/base_model.dart';
 
 import 'package:sqflite/sqflite.dart';
@@ -304,8 +305,13 @@ CREATE TABLE settings (
 
   Future<List<T>> getRecordsById<T extends BaseModel>(String tableName,
       String id, T Function(Map<String, dynamic>) fromMap) async {
-    final List<Map<String, dynamic>> result =
-        await db.query(tableName, where: 'id = ?', whereArgs: [id]);
+    String s =
+        "select $tableName.*, ${DatabaseConstants.itemsTable}.name as itemName from $tableName inner join ${DatabaseConstants.itemsTable} on $tableName.itemId=${DatabaseConstants.itemsTable}.itemid ";
+    String s1 = "where $tableName.id='$id'";
+
+    final List<Map<String, dynamic>> result = await db.rawQuery(s + s1);
+
+    //tableName, where: 'id = ?', whereArgs: [id]
 
     return result.map((map) => fromMap(map)).toList();
   }

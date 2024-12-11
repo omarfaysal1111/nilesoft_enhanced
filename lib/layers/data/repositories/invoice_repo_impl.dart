@@ -67,7 +67,7 @@ class InvoiceRepoImpl implements InvoiceRepo {
       required String tableName}) async {
     DatabaseConstants.startDB(_databaseHelper);
     await _databaseHelper.insertListRecords<SalesDtlModel>(
-        invoiceDtl, DatabaseConstants.salesInvoiceDtlTable);
+        invoiceDtl, tableName);
   }
 
   @override
@@ -116,18 +116,19 @@ class InvoiceRepoImpl implements InvoiceRepo {
   }
 
   @override
-  Future<void> updateSalesDtl({required List<SalesDtlModel> dtl}) async {
+  Future<void> updateSalesDtl(
+      {required List<SalesDtlModel> dtl, required String tableName}) async {
     DatabaseConstants.startDB(_databaseHelper);
     for (var i = 0; i < dtl.length; i++) {
       await _databaseHelper.updateRecordStringId(
-          dtl[i], DatabaseConstants.salesInvoiceDtlTable, dtl[i].id.toString());
+          dtl[i], tableName, dtl[i].id.toString());
     }
   }
 
   @override
-  Future<void> updateSalesHead({required SalesHeadModel head}) async {
+  Future<void> updateSalesHead(
+      {required SalesHeadModel head, required String tableName}) async {
     DatabaseConstants.startDB(_databaseHelper);
-    await _databaseHelper.updateRecord(
-        head, DatabaseConstants.salesInvoiceHeadTable, head.id!);
+    await _databaseHelper.updateRecord(head, tableName, head.id!);
   }
 }

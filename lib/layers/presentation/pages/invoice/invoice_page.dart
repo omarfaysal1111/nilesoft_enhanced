@@ -66,6 +66,7 @@ class InvoicePageContent extends StatelessWidget {
         dis = 0;
         tax = 0;
         dtl = [];
+        isEditting = false;
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -164,7 +165,7 @@ class InvoicePageContent extends StatelessWidget {
                               return DropdownMenuItem<CustomersModel>(
                                 value: client,
                                 child: SizedBox(
-                                  width: 100,
+                                  width: 150,
                                   child: Text(
                                     client.name!,
                                     overflow: TextOverflow
@@ -198,7 +199,7 @@ class InvoicePageContent extends StatelessWidget {
                                 return DropdownMenuItem<String>(
                                   value: client.name,
                                   child: SizedBox(
-                                    width: 100,
+                                    width: 150,
                                     child: Text(
                                       client.name!,
                                       overflow: TextOverflow

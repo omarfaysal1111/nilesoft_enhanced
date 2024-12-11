@@ -3,6 +3,7 @@ import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/data/models/items_model.dart';
 import 'package:nilesoft_erp/layers/data/remote/remote_repositories/remote_customer_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/remote/remote_repositories/remote_invoice_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/remote/remote_repositories/remote_item_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/customers_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/items_repo_impl.dart';
@@ -33,6 +34,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       } catch (e) {
         throw Exception(e);
       }
+    });
+    on<SenddingSumbittedEvent>((event, emit) async {
+      emit(state.copyWith(isSendingSubmitted: true, isSendingSucc: false));
+      RemoteInvoiceRepoImpl remoteInvoiceRepoImpl = RemoteInvoiceRepoImpl();
+      remoteInvoiceRepoImpl.sendInvoices(
+          headTableName: DatabaseConstants.salesInvoiceHeadTable,
+          dtlTableName: DatabaseConstants.salesInvoiceDtlTable,
+          endPoint: "salesinvoice/addnew");
+      emit(state.copyWith(isSendingSubmitted: false, isSendingSucc: true));
     });
   }
 }

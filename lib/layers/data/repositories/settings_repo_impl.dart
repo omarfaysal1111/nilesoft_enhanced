@@ -21,10 +21,10 @@ class SettingsRepoImpl implements SettingsRepo {
   }
 
   @override
-  Future<SettingsModel> getSettings({required String tableName}) async {
+  Future<List<SettingsModel>> getSettings({required String tableName}) async {
     await DatabaseConstants.startDB(_databaseHelper);
-    SettingsModel? settingsModel = await _databaseHelper.getRecordById(
-        tableName, 1, SettingsModel.fromMap);
-    return settingsModel!;
+    List<SettingsModel> settingsModel =
+        await _databaseHelper.getAllRecords(tableName, SettingsModel.fromMap);
+    return settingsModel;
   }
 }

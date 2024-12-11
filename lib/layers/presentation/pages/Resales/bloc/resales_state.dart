@@ -57,6 +57,14 @@ class ResalesLoaded extends ResalesState {
   ResalesLoaded({required this.clients, this.selectedClient});
 }
 
+class ResaleToEdit extends ResalesState {
+  final List<SalesDtlModel> salesDtlModel;
+  final SalesHeadModel salesHeadModel;
+  ResaleToEdit({required this.salesDtlModel, required this.salesHeadModel});
+}
+
+class ResaleUpdateSucc extends ResalesState {}
+
 class ResalesEdittedState extends ResalesState {
   final SalesDtlModel editedItem;
   final int index;
@@ -64,10 +72,15 @@ class ResalesEdittedState extends ResalesState {
   ResalesEdittedState({required this.editedItem, required this.index});
 }
 
+class UpdatingResale extends ResalesState {}
+
 class ResalesPageLoaded extends ResalesState {
   final List<CustomersModel> customers;
   final CustomersModel? selectedCustomer;
-  ResalesPageLoaded({required this.customers, this.selectedCustomer});
+  final String? docNo;
+  final int? id;
+  ResalesPageLoaded(
+      {required this.customers, this.selectedCustomer, this.docNo, this.id});
 }
 
 class AddNewResalesState extends ResalesState {
