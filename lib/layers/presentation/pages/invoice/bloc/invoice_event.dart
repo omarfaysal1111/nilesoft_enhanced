@@ -37,6 +37,7 @@ class ClientSelectedEvent extends InvoiceEvent {
 
   ClientSelectedEvent(this.selectedClient);
 }
+//selextt sum(dtl).qty from
 
 class SaveButtonClicked extends InvoiceEvent {
   final SalesHeadModel salesHeadModel;

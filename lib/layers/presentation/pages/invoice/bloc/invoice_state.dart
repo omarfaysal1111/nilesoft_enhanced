@@ -83,6 +83,12 @@ class InvoicePageLoaded extends InvoiceState {
 
 class UpdatingInvoice extends InvoiceState {}
 
+class HasSerialState extends InvoiceState {
+  final int len;
+
+  HasSerialState({required this.len});
+}
+
 class UpdateSucc extends InvoiceState {}
 
 class AddNewInvoiceState extends InvoiceState {

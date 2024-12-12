@@ -3,9 +3,9 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/bloc/delete_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/bloc/delete_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/bloc/delete_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/delete_data/bloc/delete_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/delete_data/bloc/delete_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/delete_data/bloc/delete_state.dart';
 
 final pass1 = TextEditingController();
 

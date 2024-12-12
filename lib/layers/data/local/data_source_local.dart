@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'package:flutter/foundation.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/domain/models/base_model.dart';
 
@@ -346,6 +347,28 @@ CREATE TABLE settings (
       where: "1 = 1",
       //whereArgs: [id],
     );
+  }
+
+  Future<int> checkSerialNo(String id) async {
+    int qty = 0;
+    String query =
+        "select sum(${DatabaseConstants.salesInvoiceDtlTable}.qty) as Qty "
+        "from ${DatabaseConstants.salesInvoiceDtlTable} "
+        "inner join items on ${DatabaseConstants.salesInvoiceDtlTable}.itemId = items.itemid "
+        "and items.hasSerial=1";
+    final List<Map<String, dynamic>> result = await db.rawQuery(query);
+
+    if (result.isNotEmpty && result[0]["Qty"] != null) {
+      qty = int.parse(result[0]["Qty"].toString());
+      if (kDebugMode) {
+        print("Qty: $qty");
+      }
+    } else {
+      if (kDebugMode) {
+        print("No results or Qty is null.");
+      }
+    }
+    return qty;
   }
 
   Future<int?> getLatestId(String tableName) async {

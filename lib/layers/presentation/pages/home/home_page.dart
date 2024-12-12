@@ -15,9 +15,9 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/bloc/delete_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/bloc/delete_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/delete_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/delete_data/bloc/delete_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/delete_data/bloc/delete_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/delete_data/delete_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';

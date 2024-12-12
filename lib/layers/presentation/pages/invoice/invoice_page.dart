@@ -13,6 +13,9 @@ import 'package:nilesoft_erp/layers/presentation/pages/invoice/addnew_popup/addn
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serial_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serials_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/serials/serials_page.dart';
 import 'package:uuid/uuid.dart';
 
 class InvoicePage extends StatelessWidget {
@@ -105,6 +108,20 @@ class InvoicePageContent extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     child: BlocConsumer<InvoiceBloc, InvoiceState>(
                       listener: (context, state) {
+                        if (state is HasSerialState) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => BlocProvider(
+                                create: (context) => SerialsBloc()
+                                  ..add(OnSerialInit(
+                                      invId: headid.toString(),
+                                      lenOfSerials: state.len)),
+                                child: const SerialsPage(),
+                              ),
+                            ),
+                          );
+                        }
                         if (state is InvoiceToEdit) {
                           dtl = state.salesDtlModel;
                           isEditting = true;

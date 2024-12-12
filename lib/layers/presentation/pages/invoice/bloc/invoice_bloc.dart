@@ -69,14 +69,22 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   Future<void> _onSaveClicked(
       SaveButtonClicked event, Emitter<InvoiceState> emit) async {
     InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    DatabaseHelper databaseHelper = DatabaseHelper();
+    DatabaseConstants.startDB(databaseHelper);
+
     await invoiceRepoImpl.addInvoiceHead(
         invoiceHead: event.salesHeadModel,
         tableName: DatabaseConstants.salesInvoiceHeadTable);
     await invoiceRepoImpl.addInvoiceDtl(
         invoiceDtl: event.salesDtlModel,
         tableName: DatabaseConstants.salesInvoiceDtlTable);
-
-    emit(SaveSuccess());
+    int len = await databaseHelper
+        .checkSerialNo(event.salesDtlModel[0].id.toString());
+    if (len == 0) {
+      emit(SaveSuccess());
+    } else {
+      emit(HasSerialState(len: len));
+    }
   }
 
   Future<void> _onFetchCutomers(
