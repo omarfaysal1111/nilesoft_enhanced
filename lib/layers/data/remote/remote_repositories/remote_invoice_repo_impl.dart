@@ -6,7 +6,6 @@ import 'package:nilesoft_erp/layers/data/models/settings_model.dart';
 import 'package:nilesoft_erp/layers/data/remote/data_sources.dart';
 import 'package:nilesoft_erp/layers/data/repositories/settings_repo_impl.dart';
 import 'package:nilesoft_erp/layers/domain/repository/remote/remote_invoice_repo.dart';
-import 'package:uuid/uuid.dart';
 
 class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
   @override
@@ -34,9 +33,7 @@ class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
           int.parse(invoicesHead[i]["id"].toString()),
           SalesHeadModel.fromMap);
       salesHeadModel!.invType = "0";
-      var uuid = const Uuid();
 
-      salesHeadModel.mobile_uuid = uuid.v1().toString();
       salesHeadModel.accid = settingsModel[0].cashaccId;
       salesHeadModel.cashaccid = settingsModel[0].cashaccId;
       salesHeadModel.invenid = settingsModel[0].invId;

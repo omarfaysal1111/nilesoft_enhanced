@@ -3,13 +3,12 @@ import 'package:nilesoft_erp/layers/data/models/base_model.dart';
 
 class CashinModelSend {
   CashinModel? cashinModelHead;
-  List<CashInDtl> cashInDtl = [];
 
-  CashinModelSend({this.cashinModelHead, cashInDtl});
+  CashinModelSend({this.cashinModelHead});
 
   Map toJson() {
-    List cashInDtl = this.cashInDtl.map((i) => i.toMap()).toList();
     return {
+      "id": cashinModelHead!.id,
       "docdate": cashinModelHead!.docDate,
       "accid": cashinModelHead!.accId,
       "descr": cashinModelHead!.descr,
@@ -21,7 +20,6 @@ class CashinModelSend {
       "net1": cashinModelHead!.net1,
       "branchid": 0,
       "shiftid": 0,
-      "dtl": cashInDtl
     };
   }
 }
@@ -32,6 +30,7 @@ class CashinModel implements BaseModel {
   String? accId;
   String? descr;
   String? docNo;
+  String? clint;
   String? userid;
   String? username;
   double? total;
@@ -47,52 +46,28 @@ class CashinModel implements BaseModel {
     this.docNo,
     this.total,
     this.accId,
+    this.clint,
     this.descr,
   });
   CashinModel.fromMap(Map<String, dynamic> res) {
     id = res['id'];
-    docDate = res['name'];
+    docDate = res['docdate'];
+    total = res['total'];
+    clint = res["client"];
+    docNo = res["docno"];
+    descr = res["descr"];
     accId = res["accid"];
   }
   @override
   Map<String, Object?> toMap() {
-    return {"docDate": docDate, "total": total, "descr": descr, "docno": docNo};
-  }
-}
-
-class CashInDtl {
-  String? id;
-  String? docno;
-  int? serial;
-  String? accountid;
-  String? salesmanid;
-  String? descr;
-  double? amount;
-  double? discount;
-  int? branchid;
-  int? shiftid;
-  CashInDtl(
-      {this.accountid,
-      this.amount,
-      this.branchid,
-      this.descr,
-      this.discount,
-      this.docno,
-      this.id,
-      this.salesmanid,
-      this.serial,
-      this.shiftid});
-  Map<String, Object?> toMap() {
     return {
-      "accountid": accountid,
+      "id": id,
+      "docdate": docDate,
+      "total": total,
       "descr": descr,
-      "amount": amount,
-      "discount": discount,
-      "branchid": 0,
-      "shiftid": 0,
-      "docno": '',
-      "salesmanid": "",
-      "serial": 0
+      "docno": docNo,
+      "client": clint,
+      "accid": accId
     };
   }
 }

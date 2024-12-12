@@ -4,8 +4,8 @@ import 'package:nilesoft_erp/layers/presentation/components/invoice_info.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_state.dart';
 
 class ReSalesPreviewPage extends StatelessWidget {
   const ReSalesPreviewPage({super.key});

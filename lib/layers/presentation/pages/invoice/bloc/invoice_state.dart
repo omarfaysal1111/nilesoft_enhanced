@@ -65,7 +65,11 @@ class InvoiceEdittedState extends InvoiceState {
 class InvoiceToEdit extends InvoiceState {
   final List<SalesDtlModel> salesDtlModel;
   final SalesHeadModel salesHeadModel;
-  InvoiceToEdit({required this.salesDtlModel, required this.salesHeadModel});
+  final List<CustomersModel> customers;
+  InvoiceToEdit(
+      {required this.salesDtlModel,
+      required this.salesHeadModel,
+      required this.customers});
 }
 
 class InvoicePageLoaded extends InvoiceState {

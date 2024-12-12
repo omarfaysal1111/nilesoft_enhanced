@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/components/oval_button.dart';
+import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/sqr_button.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/add_customer.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/bloc/add_customer_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/bloc/add_customer_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/cashin_page.dart';
@@ -12,9 +15,15 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/bloc/delete_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/bloc/delete_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/delete_data/delete_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/ledger/ledger_screen.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/main_preview_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -125,14 +134,36 @@ class HomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               SqrButton(
-                onClick: () {},
+                onClick: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (context) =>
+                            AddCustomerBloc()..add(OnAddCustomerInit()),
+                        child: const AddCustomer(),
+                      ),
+                    ),
+                  );
+                },
                 height: 151,
                 width: 164,
                 img: "assets/addclient.png",
                 text: "اضافة عميل",
               ),
               SqrButton(
-                onClick: () {},
+                onClick: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (context) =>
+                            LedgerBloc()..add(OnLedgerIntial()),
+                        child: const LedgerScreen(),
+                      ),
+                    ),
+                  );
+                },
                 height: 151,
                 width: 164,
                 img: "assets/rep.png",
@@ -172,27 +203,41 @@ class HomePage extends StatelessWidget {
                         );
                       });
                     }
-                    return OvalButton(
-                        text: "تحديث",
-                        onPressed: () {
-                          homeBloc.add(UpdatingSumbittedEvent());
-                        });
+                    return SizedBox(
+                      width: 160,
+                      child: CustomButton(
+                          text: "تحديث",
+                          onPressed: () {
+                            homeBloc.add(UpdatingSumbittedEvent());
+                          }),
+                    );
                   }),
                   const SizedBox(
                     height: 20,
                   ),
-                  OvalButton(
-                      text: "ارسال",
-                      onPressed: () {
-                        homeBloc.add(SenddingSumbittedEvent());
-                      }),
+                  SizedBox(
+                    width: 164,
+                    child: CustomButton(
+                        text: "ارسال",
+                        onPressed: () {
+                          homeBloc.add(SenddingSumbittedEvent());
+                        }),
+                  ),
                 ],
               ),
-              const SizedBox(
-                width: 20,
-              ),
               SqrButton(
-                onClick: () {},
+                onClick: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (context) =>
+                            DeleteBloc()..add(OnDeleteInitial()),
+                        child: const DeletePage(),
+                      ),
+                    ),
+                  );
+                },
                 height: 151,
                 width: 164,
                 img: "assets/delete.png",

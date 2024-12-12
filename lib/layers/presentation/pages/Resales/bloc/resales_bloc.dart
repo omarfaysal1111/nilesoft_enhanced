@@ -109,8 +109,13 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
         await invoiceRepoImpl.getSingleInvoiceDtl(
             tableName: DatabaseConstants.reSaleInvoiceDtlTable,
             id: event.id.toString());
+    CustomersRepoImpl customersRepo = CustomersRepoImpl();
+    List<CustomersModel> customers = await customersRepo.getCustomers(
+        tableName: DatabaseConstants.customersTable);
     emit(ResaleToEdit(
-        salesDtlModel: salesDtlModel!, salesHeadModel: salesHeadModel!));
+        salesDtlModel: salesDtlModel!,
+        salesHeadModel: salesHeadModel!,
+        customers: customers));
   }
 
   Future<void> _onFetchCustomers(

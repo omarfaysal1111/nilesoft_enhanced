@@ -13,6 +13,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/invoice/addnew_popup/addn
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_state.dart';
+import 'package:uuid/uuid.dart';
 
 class InvoicePage extends StatelessWidget {
   const InvoicePage(
@@ -64,6 +65,9 @@ class InvoicePageContent extends StatelessWidget {
         total = 0;
         net = 0;
         dis = 0;
+        customers = [];
+        selected = null;
+        desc.text = "";
         tax = 0;
         dtl = [];
         isEditting = false;
@@ -104,6 +108,11 @@ class InvoicePageContent extends StatelessWidget {
                         if (state is InvoiceToEdit) {
                           dtl = state.salesDtlModel;
                           isEditting = true;
+                          customers = state.customers;
+                          selected = CustomersModel(
+                              state.salesHeadModel.accid,
+                              state.salesHeadModel.clientName,
+                              state.salesHeadModel.invType);
                           final myDtl = state.salesDtlModel;
                           for (var i = 0; i < myDtl.length; i++) {
                             net = net +
@@ -274,8 +283,11 @@ class InvoicePageContent extends StatelessWidget {
                                 );
                               });
                             } else {
+                              var uuid = const Uuid();
+
+                              String mobile_uuid = uuid.v1().toString();
                               String formattedDate =
-                                  intl.DateFormat('dd-MM-yyyy')
+                                  intl.DateFormat('yyyy-MM-dd')
                                       .format(DateTime.now());
                               SalesHeadModel salesHeadModel = SalesHeadModel(
                                 accid: selected!.id,
@@ -284,6 +296,7 @@ class InvoicePageContent extends StatelessWidget {
                                 sent: 0,
                                 net: net,
                                 docDate: formattedDate,
+                                mobile_uuid: mobile_uuid,
                                 tax: tax,
                                 total: total,
                                 clientName: selected!.name,

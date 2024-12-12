@@ -116,8 +116,13 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
         await invoiceRepoImpl.getSingleInvoiceDtl(
             tableName: DatabaseConstants.salesInvoiceDtlTable,
             id: event.id.toString());
+    CustomersRepoImpl customersRepoImpl = CustomersRepoImpl();
+    List<CustomersModel> customers = await customersRepoImpl.getCustomers(
+        tableName: DatabaseConstants.customersTable);
     emit(InvoiceToEdit(
-        salesDtlModel: salesDtlModel!, salesHeadModel: salesHeadModel!));
+        salesDtlModel: salesDtlModel!,
+        salesHeadModel: salesHeadModel!,
+        customers: customers));
   }
 
   Future<void> _onCutomersSelected(

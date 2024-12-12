@@ -9,4 +9,6 @@ abstract class CashinRepo {
   Future<void> editCashIn(
       {required CashinModel invoice, required String tableName});
   Future<void> deleteCashIn({required int id});
+  Future<void> updateCashIn(
+      {required CashinModel model, required String tableName});
 }

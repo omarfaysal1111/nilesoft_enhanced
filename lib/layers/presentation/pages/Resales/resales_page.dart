@@ -96,6 +96,11 @@ class ResalesPageContent extends StatelessWidget {
                       listener: (context, state) {
                         if (state is ResaleToEdit) {
                           dtl = state.salesDtlModel;
+                          customers = state.customers;
+                          selected = CustomersModel(
+                              state.salesHeadModel.accid,
+                              state.salesHeadModel.clientName,
+                              state.salesHeadModel.invType);
                           isEditting = true;
                           final myDtl = state.salesDtlModel;
                           for (var i = 0; i < myDtl.length; i++) {

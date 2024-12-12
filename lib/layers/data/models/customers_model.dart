@@ -16,4 +16,14 @@ class CustomersModel implements BaseModel {
   Map<String, Object?> toMap() {
     return {"id": id, "name": name, "acctype": type};
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CustomersModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

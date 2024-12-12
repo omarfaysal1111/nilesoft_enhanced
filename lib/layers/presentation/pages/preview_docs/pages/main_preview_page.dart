@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_card.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/cashin/cashin_prev_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/cashin/cashin_prev_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_bloc.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/cashin_preview_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/resales_preview_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/sales_preview_page.dart';
 
@@ -77,7 +80,18 @@ class MainPreviewPage extends StatelessWidget {
             SizedBox(
                 width: MediaQuery.sizeOf(context).width * 0.9,
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider(
+                          create: (context) =>
+                              CashinPrevBloc()..add(OnCashInPreview()),
+                          child: const CashinPreviewPage(),
+                        ),
+                      ),
+                    );
+                  },
                   child: const RectCard(
                       text: "سندات القبض النقدي",
                       icon: "assets/mobilecash.png"),

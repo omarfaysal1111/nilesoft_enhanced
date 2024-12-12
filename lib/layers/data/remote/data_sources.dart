@@ -161,7 +161,7 @@ class MainFun {
       if (response.statusCode == 200) {
         String jsonString = response.body;
         List<dynamic> dataList =
-            jsonDecode(jsonString); // Parse directly into a List
+            jsonDecode(jsonString)["data"]; // Parse directly into a List
 
         // Map each item in the list to the model using the fromJson function
         List<T> result = dataList

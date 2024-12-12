@@ -30,14 +30,22 @@ class CashinRepoImpl implements CashinRepo {
   Future<CashinModel> getCashInById(
       {required int id, required String tableName}) async {
     DatabaseConstants.startDB(_databaseHelper);
-    CashinModel? salesmodel = await _databaseHelper.getRecordById<CashinModel>(
+    CashinModel? cashinModel = await _databaseHelper.getRecordById<CashinModel>(
         tableName, id, CashinModel.fromMap);
-    return salesmodel!;
+    return cashinModel!;
   }
 
   @override
-  Future<List<CashinModel>> getCashIns({required String tableName}) {
-    //
-    throw UnimplementedError();
+  Future<List<CashinModel>> getCashIns({required String tableName}) async {
+    List<CashinModel> cashins = await _databaseHelper.getAllRecords(
+        DatabaseConstants.cashinHeadTable, CashinModel.fromMap);
+    return cashins;
+  }
+
+  @override
+  Future<void> updateCashIn(
+      {required CashinModel model, required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.updateRecord(model, tableName, model.id!);
   }
 }

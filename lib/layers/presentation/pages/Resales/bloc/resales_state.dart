@@ -60,7 +60,11 @@ class ResalesLoaded extends ResalesState {
 class ResaleToEdit extends ResalesState {
   final List<SalesDtlModel> salesDtlModel;
   final SalesHeadModel salesHeadModel;
-  ResaleToEdit({required this.salesDtlModel, required this.salesHeadModel});
+  final List<CustomersModel> customers;
+  ResaleToEdit(
+      {required this.salesDtlModel,
+      required this.salesHeadModel,
+      required this.customers});
 }
 
 class ResaleUpdateSucc extends ResalesState {}

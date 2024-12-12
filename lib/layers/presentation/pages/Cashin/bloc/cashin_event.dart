@@ -9,3 +9,19 @@ class SaveCashinPressed extends CashinEvent {
 
   SaveCashinPressed({required this.cashinModel});
 }
+
+class OnCashinToEdit extends CashinEvent {
+  final CashinModel cashinModel;
+  final int id;
+
+  OnCashinToEdit({
+    required this.cashinModel,
+    required this.id,
+  });
+}
+
+class OnCashinUpdate extends CashinEvent {
+  final CashinModel cashinModel;
+
+  OnCashinUpdate({required this.cashinModel});
+}

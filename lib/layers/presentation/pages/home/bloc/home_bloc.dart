@@ -37,11 +37,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     });
     on<SenddingSumbittedEvent>((event, emit) async {
       emit(state.copyWith(isSendingSubmitted: true, isSendingSucc: false));
+      //Send Sales Invoices
       RemoteInvoiceRepoImpl remoteInvoiceRepoImpl = RemoteInvoiceRepoImpl();
       remoteInvoiceRepoImpl.sendInvoices(
           headTableName: DatabaseConstants.salesInvoiceHeadTable,
           dtlTableName: DatabaseConstants.salesInvoiceDtlTable,
           endPoint: "salesinvoice/addnew");
+      //Send Resales Invoice
+      remoteInvoiceRepoImpl.sendInvoices(
+          headTableName: DatabaseConstants.reSaleInvoiceHeadTable,
+          dtlTableName: DatabaseConstants.reSaleInvoiceDtlTable,
+          endPoint: "rsalesinvoice/addnew");
       emit(state.copyWith(isSendingSubmitted: false, isSendingSucc: true));
     });
   }

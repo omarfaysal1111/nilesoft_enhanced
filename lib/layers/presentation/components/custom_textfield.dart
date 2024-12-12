@@ -9,16 +9,15 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final ValueChanged<String> onChanged;
   final Duration debounceDuration;
-  // ignore: use_super_parameters
   const CustomTextField({
-    Key? key,
+    super.key,
     required this.hintText,
     this.controller,
     this.debounceDuration = const Duration(milliseconds: 900),
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     required this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

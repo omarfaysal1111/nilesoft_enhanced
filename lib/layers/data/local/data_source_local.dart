@@ -32,9 +32,10 @@ class DatabaseHelper {
               total REAL ALLOW NULL,
               tax REAL ALLOW NULL,
               dis1 REAL ALLOW NULL, 
+              mobile_uuid TEXT ALLOW NULL,
               invtype TEXT ALLOW NULL,
               docdate TEXT ALLOW NULL,
-               net REAL ALLOW NULL,
+              net REAL ALLOW NULL,
               sent INTEGER ALLOW NULL
             )
           """,
@@ -148,6 +149,7 @@ docdate TEXT ALLOW NULL,
            CREATE TABLE cashIn (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               docdate TEXT NOT NULL,
+              client Text ALLOW NULL,
               descr TEXT NOT NULL,
               accid TEXT ALLOW NULL,
               docno TEXT ALLOW NULL,
@@ -293,6 +295,59 @@ CREATE TABLE settings (
     return result;
   }
 
+  Future<void> deleteData() async {
+    await db.delete(
+      'salesInvoiceHead',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'ResalesInvoiceHead',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'salesInvoiceDtl',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'ResalesInvoiceDtl',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'purInvoiceHead',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'purInvoiceDtl',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'orderHead',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'orderDtl',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'cashIn',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+    await db.delete(
+      'cashInDtl',
+      where: "1 = 1",
+      //whereArgs: [id],
+    );
+  }
+
   Future<int?> getLatestId(String tableName) async {
     final List<Map<String, dynamic>> result =
         await db.rawQuery('SELECT MAX(id) as latestId FROM $tableName');
@@ -303,13 +358,24 @@ CREATE TABLE settings (
     return null; // Return null if the table is empty or no ID exists
   }
 
+  Future<List<T>> getCashIns<T extends BaseModel>(String tableName, int id,
+      T Function(Map<String, dynamic>) fromMap) async {
+    String query =
+        "select $tableName.*, ${DatabaseConstants.customersTable}.name as clientName from $tableName inner join ${DatabaseConstants.customersTable} on $tableName.accid=${DatabaseConstants.customersTable}.id where $tableName.id='$id'";
+
+    final List<Map<String, dynamic>> result = await db.rawQuery(query);
+
+    //tableName, where: 'id = ?', whereArgs: [id]
+
+    return result.map((map) => fromMap(map)).toList();
+  }
+
   Future<List<T>> getRecordsById<T extends BaseModel>(String tableName,
       String id, T Function(Map<String, dynamic>) fromMap) async {
-    String s =
-        "select $tableName.*, ${DatabaseConstants.itemsTable}.name as itemName from $tableName inner join ${DatabaseConstants.itemsTable} on $tableName.itemId=${DatabaseConstants.itemsTable}.itemid ";
-    String s1 = "where $tableName.id='$id'";
+    String query =
+        "select $tableName.*, ${DatabaseConstants.itemsTable}.name as itemName from $tableName inner join ${DatabaseConstants.itemsTable} on $tableName.itemId=${DatabaseConstants.itemsTable}.itemid where $tableName.id='$id'";
 
-    final List<Map<String, dynamic>> result = await db.rawQuery(s + s1);
+    final List<Map<String, dynamic>> result = await db.rawQuery(query);
 
     //tableName, where: 'id = ?', whereArgs: [id]
 
