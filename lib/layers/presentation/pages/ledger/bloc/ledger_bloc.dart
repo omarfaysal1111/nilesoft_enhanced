@@ -1,10 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_first_res.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_model.dart';
-import 'package:nilesoft_erp/layers/data/remote/remote_repositories/remote_ledger_repo_impl.dart';
-import 'package:nilesoft_erp/layers/data/repositories/customers_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_first_res.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_model.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_ledger_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/customers_repo_impl.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_state.dart';
 

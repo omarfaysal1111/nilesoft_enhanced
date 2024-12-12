@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nilesoft_erp/layers/data/models/add_customer.dart';
+import 'package:nilesoft_erp/layers/domain/models/add_customer.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/bloc/add_customer_bloc.dart';
@@ -128,7 +128,7 @@ class AddCustomer extends StatelessWidget {
                 ),
               );
             } else {
-              return SizedBox();
+              return const SizedBox();
             }
           },
         ));

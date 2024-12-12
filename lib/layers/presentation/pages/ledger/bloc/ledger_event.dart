@@ -1,5 +1,5 @@
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_parameter_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_parameter_model.dart';
 
 abstract class LedgerEvent {}
 

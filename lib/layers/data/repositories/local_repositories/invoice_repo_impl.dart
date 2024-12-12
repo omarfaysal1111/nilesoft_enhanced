@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
-import 'package:nilesoft_erp/layers/domain/repository/invoice_repo.dart';
+import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
+import 'package:nilesoft_erp/layers/domain/repository/local/invoice_repo.dart';
 
 class InvoiceRepoImpl implements InvoiceRepo {
   final DatabaseHelper _databaseHelper = DatabaseHelper();

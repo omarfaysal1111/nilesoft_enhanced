@@ -1,5 +1,5 @@
-import 'package:nilesoft_erp/layers/data/models/order_head_model.dart';
-import 'package:nilesoft_erp/layers/domain/repository/order_repo.dart';
+import 'package:nilesoft_erp/layers/domain/models/order_head_model.dart';
+import 'package:nilesoft_erp/layers/domain/repository/local/order_repo.dart';
 
 class OrdersRepoImpl implements OrderHeadRepo {
   @override

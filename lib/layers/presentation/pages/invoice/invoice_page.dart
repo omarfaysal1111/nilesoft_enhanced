@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' as intl;
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
-import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
-import 'package:nilesoft_erp/layers/data/models/items_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/info_card.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
@@ -285,6 +285,7 @@ class InvoicePageContent extends StatelessWidget {
                             } else {
                               var uuid = const Uuid();
 
+                              // ignore: non_constant_identifier_names
                               String mobile_uuid = uuid.v1().toString();
                               String formattedDate =
                                   intl.DateFormat('yyyy-MM-dd')

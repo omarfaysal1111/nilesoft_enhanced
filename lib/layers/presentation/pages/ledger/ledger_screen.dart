@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_model.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_parameter_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_parameter_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/date_picker.dart';
 import 'package:nilesoft_erp/layers/presentation/components/ledger_info_card.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';

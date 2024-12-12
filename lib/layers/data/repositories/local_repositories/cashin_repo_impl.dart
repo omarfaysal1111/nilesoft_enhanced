@@ -1,7 +1,7 @@
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/cashin_model.dart';
-import 'package:nilesoft_erp/layers/domain/repository/cashin_repo.dart';
+import 'package:nilesoft_erp/layers/domain/models/cashin_model.dart';
+import 'package:nilesoft_erp/layers/domain/repository/local/cashin_repo.dart';
 
 DatabaseHelper _databaseHelper = DatabaseHelper();
 

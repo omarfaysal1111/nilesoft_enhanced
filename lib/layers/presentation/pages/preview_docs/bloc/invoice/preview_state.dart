@@ -1,4 +1,4 @@
-import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 
 abstract class PreviewState {}
 

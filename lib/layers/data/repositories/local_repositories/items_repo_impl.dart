@@ -1,7 +1,7 @@
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/items_model.dart';
-import 'package:nilesoft_erp/layers/domain/repository/items_repo.dart';
+import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
+import 'package:nilesoft_erp/layers/domain/repository/local/items_repo.dart';
 
 final DatabaseHelper _databaseHelper = DatabaseHelper();
 

@@ -1,6 +1,6 @@
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_first_res.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_first_res.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_model.dart';
 
 class LedgerState {}
 

@@ -1,5 +1,5 @@
-import 'package:nilesoft_erp/layers/data/models/cashin_model.dart';
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/cashin_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 
 class CashinState {}
 

@@ -1,4 +1,4 @@
-import 'package:nilesoft_erp/layers/data/models/order_head_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/order_head_model.dart';
 
 abstract class OrderHeadRepo {
   Future<List<OrderHeadModel>> getOrdersHead({required String tableName});

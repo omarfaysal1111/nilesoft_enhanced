@@ -1,5 +1,5 @@
 // ignore_for_file: file_names
-import 'package:nilesoft_erp/layers/data/models/base_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/base_model.dart';
 
 class ItemsModel implements BaseModel {
   String? itemid;

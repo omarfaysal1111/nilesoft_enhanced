@@ -1,6 +1,6 @@
-import 'package:nilesoft_erp/layers/data/models/ledger_first_res.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_model.dart';
-import 'package:nilesoft_erp/layers/data/models/ledger_parameter_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_first_res.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/ledger_parameter_model.dart';
 import 'package:nilesoft_erp/layers/data/remote/data_sources.dart';
 import 'package:nilesoft_erp/layers/domain/repository/remote/remote_ledger_repo.dart';
 

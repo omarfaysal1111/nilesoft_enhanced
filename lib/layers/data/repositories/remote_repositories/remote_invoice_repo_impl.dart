@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
-import 'package:nilesoft_erp/layers/data/models/settings_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
 import 'package:nilesoft_erp/layers/data/remote/data_sources.dart';
-import 'package:nilesoft_erp/layers/data/repositories/settings_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart';
 import 'package:nilesoft_erp/layers/domain/repository/remote/remote_invoice_repo.dart';
 
 class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {

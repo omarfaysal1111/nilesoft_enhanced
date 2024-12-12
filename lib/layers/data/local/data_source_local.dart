@@ -1,7 +1,7 @@
 // ignore_for_file: file_names
 
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/base_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/base_model.dart';
 
 import 'package:sqflite/sqflite.dart';
 // ignore: depend_on_referenced_packages

@@ -1,4 +1,4 @@
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/data/remote/data_sources.dart';
 import 'package:nilesoft_erp/layers/domain/repository/remote/remote_customers_repo.dart';
 

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/settings_model.dart';
-import 'package:nilesoft_erp/layers/data/repositories/settings_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart';
 import 'package:nilesoft_erp/main.dart';
 import 'package:unique_identifier/unique_identifier.dart';
 import 'login_event.dart';

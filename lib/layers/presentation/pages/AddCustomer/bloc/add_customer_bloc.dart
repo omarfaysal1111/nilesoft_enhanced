@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nilesoft_erp/layers/data/remote/remote_repositories/add_customer_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/add_customer_repo_impl.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/bloc/add_customer_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/bloc/add_customer_state.dart';
 

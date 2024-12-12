@@ -1,4 +1,4 @@
-import 'package:nilesoft_erp/layers/data/models/add_customer.dart';
+import 'package:nilesoft_erp/layers/domain/models/add_customer.dart';
 
 abstract class AddCustomerEvent {}
 

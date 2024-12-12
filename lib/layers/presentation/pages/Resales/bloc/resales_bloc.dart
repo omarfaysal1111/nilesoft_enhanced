@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
-import 'package:nilesoft_erp/layers/data/models/customers_model.dart';
-import 'package:nilesoft_erp/layers/data/models/invoice_model.dart';
-import 'package:nilesoft_erp/layers/data/models/items_model.dart';
-import 'package:nilesoft_erp/layers/data/repositories/customers_repo_impl.dart';
-import 'package:nilesoft_erp/layers/data/repositories/invoice_repo_impl.dart';
-import 'package:nilesoft_erp/layers/data/repositories/items_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/customers_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/invoice_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/items_repo_impl.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
 
