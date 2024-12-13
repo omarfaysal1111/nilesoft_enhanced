@@ -31,6 +31,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<EditInvoiceItemEvent>(_onEdit);
     on<OnInvoiceToEdit>(_onInvoiceToEdit);
     on<OnUpdateInvoice>(_onUpdatingInvoice);
+    on<SearchClientsEvent>(_onSearchClientsEvent);
   }
   Future<void> _onEditPressed(
       EditPressed event, Emitter<InvoiceState> emit) async {
@@ -86,6 +87,26 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
       emit(HasSerialState(len: len));
     }
   }
+
+  void _onSearchClientsEvent(
+      SearchClientsEvent event, Emitter<InvoiceState> emit) {
+    final currentState = state;
+    if (currentState is InvoicePageLoaded) {
+      // Filter the client list based on the search query
+      List<CustomersModel> filteredClients = currentState.customers
+          .where((client) =>
+              client.name!.toLowerCase().contains(event.query.toLowerCase()))
+          .toList();
+
+      emit(InvoiceFiltered(filteredClients: filteredClients));
+    }
+  }
+
+/* 
+
+select sum(salesInvoiceDtl.qty) as Qty from salesInvoiceDtl where id = '11' inner join items on salesInvoiceDtl.itemId = items.itemid and items.hasSerial=1"
+E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled Exception: DatabaseException(near "inner": syntax error (code 1 SQLITE_ERROR): , while compiling: select sum(salesInvoiceDtl.qty) as Qty from salesInvoiceDtl where id = '11' inner join items on salesInvoiceDtl.itemId = items.itemid and items.hasSerial=1) sql 'select sum(salesInvoiceDtl.qty) as Qty from salesInvoiceDtl where id = '11' inner join items on salesInvoiceDtl.itemId = items.itemid and items.hasSerial=1
+*/
 
   Future<void> _onFetchCutomers(
       FetchCustomersEvent event, Emitter<InvoiceState> emit) async {

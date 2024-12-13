@@ -7,7 +7,7 @@ class ItemsModel implements BaseModel {
   double? price;
   double? qty;
   String? barcode;
-  int? hasSerial;
+  double? hasSerial;
   ItemsModel(this.itemid, this.name, this.price, this.qty, this.barcode,
       this.hasSerial);
   ItemsModel.fromMap(Map<String, dynamic> res) {
@@ -15,7 +15,8 @@ class ItemsModel implements BaseModel {
     name = res['name'];
     price = double.parse(res['price'].toString());
     qty = double.parse(res['qty'].toString());
-    hasSerial = res['hasSerial'];
+    hasSerial = double.tryParse(res['hasserialno'].toString()) ??
+        double.parse(res['hasSerial'].toString());
     barcode = res['barcode'];
   }
   @override

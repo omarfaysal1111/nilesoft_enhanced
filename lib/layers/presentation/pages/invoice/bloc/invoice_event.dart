@@ -64,6 +64,12 @@ class OnDiscountRatioChanged extends InvoiceEvent {
       {required this.amount, required this.ratio, required this.price});
 }
 
+class SearchClientsEvent extends InvoiceEvent {
+  final String query;
+
+  SearchClientsEvent(this.query);
+}
+
 class AddClientToInvoiceEvent extends InvoiceEvent {
   final SalesDtlModel item;
 

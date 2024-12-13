@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
+import 'package:nilesoft_erp/layers/presentation/components/dropdown/items_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
@@ -33,6 +34,8 @@ class AddnewPopup extends StatelessWidget {
       // ignore: deprecated_member_use
       onPopInvoked: (popped) {
         _resetControllers();
+        myItems = [];
+        selectedItem = null;
       },
       child: SizedBox(
         width: 450,
@@ -114,22 +117,17 @@ class AddnewPopup extends StatelessWidget {
           ? state.selectedClient
           : null;
 
-      return DropdownButtonFormField<ItemsModel>(
-        value: selectedValue,
-        items: state.clients.map((client) {
-          return DropdownMenuItem<ItemsModel>(
-            value: client,
-            child: Text(client.name ?? ""),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            selectedItem = value;
-            bloc.add(ClientSelectedEvent(selectedItem!));
-          }
-        },
-        decoration: _dropdownDecoration(),
-      );
+      return SearchableItemDropdown(
+          items: myItems,
+          selecteditem: selectedValue,
+          onItemSelected: (val) {
+            if (val != null) {
+              selectedItem = val;
+              bloc.add(ClientSelectedEvent(val));
+            }
+          },
+          width: double.infinity,
+          onSearch: (val) {});
     } else if (state is InvoiceLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is InvoiceError) {
@@ -139,22 +137,17 @@ class AddnewPopup extends StatelessWidget {
       );
     }
 
-    return DropdownButtonFormField<ItemsModel>(
-      value: selectedItem,
-      items: myItems.map((client) {
-        return DropdownMenuItem<ItemsModel>(
-          value: client,
-          child: Text(client.name ?? ""),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) {
-          selectedItem = value;
-          bloc.add(ClientSelectedEvent(selectedItem!));
-        }
-      },
-      decoration: _dropdownDecoration(),
-    );
+    return SearchableItemDropdown(
+        items: myItems,
+        selecteditem: selectedItem,
+        onItemSelected: (val) {
+          if (val != null) {
+            selectedItem = val;
+            bloc.add(ClientSelectedEvent(val));
+          }
+        },
+        width: double.infinity,
+        onSearch: (val) {});
   }
 
   InputDecoration _dropdownDecoration() {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
+import 'package:nilesoft_erp/layers/presentation/components/dropdown/items_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
@@ -115,22 +116,17 @@ class AddnewPopup extends StatelessWidget {
           ? state.selectedClient
           : null;
 
-      return DropdownButtonFormField<ItemsModel>(
-        value: selectedValue,
-        items: state.clients.map((client) {
-          return DropdownMenuItem<ItemsModel>(
-            value: client,
-            child: Text(client.name ?? ""),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            selectedItem = value;
-            bloc.add(ReClientSelectedEvent(selectedItem!));
-          }
-        },
-        decoration: _dropdownDecoration(),
-      );
+      return SearchableItemDropdown(
+          items: myItems,
+          selecteditem: selectedValue,
+          onItemSelected: (val) {
+            if (val != null) {
+              selectedItem = val;
+              bloc.add(ReClientSelectedEvent(val));
+            }
+          },
+          width: double.infinity,
+          onSearch: (val) {});
     } else if (state is ResalesLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is ResalesError) {
@@ -140,22 +136,17 @@ class AddnewPopup extends StatelessWidget {
       );
     }
 
-    return DropdownButtonFormField<ItemsModel>(
-      value: selectedItem,
-      items: myItems.map((client) {
-        return DropdownMenuItem<ItemsModel>(
-          value: client,
-          child: Text(client.name ?? ""),
-        );
-      }).toList(),
-      onChanged: (value) {
-        if (value != null) {
-          selectedItem = value;
-          bloc.add(ReClientSelectedEvent(selectedItem!));
-        }
-      },
-      decoration: _dropdownDecoration(),
-    );
+    return SearchableItemDropdown(
+        items: myItems,
+        selecteditem: selectedItem,
+        onItemSelected: (val) {
+          if (val != null) {
+            selectedItem = val;
+            bloc.add(ReClientSelectedEvent(val));
+          }
+        },
+        width: double.infinity,
+        onSearch: (val) {});
   }
 
   InputDecoration _dropdownDecoration() {

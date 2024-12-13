@@ -72,6 +72,12 @@ class InvoiceToEdit extends InvoiceState {
       required this.customers});
 }
 
+class InvoiceFiltered extends InvoiceState {
+  final List<CustomersModel> filteredClients;
+
+  InvoiceFiltered({required this.filteredClients});
+}
+
 class InvoicePageLoaded extends InvoiceState {
   final List<CustomersModel> customers;
   final CustomersModel? selectedCustomer;

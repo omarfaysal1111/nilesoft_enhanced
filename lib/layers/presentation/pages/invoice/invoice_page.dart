@@ -6,6 +6,7 @@ import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
+import 'package:nilesoft_erp/layers/presentation/components/dropdown/customers_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/info_card.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/summaray_card.dart';
@@ -73,6 +74,7 @@ class InvoicePageContent extends StatelessWidget {
         desc.text = "";
         tax = 0;
         dtl = [];
+        customers = [];
         isEditting = false;
       },
       child: Scaffold(
@@ -185,73 +187,32 @@ class InvoicePageContent extends StatelessWidget {
                           docNo = state.docNo.toString();
                           customers = state.customers;
                           headid = state.id!;
-                          return DropdownButtonFormField<CustomersModel>(
-                            value: state.selectedCustomer,
-                            items: state.customers.map((client) {
-                              return DropdownMenuItem<CustomersModel>(
-                                value: client,
-                                child: SizedBox(
-                                  width: 150,
-                                  child: Text(
-                                    client.name!,
-                                    overflow: TextOverflow
-                                        .ellipsis, // Prevents text overflow
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
+                          return SearchableDropdown(
+                            onSearch: (val) {},
+                            customers: customers, // Pass the list of customers
+                            selectedCustomer: selected, // The current selection
+                            onCustomerSelected: (value) {
                               if (value != null) {
                                 selected = value;
                                 bloc.add(CustomerSelectedEvent(
                                     selectedCustomer: value));
                               }
                             },
-                            decoration: InputDecoration(
-                              labelText: "اختر العميل",
-                              labelStyle:
-                                  const TextStyle(fontFamily: 'Almarai'),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                    color: Colors.grey.shade400, width: 1),
-                              ),
-                            ),
+                            width: width, // Pass the width for layout
                           );
                         }
-                        return DropdownButtonFormField<String>(
-                          value: selected?.name,
-                          items: customers?.map((client) {
-                                return DropdownMenuItem<String>(
-                                  value: client.name,
-                                  child: SizedBox(
-                                    width: 150,
-                                    child: Text(
-                                      client.name!,
-                                      overflow: TextOverflow
-                                          .ellipsis, // Prevents text overflow
-                                    ),
-                                  ),
-                                );
-                              }).toList() ??
-                              [],
-                          onChanged: (value) {
+                        return SearchableDropdown(
+                          onSearch: (val) {},
+                          customers: customers, // Pass the list of customers
+                          selectedCustomer: selected, // The current selection
+                          onCustomerSelected: (value) {
                             if (value != null) {
-                              selected = CustomersModel("id", value, "type");
+                              selected = value;
                               bloc.add(CustomerSelectedEvent(
-                                  selectedCustomer:
-                                      CustomersModel("id", value, "type")));
+                                  selectedCustomer: value));
                             }
                           },
-                          decoration: InputDecoration(
-                            labelText: "اختر العميل",
-                            labelStyle: const TextStyle(fontFamily: 'Almarai'),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                  color: Colors.grey.shade400, width: 1),
-                            ),
-                          ),
+                          width: width, // Pass the width for layout
                         );
                       },
                     ),

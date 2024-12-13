@@ -65,6 +65,7 @@ class DatabaseHelper {
               descr TEXT ALLOW NULL,
               invoiceno TEXT ALLOW NULL,
               total REAL ALLOW NULL,
+               mobile_uuid TEXT ALLOW NULL,
               tax REAL ALLOW NULL,
               dis1 REAL ALLOW NULL, 
 invtype TEXT ALLOW NULL,
@@ -353,13 +354,14 @@ CREATE TABLE settings (
     int qty = 0;
     String query =
         "select sum(${DatabaseConstants.salesInvoiceDtlTable}.qty) as Qty "
-        "from ${DatabaseConstants.salesInvoiceDtlTable} "
-        "inner join items on ${DatabaseConstants.salesInvoiceDtlTable}.itemId = items.itemid "
-        "and items.hasSerial=1";
+        "from ${DatabaseConstants.salesInvoiceDtlTable}"
+        " inner join items on ${DatabaseConstants.salesInvoiceDtlTable}.itemId = items.itemid  where id = '$id'"
+        " and items.hasSerial=1";
     final List<Map<String, dynamic>> result = await db.rawQuery(query);
 
     if (result.isNotEmpty && result[0]["Qty"] != null) {
-      qty = int.parse(result[0]["Qty"].toString());
+      double c = double.parse(result[0]["Qty"].toString());
+      qty = c.truncate();
       if (kDebugMode) {
         print("Qty: $qty");
       }

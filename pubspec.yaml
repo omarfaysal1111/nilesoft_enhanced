@@ -45,6 +45,7 @@ dependencies:
   uuid:
   intl:
   unique_identifier:
+  dropdown_search: ^5.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

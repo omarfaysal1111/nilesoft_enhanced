@@ -68,14 +68,17 @@ class InfoCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontFamily: 'Almarai',
-                    fontWeight: FontWeight.bold,
+                SizedBox(
+                  width: MediaQuery.sizeOf(context).width * .3,
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontFamily: 'Almarai',
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.end,
                   ),
-                  textAlign: TextAlign.end,
                 ),
               ],
             ),

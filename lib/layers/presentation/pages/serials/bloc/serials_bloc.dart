@@ -21,7 +21,7 @@ class SerialsBloc extends Bloc<SerialEvent, SerialsState> {
     if (serialsCount == event.len) {
       emit(SerialsFinished());
     } else {
-      emit(SerialSubmitted());
+      emit(SerialLoaded(invId: event.serial.invId.toString(), len: event.len));
     }
   }
 }

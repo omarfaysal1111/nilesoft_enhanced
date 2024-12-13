@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/domain/models/serials_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/home_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serial_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serials_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serials_state.dart';
@@ -21,6 +23,22 @@ class SerialsPage extends StatelessWidget {
           listener: (context, state) {
             if (state is SerialSubmitted) {
               serialController.clear();
+              serialController.text = "";
+            }
+            if (state is SerialLoaded) {
+              serialController.clear();
+              serialController.text = "";
+            }
+            if (state is SerialsFinished) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => BlocProvider(
+                    create: (context) => HomeBloc(),
+                    child: const HomePage(),
+                  ),
+                ),
+              );
             }
           },
           builder: (context, state) {
