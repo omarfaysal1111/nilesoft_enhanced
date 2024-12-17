@@ -3,10 +3,10 @@ import 'package:nilesoft_erp/layers/domain/models/base_model.dart';
 
 class CashinModelSend {
   CashinModel? cashinModelHead;
+  List<CashInDtl>? cashInDtl;
+  CashinModelSend({this.cashinModelHead, this.cashInDtl});
 
-  CashinModelSend({this.cashinModelHead});
-
-  Map toJson() {
+  Map<String, Object?> toJson() {
     return {
       "id": cashinModelHead!.id,
       "docdate": cashinModelHead!.docDate,
@@ -20,6 +20,8 @@ class CashinModelSend {
       "net1": cashinModelHead!.net1,
       "branchid": 0,
       "shiftid": 0,
+      "mobile_uuid": cashinModelHead!.mobileuuid,
+      "dtl": cashInDtl
     };
   }
 }
@@ -31,6 +33,7 @@ class CashinModel implements BaseModel {
   String? descr;
   String? docNo;
   String? clint;
+  String? mobileuuid;
   String? userid;
   String? username;
   double? total;
@@ -47,6 +50,7 @@ class CashinModel implements BaseModel {
     this.total,
     this.accId,
     this.clint,
+    this.mobileuuid,
     this.descr,
   });
   CashinModel.fromMap(Map<String, dynamic> res) {
@@ -54,6 +58,7 @@ class CashinModel implements BaseModel {
     docDate = res['docdate'];
     total = res['total'];
     clint = res["client"];
+    mobileuuid = res["mobile_uuid"];
     docNo = res["docno"];
     descr = res["descr"];
     accId = res["accid"];
@@ -67,7 +72,56 @@ class CashinModel implements BaseModel {
       "descr": descr,
       "docno": docNo,
       "client": clint,
-      "accid": accId
+      "accid": accId,
+      "mobile_uuid": mobileuuid
     };
+  }
+}
+
+class CashInDtl extends BaseModel {
+  String? id;
+  String? docno;
+  int? serial;
+  String? accountid;
+  String? salesmanid;
+  String? descr;
+  double? amount;
+  double? discount;
+  int? branchid;
+  int? shiftid;
+  CashInDtl(
+      {this.accountid,
+      this.amount,
+      this.branchid,
+      this.descr,
+      this.discount,
+      this.docno,
+      this.id,
+      this.salesmanid,
+      this.serial,
+      this.shiftid});
+  CashInDtl.fromMap(Map<String, dynamic> res) {
+    accountid = res["accountid"];
+    amount = res["amount"];
+    descr = res["descr"];
+  }
+  Map<String, Object?> toJson() {
+    return {
+      "accountid": accountid,
+      "descr": descr,
+      "amount": amount,
+      "discount": discount,
+      "branchid": 0,
+      "shiftid": 0,
+      "docno": '',
+      "salesmanid": "",
+      "serial": 0
+    };
+  }
+
+  @override
+  Map<String, dynamic> toMap() {
+    // TODO: implement toMap
+    throw UnimplementedError();
   }
 }

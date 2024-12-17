@@ -83,6 +83,13 @@ class AddnewPopup extends StatelessWidget {
   }
 
   void _handleStateChange(InvoiceState state) {
+    if (state is InvoiceLoaded) {
+      priceControlleer.text = state.selectedClient?.price.toString() ?? "0";
+      disControlleer.text = "0";
+      disRatioControlleer.text = "0";
+      taxControlleer.text = "0";
+      qtyControlleer.text = "0";
+    }
     if (state is EditState) {
       idx = state.index;
       myItems = state.items;
@@ -109,6 +116,12 @@ class AddnewPopup extends StatelessWidget {
   Widget _buildDropdown(InvoiceState state, InvoiceBloc bloc) {
     if (state is EditState) {
       _handleStateChange(state);
+    }
+    if (state is TextFoucsed) {
+      state.controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: state.controller.text.length,
+      );
     }
     if (state is InvoiceLoaded) {
       myItems = state.clients;
@@ -150,17 +163,6 @@ class AddnewPopup extends StatelessWidget {
         onSearch: (val) {});
   }
 
-  InputDecoration _dropdownDecoration() {
-    return InputDecoration(
-      labelText: "اختر الصنف",
-      labelStyle: const TextStyle(fontFamily: 'Almarai'),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
-      ),
-    );
-  }
-
   Widget _buildTextFields(InvoiceBloc bloc) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -172,7 +174,12 @@ class AddnewPopup extends StatelessWidget {
               width: 100,
               child: CustomTextField(
                 onChanged: (value) {},
+                keyboardType: TextInputType.number,
                 hintText: "الكمية",
+                onTap: () {
+                  print("object");
+                  bloc.add(OnTextTapped(controller: qtyControlleer));
+                },
                 controller: qtyControlleer,
               ),
             ),
@@ -180,6 +187,7 @@ class AddnewPopup extends StatelessWidget {
               width: 100,
               child: CustomTextField(
                 onChanged: (value) {},
+                keyboardType: TextInputType.number,
                 hintText: "السعر",
                 controller: priceControlleer,
               ),
@@ -197,6 +205,7 @@ class AddnewPopup extends StatelessWidget {
                   _handleDiscountChange(bloc, val);
                 },
                 hintText: "الخصم",
+                keyboardType: TextInputType.number,
                 controller: disControlleer,
               ),
             ),
@@ -207,6 +216,7 @@ class AddnewPopup extends StatelessWidget {
                   _handleDiscountRatioChange(bloc, value);
                 },
                 hintText: "الخصم٪",
+                keyboardType: TextInputType.number,
                 controller: disRatioControlleer,
               ),
             ),
@@ -218,6 +228,7 @@ class AddnewPopup extends StatelessWidget {
           child: CustomTextField(
             onChanged: (value) {},
             hintText: "الضريبة",
+            keyboardType: TextInputType.number,
             controller: taxControlleer,
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_cashin_repo_impl.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_customer_repo_impl.dart';
@@ -48,6 +49,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           headTableName: DatabaseConstants.reSaleInvoiceHeadTable,
           dtlTableName: DatabaseConstants.reSaleInvoiceDtlTable,
           endPoint: "rsalesinvoice/addnew");
+      RemoteCashinRepoImpl remoteCashinRepoImpl = RemoteCashinRepoImpl();
+      remoteCashinRepoImpl.sendInvoices(
+          endPoint: "", headTableName: DatabaseConstants.cashinHeadTable);
       emit(state.copyWith(isSendingSubmitted: false, isSendingSucc: true));
     });
   }

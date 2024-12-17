@@ -48,4 +48,11 @@ class CashinRepoImpl implements CashinRepo {
     DatabaseConstants.startDB(_databaseHelper);
     await _databaseHelper.updateRecord(model, tableName, model.id!);
   }
+
+  @override
+  Future<void> createCashInDtl({required CashInDtl cashinDtl}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.insertRecord<CashInDtl>(
+        cashinDtl, DatabaseConstants.cashInDtlTable);
+  }
 }

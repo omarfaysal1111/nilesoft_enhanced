@@ -203,6 +203,16 @@ class HomePage extends StatelessWidget {
                         );
                       });
                     }
+                    if (state.isSendingSucc) {
+                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("تم ارسال البيانات"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      });
+                    }
                     return SizedBox(
                       width: 160,
                       child: CustomButton(

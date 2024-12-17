@@ -14,7 +14,32 @@ class CashinBloc extends Bloc<CashinEvent, CashinState> {
     on<SaveCashinPressed>(onCashInSave);
     on<OnCashinToEdit>(cashinToEdit);
     on<OnCashinUpdate>(_onCashInUpdate);
+    on<CustomerSelectedCashEvent>(_onCutomersSelected);
   }
+  Future<void> _onCutomersSelected(
+      CustomerSelectedCashEvent event, Emitter<CashinState> emit) async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    DatabaseConstants.startDB(dbHelper);
+
+    final currentState = state;
+    if (currentState is CashinLoadedState) {
+      String s2 =
+          "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
+      List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+      if (queryResult2[0]["latestId"].toString() == "null" ||
+          queryResult2[0]["latestId"].toString() == "" ||
+          // ignore: unnecessary_null_comparison
+          queryResult2[0]["latestId"].toString() == null) {
+      } else {
+        //id += int.parse(queryResult2[0]["latestId"].toString().trim());
+      }
+      emit(CashinLoadedState(
+          customers: currentState.customers,
+          selectedCustomer: event.selectedCustomer,
+          docNo: await generateDocNumber()));
+    }
+  }
+
   String myDocNo = "";
   Future<void> _fetchClients(
       FetchCashinClientsEvent event, Emitter<CashinState> emit) async {
@@ -84,6 +109,11 @@ class CashinBloc extends Bloc<CashinEvent, CashinState> {
     await cashinRepoImpl.createCashIn(
         invoice: event.cashinModel,
         tableName: DatabaseConstants.cashinHeadTable);
+    await cashinRepoImpl.createCashInDtl(
+        cashinDtl: CashInDtl(
+            accountid: event.cashinModel.accId,
+            amount: event.cashinModel.net1,
+            descr: event.cashinModel.descr));
     emit(CashInSavedSuccessfuly());
   }
 }

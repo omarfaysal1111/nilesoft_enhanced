@@ -17,6 +17,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_stat
 import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serial_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serials_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/serials/serials_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 import 'package:uuid/uuid.dart';
 
 class InvoicePage extends StatelessWidget {
@@ -144,10 +145,6 @@ class InvoicePageContent extends StatelessWidget {
                           }
                         }
                         if (state is SaveSuccess) {
-                          total = 0;
-                          net = 0;
-                          dis = 0;
-                          tax = 0;
                           SchedulerBinding.instance.addPostFrameCallback((_) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -156,7 +153,37 @@ class InvoicePageContent extends StatelessWidget {
                               ),
                             );
                           });
-                          Navigator.pop(context);
+                          var uuid = const Uuid();
+                          String mobileUuid = uuid.v1().toString();
+                          String formattedDate = intl.DateFormat('yyyy-MM-dd')
+                              .format(DateTime.now());
+                          SalesHeadModel salesHeadModel = SalesHeadModel(
+                            accid: selected!.id,
+                            dis1: dis,
+                            invoiceno: docNo,
+                            sent: 0,
+                            net: net,
+                            docDate: formattedDate,
+                            mobile_uuid: mobileUuid,
+                            tax: tax,
+                            total: total,
+                            clientName: selected!.name,
+                            descr: desc.text,
+                          );
+
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PrintingScreen(
+                                    printingSalesDtlModel: dtl!,
+                                    printingSalesHeadModel: salesHeadModel,
+                                    id: salesHeadModel.accid.toString(),
+                                    numOfSerials: 0),
+                              ));
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          tax = 0;
                         }
                         if (state is UpdateSucc) {
                           total = 0;
@@ -576,27 +603,54 @@ class InvoicePageContent extends StatelessWidget {
                 ),
               ],
             ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: const BoxDecoration(
-                  color: Color(0xff39B3BD),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16.0),
-                    topRight: Radius.circular(16.0),
-                  ),
-                ),
-                child: SummaryCard(
-                  total: total.toString(),
-                  discount: dis.toString(),
-                  tax: tax.toString(),
-                  net: net.toString(),
-                ),
-              ),
-            ),
+            BlocConsumer<InvoiceBloc, InvoiceState>(
+                listener: (context, state) {},
+                builder: (context, state) {
+                  if (state is InvoiceToEdit) {
+                    return Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: const BoxDecoration(
+                          color: Color(0xff39B3BD),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(16.0),
+                            topRight: Radius.circular(16.0),
+                          ),
+                        ),
+                        child: SummaryCard(
+                          total: total.toString(),
+                          discount: dis.toString(),
+                          tax: tax.toString(),
+                          net: net.toString(),
+                        ),
+                      ),
+                    );
+                  }
+                  return Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: const BoxDecoration(
+                        color: Color(0xff39B3BD),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(16.0),
+                          topRight: Radius.circular(16.0),
+                        ),
+                      ),
+                      child: SummaryCard(
+                        total: total.toString(),
+                        discount: dis.toString(),
+                        tax: tax.toString(),
+                        net: net.toString(),
+                      ),
+                    ),
+                  );
+                }),
           ],
         ),
       ),

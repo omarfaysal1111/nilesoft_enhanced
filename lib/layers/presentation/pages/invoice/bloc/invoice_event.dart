@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
@@ -80,6 +81,12 @@ class EditInvoiceItemEvent extends InvoiceEvent {
   final SalesDtlModel updatedItem;
   final int index;
   EditInvoiceItemEvent(this.updatedItem, this.index);
+}
+
+class OnTextTapped extends InvoiceEvent {
+  final TextEditingController controller;
+
+  OnTextTapped({required this.controller});
 }
 
 class InvoicePageLoded extends InvoiceEvent {}

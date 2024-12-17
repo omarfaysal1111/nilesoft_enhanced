@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
@@ -11,6 +12,12 @@ class InvoicePageInitial extends InvoiceState {}
 class InvoicePageLoading extends InvoiceState {}
 
 class InvoiceLoading extends InvoiceState {}
+
+class ItemSelected extends InvoiceState {
+  final ItemsModel selectedItem;
+
+  ItemSelected({required this.selectedItem});
+}
 
 class EditState extends InvoiceState {
   final SalesDtlModel salesDtlModel;
@@ -70,6 +77,12 @@ class InvoiceToEdit extends InvoiceState {
       {required this.salesDtlModel,
       required this.salesHeadModel,
       required this.customers});
+}
+
+class TextFoucsed extends InvoiceState {
+  final TextEditingController controller;
+
+  TextFoucsed({required this.controller});
 }
 
 class InvoiceFiltered extends InvoiceState {

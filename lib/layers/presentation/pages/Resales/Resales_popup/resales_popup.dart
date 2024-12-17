@@ -110,6 +110,11 @@ class AddnewPopup extends StatelessWidget {
       _handleStateChange(state);
     }
     if (state is ResalesLoaded) {
+      priceControlleer.text = state.selectedClient?.price.toString() ?? "0";
+      disControlleer.text = "0";
+      disRatioControlleer.text = "0";
+      taxControlleer.text = "0";
+      qtyControlleer.text = "0";
       myItems = state.clients;
       final selectedValue = state.clients
               .any((client) => client.name == state.selectedClient?.name)
@@ -147,17 +152,6 @@ class AddnewPopup extends StatelessWidget {
         },
         width: double.infinity,
         onSearch: (val) {});
-  }
-
-  InputDecoration _dropdownDecoration() {
-    return InputDecoration(
-      labelText: "اختر الصنف",
-      labelStyle: const TextStyle(fontFamily: 'Almarai'),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
-      ),
-    );
   }
 
   Widget _buildTextFields(ResalesBloc bloc) {

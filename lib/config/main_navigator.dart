@@ -18,4 +18,9 @@ class MainNavigator {
       ),
     );
   }
+
+  static onTextFieldTap(TextEditingController controller) {
+    controller.selection =
+        TextSelection(baseOffset: 0, extentOffset: controller.text.length);
+  }
 }

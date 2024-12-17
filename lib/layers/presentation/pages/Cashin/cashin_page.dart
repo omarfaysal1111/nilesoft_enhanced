@@ -4,11 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/domain/models/cashin_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
+import 'package:nilesoft_erp/layers/presentation/components/dropdown/customers_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_state.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:uuid/uuid.dart';
 
 CustomersModel? _customersModel;
 final TextEditingController desc = TextEditingController();
@@ -64,9 +66,9 @@ class CashinPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: BlocConsumer<CashinBloc, CashinState>(
-                    listener: (context, state) {
+                    textDirection: TextDirection.rtl,
+                    child: BlocConsumer<CashinBloc, CashinState>(
+                        listener: (context, state) {
                       if (state is CashInToEditState) {
                         customers = state.customers;
                         isEditting = true;
@@ -98,69 +100,40 @@ class CashinPage extends StatelessWidget {
                         });
                         Navigator.pop(context);
                       }
-                    },
-                    builder: (context, state) {
+                    }, builder: (context, state) {
                       if (state is CashinInitial) {
                         return const Center(child: CircularProgressIndicator());
                       } else if (state is CashinLoadedState) {
                         docNo = state.docNo!;
                         customers = state.customers;
-                        return DropdownButtonFormField<CustomersModel>(
-                          value: state.selectedCustomer,
-                          items: state.customers.map((client) {
-                            return DropdownMenuItem<CustomersModel>(
-                              value: client,
-                              child: SizedBox(
-                                width: 100,
-                                child: Text(
-                                  client.name!,
-                                  overflow: TextOverflow
-                                      .ellipsis, // Prevents text overflow
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            if (value != null) {
-                              selected = value;
-                              _customersModel = value;
+                        return SearchableDropdown(
+                            customers: state.customers,
+                            selectedCustomer: state.selectedCustomer,
+                            onCustomerSelected: (val) {
+                              if (val != null) {
+                                selected = val;
+                                _customersModel = val;
+                                bloc.add(CustomerSelectedCashEvent(
+                                    selectedCustomer: val));
+                              }
+                            },
+                            width: MediaQuery.sizeOf(context).width,
+                            onSearch: (v) {});
+                      }
+                      return SearchableDropdown(
+                          customers: customers,
+                          selectedCustomer: selected,
+                          onCustomerSelected: (val) {
+                            if (val != null) {
+                              selected = val;
+                              _customersModel = val;
+                              bloc.add(CustomerSelectedCashEvent(
+                                  selectedCustomer: val));
                             }
                           },
-                          decoration: const InputDecoration(
-                            labelText: "اختر العميل",
-                            border: OutlineInputBorder(),
-                          ),
-                        );
-                      }
-                      return DropdownButtonFormField<CustomersModel>(
-                        value: selected,
-                        items: customers!.map((client) {
-                          return DropdownMenuItem<CustomersModel>(
-                            value: client,
-                            child: SizedBox(
-                              width: 100,
-                              child: Text(
-                                client.name!,
-                                overflow: TextOverflow
-                                    .ellipsis, // Prevents text overflow
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            _customersModel = value;
-                            selected = _customersModel;
-                          }
-                        },
-                        decoration: const InputDecoration(
-                          labelText: "اختر العميل",
-                          border: OutlineInputBorder(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                          width: MediaQuery.sizeOf(context).width,
+                          onSearch: (v) {});
+                    })),
                 const SizedBox(
                   height: 20,
                 ),
@@ -182,15 +155,20 @@ class CashinPage extends StatelessWidget {
                       String formattedDate =
                           intl.DateFormat('dd-MM-yyyy').format(DateTime.now());
                       if (!isEditting) {
+                        var uuid = const Uuid();
+                        String mobileUuid = uuid.v1().toString();
                         bloc.add(SaveCashinPressed(
                             cashinModel: CashinModel(
                                 accId: _customersModel!.id.toString(),
                                 descr: desc.text,
                                 docDate: formattedDate,
+                                mobileuuid: mobileUuid,
                                 docNo: docNo,
                                 clint: _customersModel!.name.toString(),
                                 total: double.parse(amount.text))));
                       } else {
+                        var uuid = const Uuid();
+                        String mobileUuid = uuid.v1().toString();
                         bloc.add(OnCashinUpdate(
                             cashinModel: CashinModel(
                                 accId: selected!.id.toString(),
@@ -198,6 +176,7 @@ class CashinPage extends StatelessWidget {
                                 id: id,
                                 docDate: formattedDate,
                                 docNo: docNo,
+                                mobileuuid: mobileUuid,
                                 clint: selected!.name.toString(),
                                 total: double.parse(amount.text))));
                       }

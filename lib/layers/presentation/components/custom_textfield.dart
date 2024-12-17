@@ -9,6 +9,7 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final ValueChanged<String> onChanged;
   final Duration debounceDuration;
+  final VoidCallback? onTap;
   const CustomTextField({
     super.key,
     required this.hintText,
@@ -17,6 +18,7 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     required this.onChanged,
+    this.onTap,
   });
 
   @override
@@ -32,12 +34,16 @@ class CustomTextField extends StatelessWidget {
 
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
         textAlign: TextAlign.right,
         onChanged: onTextChanged,
+        onTap: () {
+          controller!.selection = TextSelection(
+              baseOffset: 0, extentOffset: controller!.text.length);
+        },
         decoration: InputDecoration(
           hintText: hintText,
           labelText: hintText,

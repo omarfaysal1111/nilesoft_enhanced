@@ -32,6 +32,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<OnInvoiceToEdit>(_onInvoiceToEdit);
     on<OnUpdateInvoice>(_onUpdatingInvoice);
     on<SearchClientsEvent>(_onSearchClientsEvent);
+    on<OnTextTapped>(_onTextTapped);
   }
   Future<void> _onEditPressed(
       EditPressed event, Emitter<InvoiceState> emit) async {
@@ -179,6 +180,11 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
           id: id,
           docNo: await generateDocNumber()));
     }
+  }
+
+  Future<void> _onTextTapped(
+      OnTextTapped event, Emitter<InvoiceState> emit) async {
+    emit(TextFoucsed(controller: event.controller));
   }
 
   Future<void> _onUpdatingInvoice(

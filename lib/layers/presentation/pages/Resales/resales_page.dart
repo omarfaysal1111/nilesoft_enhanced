@@ -14,6 +14,8 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
+import 'package:uuid/uuid.dart';
 
 class ResalesPage extends StatelessWidget {
   const ResalesPage({super.key});
@@ -130,10 +132,6 @@ class ResalesPageContent extends StatelessWidget {
                           Navigator.pop(context);
                         }
                         if (state is ReSaveSuccess) {
-                          total = 0;
-                          net = 0;
-                          dis = 0;
-                          tax = 0;
                           SchedulerBinding.instance.addPostFrameCallback((_) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
@@ -142,7 +140,37 @@ class ResalesPageContent extends StatelessWidget {
                               ),
                             );
                           });
-                          Navigator.pop(context);
+                          var uuid = const Uuid();
+                          String mobileUuid = uuid.v1().toString();
+                          String formattedDate = intl.DateFormat('yyyy-MM-dd')
+                              .format(DateTime.now());
+                          SalesHeadModel salesHeadModel = SalesHeadModel(
+                            accid: selected!.id,
+                            dis1: dis,
+                            invoiceno: docNo,
+                            sent: 0,
+                            net: net,
+                            docDate: formattedDate,
+                            mobile_uuid: mobileUuid,
+                            tax: tax,
+                            total: total,
+                            clientName: selected!.name,
+                            descr: desc.text,
+                          );
+
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PrintingScreen(
+                                    printingSalesDtlModel: dtl!,
+                                    printingSalesHeadModel: salesHeadModel,
+                                    id: salesHeadModel.accid.toString(),
+                                    numOfSerials: 0),
+                              ));
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          tax = 0;
                         }
                       },
                       builder: (context, state) {
