@@ -20,7 +20,7 @@ class DatabaseHelper {
   }
   Future<void> initDB() async {
     String path = await getDatabasesPath();
-    db = await openDatabase(join(path, 'DB1119e9u707638791j49j48s.db'),
+    db = await openDatabase(join(path, 'NileSoftv1.db'),
         onCreate: (database, version) async {
       await database.execute(
         """
@@ -258,6 +258,18 @@ CREATE TABLE settings (
       T Function(Map<String, dynamic>) fromMap) async {
     final List<Map<String, dynamic>> result =
         await db.query(tableName, where: 'id = ?', whereArgs: [id]);
+
+    if (result.isNotEmpty) {
+      return fromMap(result.first);
+    } else {
+      return null;
+    }
+  }
+
+  Future<T?> getRecordByBarcode<T extends BaseModel>(String tableName,
+      String barcode, T Function(Map<String, dynamic>) fromMap) async {
+    final List<Map<String, dynamic>> result =
+        await db.query(tableName, where: 'barcode = ?', whereArgs: [barcode]);
 
     if (result.isNotEmpty) {
       return fromMap(result.first);

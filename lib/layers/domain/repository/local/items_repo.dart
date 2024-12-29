@@ -10,4 +10,6 @@ abstract class ItemsRepo {
   Future<void> editItems({required ItemsModel item, required String tableName});
   Future<void> deleteItem({required int id});
   Future<void> deleteAllItems({required String tableName});
+  Future<ItemsModel> getItemByBarcode(
+      {required String barcode, required String tableName});
 }

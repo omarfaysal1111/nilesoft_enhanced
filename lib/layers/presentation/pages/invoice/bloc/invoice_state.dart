@@ -79,6 +79,12 @@ class InvoiceToEdit extends InvoiceState {
       required this.customers});
 }
 
+class CheckBoxSelected extends InvoiceState {
+  final String value;
+
+  CheckBoxSelected({required this.value});
+}
+
 class TextFoucsed extends InvoiceState {
   final TextEditingController controller;
 
@@ -114,4 +120,35 @@ class AddNewInvoiceState extends InvoiceState {
   final List<SalesDtlModel> chosenItems; // Chosen clients for the invoice
 
   AddNewInvoiceState({required this.chosenItems});
+}
+
+class DisamChanged extends InvoiceState {
+  final double amValue;
+  final double ratValue;
+  final double net;
+  DisamChanged(this.net, {required this.amValue, required this.ratValue});
+}
+
+class DisratChanged extends InvoiceState {
+  final double amValue;
+  final double ratValue;
+  final double net;
+
+  DisratChanged(this.net, {required this.amValue, required this.ratValue});
+}
+
+class QRCodeInitial extends InvoiceState {}
+
+class QRCodeScanning extends InvoiceState {}
+
+class QRCodeSuccess extends InvoiceState {
+  final String qrCode;
+  final ItemsModel item;
+  QRCodeSuccess(this.qrCode, this.item);
+}
+
+class QRCodeFailure extends InvoiceState {
+  final String error;
+
+  QRCodeFailure(this.error);
 }

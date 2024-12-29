@@ -4,6 +4,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/login/login_page.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 

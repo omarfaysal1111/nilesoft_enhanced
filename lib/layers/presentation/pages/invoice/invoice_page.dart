@@ -20,6 +20,9 @@ import 'package:nilesoft_erp/layers/presentation/pages/serials/serials_page.dart
 import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 import 'package:uuid/uuid.dart';
 
+final disamController = TextEditingController();
+final disratController = TextEditingController();
+
 class InvoicePage extends StatelessWidget {
   const InvoicePage(
       {super.key, required this.extraTitle, required this.invoiceType});
@@ -50,6 +53,7 @@ double net = 0;
 int headid = 0;
 String docNo = "";
 bool isEditting = false;
+String selectedValue = '1';
 
 class InvoicePageContent extends StatelessWidget {
   const InvoicePageContent(
@@ -74,6 +78,8 @@ class InvoicePageContent extends StatelessWidget {
         selected = null;
         desc.text = "";
         tax = 0;
+        disamController.text = "";
+        disratController.text = "";
         dtl = [];
         customers = [];
         isEditting = false;
@@ -111,6 +117,9 @@ class InvoicePageContent extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     child: BlocConsumer<InvoiceBloc, InvoiceState>(
                       listener: (context, state) {
+                        if (state is CheckBoxSelected) {
+                          selectedValue = state.value;
+                        }
                         if (state is HasSerialState) {
                           Navigator.push(
                             context,
@@ -228,18 +237,24 @@ class InvoicePageContent extends StatelessWidget {
                             width: width, // Pass the width for layout
                           );
                         }
-                        return SearchableDropdown(
-                          onSearch: (val) {},
-                          customers: customers, // Pass the list of customers
-                          selectedCustomer: selected, // The current selection
-                          onCustomerSelected: (value) {
-                            if (value != null) {
-                              selected = value;
-                              bloc.add(CustomerSelectedEvent(
-                                  selectedCustomer: value));
-                            }
-                          },
-                          width: width, // Pass the width for layout
+                        return Column(
+                          children: [
+                            SearchableDropdown(
+                              onSearch: (val) {},
+                              customers:
+                                  customers, // Pass the list of customers
+                              selectedCustomer:
+                                  selected, // The current selection
+                              onCustomerSelected: (value) {
+                                if (value != null) {
+                                  selected = value;
+                                  bloc.add(CustomerSelectedEvent(
+                                      selectedCustomer: value));
+                                }
+                              },
+                              width: width, // Pass the width for layout
+                            ),
+                          ],
                         );
                       },
                     ),
@@ -253,7 +268,36 @@ class InvoicePageContent extends StatelessWidget {
                       controller: desc,
                       onChanged: (value) {},
                     )),
-                SizedBox(height: height * 0.02),
+                BlocConsumer<InvoiceBloc, InvoiceState>(
+                    listener: (context, state) {},
+                    builder: (context, state) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('اجل'),
+                              Radio<String>(
+                                value: '2',
+                                groupValue: selectedValue,
+                                onChanged: (String? value) {
+                                  bloc.add(OnSelectCheckBox(value: value!));
+                                },
+                              ),
+                            ],
+                          ),
+                          const Text('نقدي'),
+                          Radio<String>(
+                            value: '1',
+                            groupValue: selectedValue,
+                            onChanged: (String? value) {
+                              bloc.add(OnSelectCheckBox(value: value!));
+                            },
+                          ),
+                        ],
+                      );
+                    }),
+                SizedBox(height: height * 0.002),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -302,6 +346,7 @@ class InvoicePageContent extends StatelessWidget {
                                 sent: 0,
                                 net: net,
                                 docDate: formattedDate,
+                                invType: selectedValue,
                                 mobile_uuid: mobile_uuid,
                                 tax: tax,
                                 total: total,
@@ -414,6 +459,10 @@ class InvoicePageContent extends StatelessWidget {
                           tax = tax + myDtl[i].tax!;
                           total = total + myDtl[i].price!;
                         }
+                        disamController.text =
+                            ((double.parse(disratController.text) / 100) *
+                                    (total - dis))
+                                .toString();
                       }
                     },
                     builder: (context, state) {
@@ -425,7 +474,7 @@ class InvoicePageContent extends StatelessWidget {
                           return const Center(child: Text("جاري اضافة الصنف"));
                         }
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 140.0),
+                          padding: const EdgeInsets.only(bottom: 220.0),
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: dtl?.length ?? 0,
@@ -603,54 +652,89 @@ class InvoicePageContent extends StatelessWidget {
                 ),
               ],
             ),
-            BlocConsumer<InvoiceBloc, InvoiceState>(
-                listener: (context, state) {},
-                builder: (context, state) {
-                  if (state is InvoiceToEdit) {
-                    return Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: const BoxDecoration(
-                          color: Color(0xff39B3BD),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(16.0),
-                            topRight: Radius.circular(16.0),
-                          ),
-                        ),
-                        child: SummaryCard(
-                          total: total.toString(),
-                          discount: dis.toString(),
-                          tax: tax.toString(),
-                          net: net.toString(),
-                        ),
-                      ),
-                    );
-                  }
-                  return Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: const BoxDecoration(
-                        color: Color(0xff39B3BD),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(16.0),
-                          topRight: Radius.circular(16.0),
-                        ),
-                      ),
-                      child: SummaryCard(
-                        total: total.toString(),
-                        discount: dis.toString(),
-                        tax: tax.toString(),
-                        net: net.toString(),
+            BlocConsumer<InvoiceBloc, InvoiceState>(listener: (context, state) {
+              if (state is DisamChanged) {
+                net = (total + tax) - dis - state.amValue;
+                disratController.text =
+                    state.ratValue.toStringAsFixed(1).toString();
+                disamController.text =
+                    (state.amValue.toStringAsFixed(1)).toString();
+              }
+
+              if (state is DisratChanged) {
+                net = (total + tax) - dis - state.amValue;
+                // net = state.net;
+                disratController.text =
+                    state.ratValue.toStringAsFixed(1).toString();
+                disamController.text =
+                    (state.amValue.toStringAsFixed(1)).toString();
+              }
+            }, builder: (context, state) {
+              if (state is InvoiceToEdit) {
+                return Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: const BoxDecoration(
+                      color: Color(0xff39B3BD),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16.0),
+                        topRight: Radius.circular(16.0),
                       ),
                     ),
-                  );
-                }),
+                    child: SummaryCard(
+                      total: total.toString(),
+                      disamController: disamController,
+                      disratController: disratController,
+                      discount: dis.toString(),
+                      tax: tax.toString(),
+                      net: net.toString(),
+                      amChanged: (String value) {
+                        bloc.add(OnDisamChanged(total, dis, net,
+                            value: double.parse(value)));
+                      },
+                      ratChanged: (String value) {
+                        bloc.add(OnDisratChanged(total, dis, net,
+                            value: double.parse(value)));
+                      },
+                    ),
+                  ),
+                );
+              }
+              return Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: const BoxDecoration(
+                    color: Color(0xff39B3BD),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16.0),
+                      topRight: Radius.circular(16.0),
+                    ),
+                  ),
+                  child: SummaryCard(
+                    total: total.toString(),
+                    disamController: disamController,
+                    disratController: disratController,
+                    discount: dis.toString(),
+                    tax: tax.toString(),
+                    net: net.toString(),
+                    amChanged: (String value) {
+                      bloc.add(OnDisamChanged(total, dis, net,
+                          value: double.parse(value)));
+                    },
+                    ratChanged: (String value) {
+                      bloc.add(OnDisratChanged(total, dis, net,
+                          value: double.parse(value)));
+                    },
+                  ),
+                ),
+              );
+            }),
           ],
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/ledger_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/ledger_parameter_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/date_picker.dart';
+import 'package:nilesoft_erp/layers/presentation/components/dropdown/customers_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/ledger_info_card.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/summaray_card_ledger.dart';
@@ -159,41 +160,23 @@ class LedgerScreen extends StatelessWidget {
                         height: height * 0.03,
                       ),
                       SizedBox(
-                          width: width * 0.97,
-                          height: 57,
-                          child: DropdownButtonFormField<CustomersModel>(
-                            value: selectedCustomer,
-                            items: customers.map((client) {
-                              return DropdownMenuItem<CustomersModel>(
-                                value: client,
-                                child: SizedBox(
-                                  width: 150,
-                                  child: Text(
-                                    client.name!,
-                                    overflow: TextOverflow
-                                        .ellipsis, // Prevents text overflow
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              if (value != null) {
-                                bloc.add(OnCustomerSelected(
-                                    selectedCustomer: value,
-                                    customers: customers));
-                              }
-                            },
-                            decoration: InputDecoration(
-                              labelText: "اختر العميل",
-                              labelStyle:
-                                  const TextStyle(fontFamily: 'Almarai'),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                    color: Colors.grey.shade400, width: 1),
-                              ),
-                            ),
-                          )),
+                        width: width * 0.97,
+                        height: 57,
+                        child: SearchableDropdown(
+                          onSearch: (val) {},
+                          customers: customers, // Pass the list of customers
+                          selectedCustomer:
+                              selectedCustomer, // The current selection
+                          onCustomerSelected: (value) {
+                            if (value != null) {
+                              selectedCustomer = value;
+                              bloc.add(CustomerSelectedEvent(
+                                  selectedCustomer: value));
+                            }
+                          },
+                          width: width, // Pass the width for layout
+                        ),
+                      ),
                       SizedBox(
                         height: height * 0.03,
                       ),

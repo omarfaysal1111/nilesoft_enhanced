@@ -28,7 +28,13 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     on<ReEditResalesItemEvent>(_onEditItem);
     on<OnResaleToEdit>(_onInvoiceToEdit);
     on<OnUpdateResale>(_onUpdatingInvoice);
+    on<OnSelectCheckBox>(_onCheckBoxSelected);
   }
+  Future<void> _onCheckBoxSelected(
+      OnSelectCheckBox event, Emitter<ResalesState> emit) async {
+    emit(CheckBoxSelected(value: event.value));
+  }
+
   Future<void> _onUpdatingInvoice(
       OnUpdateResale event, Emitter<ResalesState> emit) async {
     emit(UpdatingResale());

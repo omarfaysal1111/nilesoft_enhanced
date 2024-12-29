@@ -25,6 +25,9 @@ class LedgerBloc extends Bloc<LedgerEvent, LedgerState> {
     emit(LedgerLoaded(customers: customers));
   }
 
+  // ignore: unused_element
+  Future<void> _onCutomersSelected(
+      CustomerSelectedEvent event, Emitter<LedgerState> emit) async {}
   Future<void> _onLedgerSubmitted(
       OnLedgerSubmit event, Emitter<LedgerState> emit) async {
     RemoteLedgerRepoImpl ledgerRepoImpl = RemoteLedgerRepoImpl();

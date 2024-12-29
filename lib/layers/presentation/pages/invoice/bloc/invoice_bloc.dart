@@ -33,7 +33,43 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<OnUpdateInvoice>(_onUpdatingInvoice);
     on<SearchClientsEvent>(_onSearchClientsEvent);
     on<OnTextTapped>(_onTextTapped);
+    on<OnSelectCheckBox>(_onCheckBoxSelected);
+    on<StartScanning>((event, emit) => emit(QRCodeScanning()));
+    on<QRCodeDetected>(_onDetect);
+    on<QRCodeError>((event, emit) => emit(QRCodeFailure(event.error)));
+    on<OnDisamChanged>(_onDisamChanged);
+    on<OnDisratChanged>(_onDisratChanged);
   }
+
+  void _onDisamChanged(OnDisamChanged event, Emitter<InvoiceState> emit) {
+    double disratVal = 0;
+    double net = 0;
+    disratVal = (event.value / (event.total - event.previousDis)) * 100;
+    net = event.net;
+    emit(DisamChanged(net, amValue: event.value, ratValue: disratVal));
+  }
+
+  void _onDisratChanged(OnDisratChanged event, Emitter<InvoiceState> emit) {
+    double disamVal = 0;
+    double net = 0;
+    disamVal = (event.value / 100) * (event.total - event.previousDis);
+    net = event.net;
+    emit(DisamChanged(net, amValue: disamVal, ratValue: event.value));
+  }
+
+  Future<void> _onCheckBoxSelected(
+      OnSelectCheckBox event, Emitter<InvoiceState> emit) async {
+    emit(CheckBoxSelected(value: event.value));
+  }
+
+  Future<void> _onDetect(
+      QRCodeDetected event, Emitter<InvoiceState> emit) async {
+    ItemsRepoImpl itemsRepoImpl = ItemsRepoImpl();
+    ItemsModel itemsModel = await itemsRepoImpl.getItemByBarcode(
+        barcode: event.qrCode, tableName: DatabaseConstants.itemsTable);
+    emit(QRCodeSuccess(event.qrCode, itemsModel));
+  }
+
   Future<void> _onEditPressed(
       EditPressed event, Emitter<InvoiceState> emit) async {
     ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();

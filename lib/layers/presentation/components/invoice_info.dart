@@ -26,6 +26,7 @@ class DocInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8.0),
         boxShadow: [
           BoxShadow(
+            // ignore: deprecated_member_use
             color: Colors.black.withOpacity(0.1),
             blurRadius: 4.0,
             spreadRadius: 2.0,

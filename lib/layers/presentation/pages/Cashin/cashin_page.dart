@@ -153,7 +153,7 @@ class CashinPage extends StatelessWidget {
                     text: "انهاء سند القبض النقدي",
                     onPressed: () {
                       String formattedDate =
-                          intl.DateFormat('dd-MM-yyyy').format(DateTime.now());
+                          intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
                       if (!isEditting) {
                         var uuid = const Uuid();
                         String mobileUuid = uuid.v1().toString();

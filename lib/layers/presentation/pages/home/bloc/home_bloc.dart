@@ -51,7 +51,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           endPoint: "rsalesinvoice/addnew");
       RemoteCashinRepoImpl remoteCashinRepoImpl = RemoteCashinRepoImpl();
       remoteCashinRepoImpl.sendInvoices(
-          endPoint: "", headTableName: DatabaseConstants.cashinHeadTable);
+          endPoint: "cashin/addnew",
+          headTableName: DatabaseConstants.cashinHeadTable);
       emit(state.copyWith(isSendingSubmitted: false, isSendingSucc: true));
     });
   }

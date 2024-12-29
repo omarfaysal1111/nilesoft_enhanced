@@ -54,4 +54,13 @@ class ItemsRepoImpl implements ItemsRepo {
     DatabaseConstants.startDB(_databaseHelper);
     await _databaseHelper.deleteAllRecord(tableName);
   }
+
+  @override
+  Future<ItemsModel> getItemByBarcode(
+      {required String barcode, required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    ItemsModel? itemsModel = await _databaseHelper.getRecordByBarcode(
+        DatabaseConstants.itemsTable, barcode, ItemsModel.fromMap);
+    return itemsModel!;
+  }
 }

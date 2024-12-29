@@ -46,6 +46,12 @@ class ReSaveButtonClicked extends ResalesEvent {
       {required this.salesHeadModel, required this.salesDtlModel});
 }
 
+class OnSelectCheckBox extends ResalesEvent {
+  final String value;
+
+  OnSelectCheckBox({required this.value});
+}
+
 class ReOnDiscountChanged extends ResalesEvent {
   final double amount;
   final double ratio;

@@ -42,6 +42,7 @@ double tax = 0;
 double net = 0;
 int headid = 0;
 String docNo = "";
+String selectedValue = '1';
 bool isEditting = false;
 
 class ResalesPageContent extends StatelessWidget {
@@ -226,6 +227,38 @@ class ResalesPageContent extends StatelessWidget {
                       onChanged: (value) {},
                     )),
                 SizedBox(height: height * 0.02),
+                BlocConsumer<ResalesBloc, ResalesState>(
+                    listener: (context, state) {
+                  if (state is CheckBoxSelected) {
+                    selectedValue = state.value;
+                  }
+                }, builder: (context, state) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('اجل'),
+                          Radio<String>(
+                            value: '2',
+                            groupValue: selectedValue,
+                            onChanged: (String? value) {
+                              bloc.add(OnSelectCheckBox(value: value!));
+                            },
+                          ),
+                        ],
+                      ),
+                      const Text('نقدي'),
+                      Radio<String>(
+                        value: '1',
+                        groupValue: selectedValue,
+                        onChanged: (String? value) {
+                          bloc.add(OnSelectCheckBox(value: value!));
+                        },
+                      ),
+                    ],
+                  );
+                }),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -586,6 +619,10 @@ class ResalesPageContent extends StatelessWidget {
                   discount: dis.toString(),
                   tax: tax.toString(),
                   net: net.toString(),
+                  disamController: TextEditingController(),
+                  disratController: TextEditingController(),
+                  amChanged: (String value) {},
+                  ratChanged: (String value) {},
                 ),
               ),
             ),

@@ -57,6 +57,12 @@ class ResalesLoaded extends ResalesState {
   ResalesLoaded({required this.clients, this.selectedClient});
 }
 
+class CheckBoxSelected extends ResalesState {
+  final String value;
+
+  CheckBoxSelected({required this.value});
+}
+
 class ResaleToEdit extends ResalesState {
   final List<SalesDtlModel> salesDtlModel;
   final SalesHeadModel salesHeadModel;

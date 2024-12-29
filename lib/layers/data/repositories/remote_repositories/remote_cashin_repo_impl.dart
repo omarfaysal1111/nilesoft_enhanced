@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/remote/data_sources.dart';
@@ -40,9 +41,13 @@ class RemoteCashinRepoImpl extends RemoteCashineRepo {
       cashDtls.add(cashInDtl);
       CashinModelSend cashinModelSend =
           CashinModelSend(cashInDtl: cashDtls, cashinModelHead: cashinModel[i]);
-      print(jsonEncode(cashinModelSend));
+      if (kDebugMode) {
+        print(jsonEncode(cashinModelSend));
+      }
       await MainFun.postReq(
           ResponseModel.fromJson, "cashin/addnew", cashinModelSend.toJson());
+      databaseHelper.db.rawUpdate(
+          "UPDATE $headTableName SET sent = 1 where id='${cashinModel[i].id}'");
     }
   }
 }

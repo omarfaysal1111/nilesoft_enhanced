@@ -87,6 +87,7 @@ class CashInDtl extends BaseModel {
   String? descr;
   double? amount;
   double? discount;
+  int? sent;
   int? branchid;
   int? shiftid;
   CashInDtl(
@@ -98,12 +99,20 @@ class CashInDtl extends BaseModel {
       this.docno,
       this.id,
       this.salesmanid,
+      this.sent,
       this.serial,
       this.shiftid});
   CashInDtl.fromMap(Map<String, dynamic> res) {
     accountid = res["accountid"];
     amount = res["amount"];
     descr = res["descr"];
+    branchid = 0;
+    shiftid = 0;
+    discount = 0;
+    docno = '';
+    salesmanid = "";
+    serial = 0;
+    sent = 0;
   }
   Map<String, Object?> toJson() {
     return {
@@ -116,12 +125,49 @@ class CashInDtl extends BaseModel {
       "docno": '',
       "salesmanid": "",
       "serial": 0
+      /* 
+      
+       id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              accountid TEXT ALLOW NULL,
+              amount REAL ALLOW NULL,
+              discount REAL ALLOW NULL,
+              descr TEXT ALLOW NULL,
+              shiftid INTEGER ALLOW NULL,
+              branchid INTEGER ALLOW NULL,
+              docno  TEXT ALLOW NULL,
+              salesmanid TEXT ALLOW NULL,
+              serial REAL ALLOW NULL,
+              sent INTEGER ALLOW NULL
+      */
     };
   }
 
   @override
   Map<String, dynamic> toMap() {
-    // TODO: implement toMap
-    throw UnimplementedError();
+    return {
+      "accountid": accountid,
+      "descr": descr,
+      "amount": amount,
+      "discount": discount,
+      "branchid": 0,
+      "shiftid": 0,
+      "docno": '',
+      "salesmanid": "",
+      "serial": 0
+      /* 
+      
+       id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              accountid TEXT ALLOW NULL,
+              amount REAL ALLOW NULL,
+              discount REAL ALLOW NULL,
+              descr TEXT ALLOW NULL,
+              shiftid INTEGER ALLOW NULL,
+              branchid INTEGER ALLOW NULL,
+              docno  TEXT ALLOW NULL,
+              salesmanid TEXT ALLOW NULL,
+              serial REAL ALLOW NULL,
+              sent INTEGER ALLOW NULL
+      */
+    };
   }
 }

@@ -9,6 +9,7 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final ValueChanged<String> onChanged;
   final Duration debounceDuration;
+  final TextStyle? hintStyle;
   final VoidCallback? onTap;
   const CustomTextField({
     super.key,
@@ -19,6 +20,7 @@ class CustomTextField extends StatelessWidget {
     this.obscureText = false,
     required this.onChanged,
     this.onTap,
+    this.hintStyle,
   });
 
   @override
@@ -47,6 +49,7 @@ class CustomTextField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hintText,
           labelText: hintText,
+          hintStyle: hintStyle,
           alignLabelWithHint: true,
           labelStyle: const TextStyle(
             color: Color(0xff434343),

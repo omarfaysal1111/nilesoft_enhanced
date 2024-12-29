@@ -15,6 +15,12 @@ class OnCustomerSelected extends LedgerEvent {
   OnCustomerSelected({required this.selectedCustomer, required this.customers});
 }
 
+class CustomerSelectedEvent extends LedgerEvent {
+  final CustomersModel selectedCustomer;
+
+  CustomerSelectedEvent({required this.selectedCustomer});
+}
+
 class OnToDateChanged extends LedgerEvent {
   final String date;
 

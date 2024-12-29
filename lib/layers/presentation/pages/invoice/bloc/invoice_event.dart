@@ -13,6 +13,12 @@ class InitializeDataEvent extends InvoiceEvent {
   InitializeDataEvent();
 }
 
+class OnSelectCheckBox extends InvoiceEvent {
+  final String value;
+
+  OnSelectCheckBox({required this.value});
+}
+
 class OnInvoiceToEdit extends InvoiceEvent {
   final int id;
 
@@ -81,6 +87,37 @@ class EditInvoiceItemEvent extends InvoiceEvent {
   final SalesDtlModel updatedItem;
   final int index;
   EditInvoiceItemEvent(this.updatedItem, this.index);
+}
+
+class StartScanning extends InvoiceEvent {}
+
+class QRCodeDetected extends InvoiceEvent {
+  final String qrCode;
+
+  QRCodeDetected(this.qrCode);
+}
+
+class OnDisamChanged extends InvoiceEvent {
+  final double value;
+  final double total;
+  final double previousDis;
+  final double net;
+  OnDisamChanged(this.total, this.previousDis, this.net, {required this.value});
+}
+
+class OnDisratChanged extends InvoiceEvent {
+  final double value;
+  final double total;
+  final double previousDis;
+  final double net;
+  OnDisratChanged(this.total, this.previousDis, this.net,
+      {required this.value});
+}
+
+class QRCodeError extends InvoiceEvent {
+  final String error;
+
+  QRCodeError(this.error);
 }
 
 class OnTextTapped extends InvoiceEvent {

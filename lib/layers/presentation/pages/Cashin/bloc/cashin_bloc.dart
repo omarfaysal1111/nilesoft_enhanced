@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart';
 import 'package:nilesoft_erp/layers/domain/models/cashin_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/cashin_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/customers_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_state.dart';
 
@@ -106,14 +108,19 @@ class CashinBloc extends Bloc<CashinEvent, CashinState> {
   Future<void> onCashInSave(
       SaveCashinPressed event, Emitter<CashinState> emit) async {
     CashinRepoImpl cashinRepoImpl = CashinRepoImpl();
-    await cashinRepoImpl.createCashIn(
-        invoice: event.cashinModel,
-        tableName: DatabaseConstants.cashinHeadTable);
+    SettingsRepoImpl settingsRepoImpl = SettingsRepoImpl();
+    List<SettingsModel> settingsModel = await settingsRepoImpl.getSettings(
+        tableName: DatabaseConstants.settingsTable);
     await cashinRepoImpl.createCashInDtl(
         cashinDtl: CashInDtl(
             accountid: event.cashinModel.accId,
-            amount: event.cashinModel.net1,
+            amount: event.cashinModel.total,
             descr: event.cashinModel.descr));
+    event.cashinModel.accId = settingsModel[0].cashaccId;
+    await cashinRepoImpl.createCashIn(
+        invoice: event.cashinModel,
+        tableName: DatabaseConstants.cashinHeadTable);
+
     emit(CashInSavedSuccessfuly());
   }
 }

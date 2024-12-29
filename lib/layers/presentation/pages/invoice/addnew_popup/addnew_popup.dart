@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
@@ -53,9 +55,10 @@ class AddnewPopup extends StatelessWidget {
               Directionality(
                 textDirection: TextDirection.rtl,
                 child: BlocConsumer<InvoiceBloc, InvoiceState>(
-                  listener: (context, state) => _handleStateChange(state),
+                  listener: (context, state) =>
+                      _handleStateChange(state, context),
                   builder: (context, state) {
-                    return _buildDropdown(state, bloc);
+                    return _buildDropdown(state, bloc, context);
                   },
                 ),
               ),
@@ -82,7 +85,29 @@ class AddnewPopup extends StatelessWidget {
     myItems = [];
   }
 
-  void _handleStateChange(InvoiceState state) {
+  void _handleStateChange(InvoiceState state, BuildContext context) {
+    /// MobileScannerController controller = MobileScannerController();
+    if (state is QRCodeScanning || state is QRCodeInitial) {
+      // controller.start();
+
+      showScannerDialog(context);
+    }
+
+    if (state is QRCodeSuccess) {
+      priceControlleer.text = state.item.price.toString();
+      disControlleer.text = "0";
+      disRatioControlleer.text = "0";
+      taxControlleer.text = "0";
+      qtyControlleer.text = "0";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('QR Code Found: ${state.qrCode}')),
+      );
+    }
+    if (state is QRCodeFailure) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${state.error}')),
+      );
+    }
     if (state is InvoiceLoaded) {
       priceControlleer.text = state.selectedClient?.price.toString() ?? "0";
       disControlleer.text = "0";
@@ -113,9 +138,25 @@ class AddnewPopup extends StatelessWidget {
     }
   }
 
-  Widget _buildDropdown(InvoiceState state, InvoiceBloc bloc) {
+  Widget _buildDropdown(
+      InvoiceState state, InvoiceBloc bloc, BuildContext context) {
+    if (state is QRCodeSuccess) {
+      selectedItem = state.item;
+      return SearchableItemDropdown(
+          items: myItems,
+          selecteditem: state.item,
+          onItemSelected: (val) {
+            if (val != null) {
+              selectedItem = val;
+              bloc.add(ClientSelectedEvent(val));
+            }
+          },
+          width: double.infinity,
+          onSearch: (val) {});
+    }
+
     if (state is EditState) {
-      _handleStateChange(state);
+      _handleStateChange(state, context);
     }
     if (state is TextFoucsed) {
       state.controller.selection = TextSelection(
@@ -163,10 +204,72 @@ class AddnewPopup extends StatelessWidget {
         onSearch: (val) {});
   }
 
+  void showScannerDialog(BuildContext context) async {
+    final bloc = context.read<InvoiceBloc>();
+    //MobileScannerController controller = MobileScannerController();
+
+    // Request Camera Permission
+    //  final permissionStatus = await Permission.camera.request();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: AspectRatio(
+            aspectRatio: 1, // Ensure square aspect ratio
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16), // Match dialog corners
+              child: Container(
+                color: Colors.black, // Black background for visibility
+                child: MobileScanner(
+                  // controller: controller,
+                  onDetect: (BarcodeCapture barcodeCapture) {
+                    final code = barcodeCapture.barcodes.first.rawValue;
+                    if (code != null) {
+                      bloc.add(QRCodeDetected(code));
+                      if (kDebugMode) {
+                        print('QR Code detected: $code');
+                      }
+                      Navigator.pop(dialogContext); // Close the dialog
+                    }
+                  },
+                  // onError: (error) {
+                  //   print('MobileScanner error: $error');
+                  //   ScaffoldMessenger.of(context).showSnackBar(
+                  //     SnackBar(content: Text('Scanner Error: $error')),
+                  //   );
+                  // },
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // controller.stop();
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildTextFields(InvoiceBloc bloc) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
+        CustomButton(
+            text: "Scan",
+            onPressed: () {
+              bloc.add(StartScanning());
+            }),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -177,7 +280,9 @@ class AddnewPopup extends StatelessWidget {
                 keyboardType: TextInputType.number,
                 hintText: "الكمية",
                 onTap: () {
-                  print("object");
+                  if (kDebugMode) {
+                    print("object");
+                  }
                   bloc.add(OnTextTapped(controller: qtyControlleer));
                 },
                 controller: qtyControlleer,
