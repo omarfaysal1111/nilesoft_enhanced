@@ -62,6 +62,8 @@ class SalesHeadModel implements BaseModel {
   double? tax;
   double? net;
   String? invType;
+  double? disam;
+  double? disrat;
   // String? visaId;
   int? sent;
 
@@ -72,6 +74,8 @@ class SalesHeadModel implements BaseModel {
       this.id,
       this.invType,
       this.sent,
+      this.disam,
+      this.disrat,
       // this.coinPrice,
 //this.docdate,
       this.tax,
@@ -92,6 +96,8 @@ class SalesHeadModel implements BaseModel {
       : accid = res["accid"],
         descr = res["descr"],
         id = res["id"],
+        disam = res["disam"],
+        disrat = res["disrat"],
         docDate = res["docdate"],
         invType = res["invtype"],
         sent = res["sent"],
@@ -110,6 +116,8 @@ class SalesHeadModel implements BaseModel {
       "descr": descr,
       // "invtime": invTime,
       "sent": sent,
+      "disam": disam,
+      "disratio": disrat,
       "id": id,
       //  "docdate": docdate,
       // "invtype": invType,

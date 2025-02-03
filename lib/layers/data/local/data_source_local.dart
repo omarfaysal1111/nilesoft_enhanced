@@ -32,6 +32,8 @@ class DatabaseHelper {
               invoiceno TEXT ALLOW NULL,
               total REAL ALLOW NULL,
               tax REAL ALLOW NULL,
+              disam REAL ALLOW NULLL,
+              disratio REAL ALLOW NULL,
               dis1 REAL ALLOW NULL, 
               mobile_uuid TEXT ALLOW NULL,
               invtype TEXT ALLOW NULL,
@@ -67,9 +69,11 @@ class DatabaseHelper {
               total REAL ALLOW NULL,
                mobile_uuid TEXT ALLOW NULL,
               tax REAL ALLOW NULL,
+              disam REAL ALLOW NULLL,
+              disratio REAL ALLOW NULL,
               dis1 REAL ALLOW NULL, 
-invtype TEXT ALLOW NULL,
-docdate TEXT ALLOW NULL,
+              invtype TEXT ALLOW NULL,
+              docdate TEXT ALLOW NULL,
                net REAL ALLOW NULL,
 
               sent INTEGER ALLOW NULL
@@ -417,6 +421,14 @@ CREATE TABLE settings (
 
     //tableName, where: 'id = ?', whereArgs: [id]
 
+    return result.map((map) => fromMap(map)).toList();
+  }
+
+  Future<List<T>> getRecordWhereSent<T extends BaseModel>(String tableName,
+      int sent, T Function(Map<String, dynamic>) fromMap) async {
+    String query = "select * from $tableName where sent=$sent";
+
+    final List<Map<String, dynamic>> result = await db.rawQuery(query);
     return result.map((map) => fromMap(map)).toList();
   }
 

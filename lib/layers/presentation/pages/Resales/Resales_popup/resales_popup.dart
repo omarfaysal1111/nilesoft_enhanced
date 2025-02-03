@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
@@ -52,9 +54,10 @@ class AddnewPopup extends StatelessWidget {
               Directionality(
                 textDirection: TextDirection.rtl,
                 child: BlocConsumer<ResalesBloc, ResalesState>(
-                  listener: (context, state) => _handleStateChange(state),
+                  listener: (context, state) =>
+                      _handleStateChange(state, context),
                   builder: (context, state) {
-                    return _buildDropdown(state, bloc);
+                    return _buildDropdown(state, bloc, context);
                   },
                 ),
               ),
@@ -81,7 +84,88 @@ class AddnewPopup extends StatelessWidget {
     myItems = [];
   }
 
-  void _handleStateChange(ResalesState state) {
+  void showScannerDialog(BuildContext context) async {
+    final bloc = context.read<ResalesBloc>();
+    //MobileScannerController controller = MobileScannerController();
+
+    // Request Camera Permission
+    //  final permissionStatus = await Permission.camera.request();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: AspectRatio(
+            aspectRatio: 1, // Ensure square aspect ratio
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16), // Match dialog corners
+              child: Container(
+                color: Colors.black, // Black background for visibility
+                child: MobileScanner(
+                  // controller: controller,
+                  onDetect: (BarcodeCapture barcodeCapture) {
+                    final code = barcodeCapture.barcodes.first.rawValue;
+                    if (code != null) {
+                      bloc.add(ReQRCodeDetected(code));
+                      if (kDebugMode) {
+                        print('QR Code detected: $code');
+                      }
+                      Navigator.pop(dialogContext); // Close the dialog
+                    }
+                  },
+                  // onError: (error) {
+                  //   print('MobileScanner error: $error');
+                  //   ScaffoldMessenger.of(context).showSnackBar(
+                  //     SnackBar(content: Text('Scanner Error: $error')),
+                  //   );
+                  // },
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // controller.stop();
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleStateChange(ResalesState state, BuildContext context) {
+    if (state is ResalesLoaded) {
+      priceControlleer.text = state.selectedClient?.price.toString() ?? "0";
+      disControlleer.text = "0";
+      disRatioControlleer.text = "0";
+      taxControlleer.text = "0";
+      qtyControlleer.text = "0";
+    }
+    if (state is QRCodeScanning || state is QRCodeInitial) {
+      // controller.start();
+
+      showScannerDialog(context);
+    }
+
+    if (state is QRCodeSuccess) {
+      priceControlleer.text = state.item.price.toString();
+      disControlleer.text = "0";
+      disRatioControlleer.text = "0";
+      taxControlleer.text = "0";
+
+      qtyControlleer.text = "0";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('QR Code Found: ${state.qrCode}')),
+      );
+    }
     if (state is ReEditState) {
       idx = state.index;
       myItems = state.items;
@@ -105,16 +189,26 @@ class AddnewPopup extends StatelessWidget {
     }
   }
 
-  Widget _buildDropdown(ResalesState state, ResalesBloc bloc) {
+  Widget _buildDropdown(
+      ResalesState state, ResalesBloc bloc, BuildContext context) {
+    if (state is QRCodeSuccess) {
+      selectedItem = state.item;
+      return SearchableItemDropdown(
+          items: myItems,
+          selecteditem: state.item,
+          onItemSelected: (val) {
+            if (val != null) {
+              selectedItem = val;
+              bloc.add(ReClientSelectedEvent(val));
+            }
+          },
+          width: double.infinity,
+          onSearch: (val) {});
+    }
     if (state is ReEditState) {
-      _handleStateChange(state);
+      _handleStateChange(state, context);
     }
     if (state is ResalesLoaded) {
-      priceControlleer.text = state.selectedClient?.price.toString() ?? "0";
-      disControlleer.text = "0";
-      disRatioControlleer.text = "0";
-      taxControlleer.text = "0";
-      qtyControlleer.text = "0";
       myItems = state.clients;
       final selectedValue = state.clients
               .any((client) => client.name == state.selectedClient?.name)
@@ -158,6 +252,14 @@ class AddnewPopup extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
+        CustomButton(
+            text: "اختيار بالباركود",
+            onPressed: () {
+              bloc.add(ReStartScanning());
+            }),
+        const SizedBox(
+          height: 20,
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

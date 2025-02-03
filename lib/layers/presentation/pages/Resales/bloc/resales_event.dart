@@ -25,6 +25,23 @@ class OnResaleToEdit extends ResalesEvent {
   OnResaleToEdit(this.id);
 }
 
+class OnDisamChanged extends ResalesEvent {
+  final double value;
+  final double total;
+  final double previousDis;
+  final double net;
+  OnDisamChanged(this.total, this.previousDis, this.net, {required this.value});
+}
+
+class OnDisratChanged extends ResalesEvent {
+  final double value;
+  final double total;
+  final double previousDis;
+  final double net;
+  OnDisratChanged(this.total, this.previousDis, this.net,
+      {required this.value});
+}
+
 class ReEditPressed extends ResalesEvent {
   final SalesDtlModel salesDtlModel;
   final int index;
@@ -44,6 +61,14 @@ class ReSaveButtonClicked extends ResalesEvent {
 
   ReSaveButtonClicked(
       {required this.salesHeadModel, required this.salesDtlModel});
+}
+
+class ReStartScanning extends ResalesEvent {}
+
+class ReQRCodeDetected extends ResalesEvent {
+  final String qrCode;
+
+  ReQRCodeDetected(this.qrCode);
 }
 
 class OnSelectCheckBox extends ResalesEvent {

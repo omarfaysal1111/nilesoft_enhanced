@@ -29,7 +29,35 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     on<OnResaleToEdit>(_onInvoiceToEdit);
     on<OnUpdateResale>(_onUpdatingInvoice);
     on<OnSelectCheckBox>(_onCheckBoxSelected);
+    on<ReStartScanning>((event, emit) => emit(QRCodeScanning()));
+    on<ReQRCodeDetected>(_onDetect);
+    on<OnDisamChanged>(_onDisamChanged);
+    on<OnDisratChanged>(_onDisratChanged);
   }
+  void _onDisamChanged(OnDisamChanged event, Emitter<ResalesState> emit) {
+    double disratVal = 0;
+    double net = 0;
+    disratVal = (event.value / (event.total - event.previousDis)) * 100;
+    net = event.net;
+    emit(DisamChanged(net, amValue: event.value, ratValue: disratVal));
+  }
+
+  void _onDisratChanged(OnDisratChanged event, Emitter<ResalesState> emit) {
+    double disamVal = 0;
+    double net = 0;
+    disamVal = (event.value / 100) * (event.total - event.previousDis);
+    net = event.net;
+    emit(DisamChanged(net, amValue: disamVal, ratValue: event.value));
+  }
+
+  Future<void> _onDetect(
+      ReQRCodeDetected event, Emitter<ResalesState> emit) async {
+    ItemsRepoImpl itemsRepoImpl = ItemsRepoImpl();
+    ItemsModel itemsModel = await itemsRepoImpl.getItemByBarcode(
+        barcode: event.qrCode, tableName: DatabaseConstants.itemsTable);
+    emit(QRCodeSuccess(event.qrCode, itemsModel));
+  }
+
   Future<void> _onCheckBoxSelected(
       OnSelectCheckBox event, Emitter<ResalesState> emit) async {
     emit(CheckBoxSelected(value: event.value));

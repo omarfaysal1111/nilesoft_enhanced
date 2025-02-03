@@ -1,0 +1,2 @@
+/Users/admin/Documents/nilesoftEnhanced/nilesoft_erp/android/app/.cxx/RelWithDebInfo/136n1d5l/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/admin/Documents/nilesoftEnhanced/nilesoft_erp/android/app/.cxx/RelWithDebInfo/136n1d5l/armeabi-v7a/CMakeFiles/rebuild_cache.dir

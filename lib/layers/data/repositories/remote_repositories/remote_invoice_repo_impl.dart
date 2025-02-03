@@ -34,7 +34,6 @@ class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
           SalesHeadModel.fromMap);
       salesHeadModel!.invType = "0";
 
-      salesHeadModel.accid = settingsModel[0].cashaccId;
       salesHeadModel.cashaccid = settingsModel[0].cashaccId;
       salesHeadModel.invenid = settingsModel[0].invId;
       salesHeadModel.visaid = settingsModel[0].visaId;

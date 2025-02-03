@@ -17,6 +17,9 @@ import 'package:intl/intl.dart' as intl;
 import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 import 'package:uuid/uuid.dart';
 
+final disamController = TextEditingController();
+final disratController = TextEditingController();
+
 class ResalesPage extends StatelessWidget {
   const ResalesPage({super.key});
 
@@ -151,6 +154,8 @@ class ResalesPageContent extends StatelessWidget {
                             invoiceno: docNo,
                             sent: 0,
                             net: net,
+                            disam: double.parse(disamController.text),
+                            disrat: double.tryParse(disratController.text) ?? 0,
                             docDate: formattedDate,
                             mobile_uuid: mobileUuid,
                             tax: tax,
@@ -304,6 +309,9 @@ class ResalesPageContent extends StatelessWidget {
                                 net: net,
                                 docDate: formattedDate,
                                 tax: tax,
+                                disam: double.parse(disamController.text),
+                                disrat:
+                                    double.tryParse(disratController.text) ?? 0,
                                 total: total,
                                 clientName: selected!.name,
                                 descr: desc.text,
@@ -401,18 +409,37 @@ class ResalesPageContent extends StatelessWidget {
 
                       if (state is AddNewResalesState) {
                         final myDtl = state.chosenItems;
+                        // Reset all values before recalculating
                         total = 0;
                         net = 0;
                         dis = 0;
                         tax = 0;
-                        for (var i = 0; i < myDtl.length; i++) {
-                          net = net +
-                              ((myDtl[i].qty)! * (myDtl[i].price)! -
-                                  (myDtl[i].disam)! +
-                                  (myDtl[i].tax)!);
-                          dis = dis + myDtl[i].disam!;
-                          tax = tax + myDtl[i].tax!;
-                          total = total + myDtl[i].price!;
+
+                        // Calculate totals from items
+                        for (var item in myDtl) {
+                          // Calculate item total before discount
+                          double itemTotal =
+                              (item.qty ?? 0) * (item.price ?? 0);
+                          // Add to running total
+                          total += itemTotal;
+
+                          // Add discounts and tax
+                          dis += item.disam ?? 0;
+                          tax += item.tax ?? 0;
+                        }
+
+                        // Calculate final net amount
+                        net = total - dis + tax;
+
+                        // Update discount amount based on rate
+                        double discountRate =
+                            double.tryParse(disratController.text) ?? 0;
+                        double discountAmount = (discountRate / 100) * total;
+                        disamController.text =
+                            discountAmount.toStringAsFixed(2);
+
+                        if (disamController.text == "0") {
+                          disratController.text = "0";
                         }
                       }
                     },
@@ -425,7 +452,7 @@ class ResalesPageContent extends StatelessWidget {
                           return const Center(child: Text("جاري اضافة الصنف"));
                         }
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 140.0),
+                          padding: const EdgeInsets.only(bottom: 220.0),
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: dtl?.length ?? 0,
@@ -473,7 +500,7 @@ class ResalesPageContent extends StatelessWidget {
                         );
                       } else if (state is ResalesLoaded) {
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 140.0),
+                          padding: const EdgeInsets.only(bottom: 220.0),
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: dtl?.length ?? 0,
@@ -547,7 +574,7 @@ class ResalesPageContent extends StatelessWidget {
                               ],
                             )
                           : Padding(
-                              padding: const EdgeInsets.only(bottom: 140.0),
+                              padding: const EdgeInsets.only(bottom: 220.0),
                               child: ListView.builder(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
@@ -559,11 +586,11 @@ class ResalesPageContent extends StatelessWidget {
                                     discount: dtl![index].disam.toString(),
                                     quantity: dtl![index].qty.toString(),
                                     tax: dtl![index].tax.toString(),
-                                    total: ((dtl![index].qty)! *
-                                                (dtl![index].price)! -
-                                            (dtl![index].disam)! +
-                                            (dtl![index].tax)!)
-                                        .toString(),
+                                    total: ((dtl![index].qty ?? 0) *
+                                                (dtl![index].price ?? 0) -
+                                            (dtl![index].disam ?? 0) +
+                                            (dtl![index].tax ?? 0))
+                                        .toStringAsFixed(2),
                                     onDelete: () {
                                       // Implement deletion logic
                                     },
@@ -601,31 +628,93 @@ class ResalesPageContent extends StatelessWidget {
                 ),
               ],
             ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: const BoxDecoration(
-                  color: Color(0xff39B3BD),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16.0),
-                    topRight: Radius.circular(16.0),
+            BlocConsumer<ResalesBloc, ResalesState>(listener: (context, state) {
+              if (state is DisamChanged) {
+                net = total - state.amValue + tax;
+                disratController.text = state.ratValue.toStringAsFixed(1);
+                disamController.text = state.amValue.toStringAsFixed(1);
+              }
+
+              if (state is DisratChanged) {
+                net = total - state.amValue + tax;
+                disratController.text = state.ratValue.toStringAsFixed(1);
+                disamController.text = state.amValue.toStringAsFixed(1);
+              }
+            }, builder: (context, state) {
+              if (state is ResaleToEdit) {
+                return Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: const BoxDecoration(
+                      color: Color(0xff39B3BD),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16.0),
+                        topRight: Radius.circular(16.0),
+                      ),
+                    ),
+                    child: SummaryCard(
+                      total: net.toString(),
+                      disamController: disamController,
+                      disratController: disratController,
+                      discount: dis.toString(),
+                      tax: tax.toString(),
+                      net: total.toString(),
+                      amChanged: (String value) {
+                        double amValue = double.tryParse(value) ?? 0;
+                        net = total - amValue + tax;
+                        bloc.add(
+                            OnDisamChanged(total, dis, net, value: amValue));
+                      },
+                      ratChanged: (String value) {
+                        double ratValue = double.tryParse(value) ?? 0;
+                        double amValue = (ratValue / 100) * total;
+                        net = total - amValue + tax;
+                        bloc.add(
+                            OnDisratChanged(total, dis, net, value: ratValue));
+                      },
+                    ),
+                  ),
+                );
+              }
+              return Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: const BoxDecoration(
+                    color: Color(0xff39B3BD),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(16.0),
+                      topRight: Radius.circular(16.0),
+                    ),
+                  ),
+                  child: SummaryCard(
+                    total: total.toString(),
+                    disamController: disamController,
+                    disratController: disratController,
+                    discount: dis.toString(),
+                    tax: tax.toString(),
+                    net: net.toString(),
+                    amChanged: (String value) {
+                      double amValue = double.tryParse(value) ?? 0;
+                      net = total - amValue + tax;
+                      bloc.add(OnDisamChanged(total, dis, net, value: amValue));
+                    },
+                    ratChanged: (String value) {
+                      double ratValue = double.tryParse(value) ?? 0;
+                      double amValue = (ratValue / 100) * total;
+                      net = total - amValue + tax;
+                      bloc.add(
+                          OnDisratChanged(total, dis, net, value: ratValue));
+                    },
                   ),
                 ),
-                child: SummaryCard(
-                  total: total.toString(),
-                  discount: dis.toString(),
-                  tax: tax.toString(),
-                  net: net.toString(),
-                  disamController: TextEditingController(),
-                  disratController: TextEditingController(),
-                  amChanged: (String value) {},
-                  ratChanged: (String value) {},
-                ),
-              ),
-            ),
+              );
+            }),
           ],
         ),
       ),

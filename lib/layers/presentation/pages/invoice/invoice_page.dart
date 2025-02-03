@@ -344,6 +344,9 @@ class InvoicePageContent extends StatelessWidget {
                                 dis1: dis,
                                 invoiceno: docNo,
                                 sent: 0,
+                                disam: double.parse(disamController.text),
+                                disrat:
+                                    double.tryParse(disratController.text) ?? 0,
                                 net: net,
                                 docDate: formattedDate,
                                 invType: selectedValue,
@@ -446,23 +449,37 @@ class InvoicePageContent extends StatelessWidget {
 
                       if (state is AddNewInvoiceState) {
                         final myDtl = state.chosenItems;
+                        // Reset all values before recalculating
                         total = 0;
                         net = 0;
                         dis = 0;
                         tax = 0;
-                        for (var i = 0; i < myDtl.length; i++) {
-                          net = net +
-                              ((myDtl[i].qty)! * (myDtl[i].price)! -
-                                  (myDtl[i].disam)! +
-                                  (myDtl[i].tax)!);
-                          dis = dis + myDtl[i].disam!;
-                          tax = tax + myDtl[i].tax!;
-                          total = total + myDtl[i].price!;
+
+                        // Calculate totals from items
+                        for (var item in myDtl) {
+                          // Calculate item total before discount
+                          double itemTotal =
+                              (item.qty ?? 0) * (item.price ?? 0);
+                          // Add to running total
+                          total += itemTotal;
+
+                          // Add discounts and tax
+                          dis += item.disam ?? 0;
+                          tax += item.tax ?? 0;
                         }
+
+                        // Calculate final net amount
+                        net = total - dis + tax;
+
+                        // Update discount amount based on rate
+                        double discountRate =
+                            double.tryParse(disratController.text) ?? 0;
+                        double discountAmount = (discountRate / 100) * total;
                         disamController.text =
-                            ((double.parse(disratController.text) / 100) *
-                                    (total - dis))
-                                .toString();
+                            discountAmount.toStringAsFixed(2);
+                      }
+                      if (disamController.text == "0") {
+                        disratController.text = "0";
                       }
                     },
                     builder: (context, state) {
@@ -522,7 +539,7 @@ class InvoicePageContent extends StatelessWidget {
                         );
                       } else if (state is InvoiceLoaded) {
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 140.0),
+                          padding: const EdgeInsets.only(bottom: 220.0),
                           child: ListView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: dtl?.length ?? 0,
@@ -596,7 +613,7 @@ class InvoicePageContent extends StatelessWidget {
                               ],
                             )
                           : Padding(
-                              padding: const EdgeInsets.only(bottom: 140.0),
+                              padding: const EdgeInsets.only(bottom: 220.0),
                               child: ListView.builder(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 16),
@@ -610,7 +627,7 @@ class InvoicePageContent extends StatelessWidget {
                                     tax: dtl![index].tax.toString(),
                                     total: ((dtl![index].qty)! *
                                                 (dtl![index].price)! -
-                                            (dtl![index].disam ?? 1) +
+                                            (dtl![index].disam)! +
                                             (dtl![index].tax)!)
                                         .toString(),
                                     onDelete: () {
@@ -685,19 +702,24 @@ class InvoicePageContent extends StatelessWidget {
                       ),
                     ),
                     child: SummaryCard(
-                      total: total.toString(),
+                      total: net.toString(),
                       disamController: disamController,
                       disratController: disratController,
                       discount: dis.toString(),
                       tax: tax.toString(),
-                      net: net.toString(),
+                      net: total.toString(),
                       amChanged: (String value) {
-                        bloc.add(OnDisamChanged(total, dis, net,
-                            value: double.parse(value)));
+                        double amValue = double.tryParse(value) ?? 0;
+                        net = total - amValue + tax;
+                        bloc.add(
+                            OnDisamChanged(total, dis, net, value: amValue));
                       },
                       ratChanged: (String value) {
-                        bloc.add(OnDisratChanged(total, dis, net,
-                            value: double.parse(value)));
+                        double ratValue = double.tryParse(value) ?? 0;
+                        double amValue = (ratValue / 100) * total;
+                        net = total - amValue + tax;
+                        bloc.add(
+                            OnDisratChanged(total, dis, net, value: ratValue));
                       },
                     ),
                   ),
@@ -724,12 +746,16 @@ class InvoicePageContent extends StatelessWidget {
                     tax: tax.toString(),
                     net: net.toString(),
                     amChanged: (String value) {
-                      bloc.add(OnDisamChanged(total, dis, net,
-                          value: double.parse(value)));
+                      double amValue = double.tryParse(value) ?? 0;
+                      net = total - amValue + tax;
+                      bloc.add(OnDisamChanged(total, dis, net, value: amValue));
                     },
                     ratChanged: (String value) {
-                      bloc.add(OnDisratChanged(total, dis, net,
-                          value: double.parse(value)));
+                      double ratValue = double.tryParse(value) ?? 0;
+                      double amValue = (ratValue / 100) * total;
+                      net = total - amValue + tax;
+                      bloc.add(
+                          OnDisratChanged(total, dis, net, value: ratValue));
                     },
                   ),
                 ),

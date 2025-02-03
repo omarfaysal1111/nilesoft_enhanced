@@ -11,3 +11,15 @@ class DocPreviewLoaded extends PreviewState {
 
   DocPreviewLoaded({required this.salesModel});
 }
+
+class DocPreviewSentLoaded extends PreviewState {
+  final List<SalesHeadModel> salesModel;
+
+  DocPreviewSentLoaded({required this.salesModel});
+}
+
+class DocPreviewUnsentLoaded extends PreviewState {
+  final List<SalesHeadModel> salesModel;
+
+  DocPreviewUnsentLoaded({required this.salesModel});
+}

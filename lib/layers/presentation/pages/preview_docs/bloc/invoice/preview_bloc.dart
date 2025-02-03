@@ -8,11 +8,29 @@ import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice
 class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
   PreviewBloc() : super(DocPreviewInitial()) {
     on<OnPreviewInitial>(_onPreviewInitial);
+    on<OnPreviewSent>(_onPreviewSentInitial);
+    on<OnPreviewUnsent>(_onPreviewUnsentInitial);
   }
   Future<void> _onPreviewInitial(
       OnPreviewInitial event, Emitter<PreviewState> emit) async {
     InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
     List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getInvoicesHead(
+        tableName: DatabaseConstants.salesInvoiceHeadTable);
+    emit(DocPreviewLoaded(salesModel: invoicesHead));
+  }
+
+  Future<void> _onPreviewSentInitial(
+      OnPreviewSent event, Emitter<PreviewState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getSentInvoices(
+        tableName: DatabaseConstants.salesInvoiceHeadTable);
+    emit(DocPreviewLoaded(salesModel: invoicesHead));
+  }
+
+  Future<void> _onPreviewUnsentInitial(
+      OnPreviewUnsent event, Emitter<PreviewState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getUnsentInvoices(
         tableName: DatabaseConstants.salesInvoiceHeadTable);
     emit(DocPreviewLoaded(salesModel: invoicesHead));
   }

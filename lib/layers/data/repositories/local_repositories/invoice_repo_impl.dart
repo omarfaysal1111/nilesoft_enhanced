@@ -131,4 +131,20 @@ class InvoiceRepoImpl implements InvoiceRepo {
     DatabaseConstants.startDB(_databaseHelper);
     await _databaseHelper.updateRecord(head, tableName, head.id!);
   }
+
+  @override
+  Future<List<SalesHeadModel>> getSentInvoices(
+      {required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getRecordWhereSent(
+        tableName, 1, SalesHeadModel.fromMap);
+  }
+
+  @override
+  Future<List<SalesHeadModel>> getUnsentInvoices(
+      {required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getRecordWhereSent(
+        tableName, 0, SalesHeadModel.fromMap);
+  }
 }

@@ -8,11 +8,29 @@ import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales
 class RePreviewBloc extends Bloc<RePreviewEvent, RePreviewState> {
   RePreviewBloc() : super(ReDocPreviewInitial()) {
     on<ReOnPreviewInitial>(_onPreviewInitial);
+    on<ReOnPreviewSent>(_onPreviewSentInitial);
+    on<ReOnPreviewUnsent>(_onPreviewUnsentInitial);
   }
   Future<void> _onPreviewInitial(
       ReOnPreviewInitial event, Emitter<RePreviewState> emit) async {
     InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
     List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getInvoicesHead(
+        tableName: DatabaseConstants.reSaleInvoiceHeadTable);
+    emit(ReDocPreviewLoaded(salesModel: invoicesHead));
+  }
+
+  Future<void> _onPreviewSentInitial(
+      ReOnPreviewSent event, Emitter<RePreviewState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getSentInvoices(
+        tableName: DatabaseConstants.reSaleInvoiceHeadTable);
+    emit(ReDocPreviewLoaded(salesModel: invoicesHead));
+  }
+
+  Future<void> _onPreviewUnsentInitial(
+      ReOnPreviewUnsent event, Emitter<RePreviewState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getUnsentInvoices(
         tableName: DatabaseConstants.reSaleInvoiceHeadTable);
     emit(ReDocPreviewLoaded(salesModel: invoicesHead));
   }

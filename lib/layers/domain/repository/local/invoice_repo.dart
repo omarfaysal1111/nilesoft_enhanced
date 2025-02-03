@@ -26,4 +26,6 @@ abstract class InvoiceRepo {
       {required SalesHeadModel head, required String tableName});
   Future<void> updateSalesDtl(
       {required List<SalesDtlModel> dtl, required String tableName});
+  Future<List<SalesHeadModel>> getUnsentInvoices({required String tableName});
+  Future<List<SalesHeadModel>> getSentInvoices({required String tableName});
 }

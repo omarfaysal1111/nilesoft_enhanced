@@ -266,10 +266,13 @@ class AddnewPopup extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         CustomButton(
-            text: "Scan",
+            text: "اختيار بالباركود",
             onPressed: () {
               bloc.add(StartScanning());
             }),
+        const SizedBox(
+          height: 20,
+        ),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

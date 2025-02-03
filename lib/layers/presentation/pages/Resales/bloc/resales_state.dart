@@ -63,6 +63,37 @@ class CheckBoxSelected extends ResalesState {
   CheckBoxSelected({required this.value});
 }
 
+class DisamChanged extends ResalesState {
+  final double amValue;
+  final double ratValue;
+  final double net;
+  DisamChanged(this.net, {required this.amValue, required this.ratValue});
+}
+
+class DisratChanged extends ResalesState {
+  final double amValue;
+  final double ratValue;
+  final double net;
+
+  DisratChanged(this.net, {required this.amValue, required this.ratValue});
+}
+
+class QRCodeInitial extends ResalesState {}
+
+class QRCodeScanning extends ResalesState {}
+
+class QRCodeSuccess extends ResalesState {
+  final String qrCode;
+  final ItemsModel item;
+  QRCodeSuccess(this.qrCode, this.item);
+}
+
+class QRCodeFailure extends ResalesState {
+  final String error;
+
+  QRCodeFailure(this.error);
+}
+
 class ResaleToEdit extends ResalesState {
   final List<SalesDtlModel> salesDtlModel;
   final SalesHeadModel salesHeadModel;
