@@ -208,6 +208,23 @@ class PrintingScreen extends StatelessWidget {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     const Text(
+                                      'الخصم علي الفاتورة',
+                                      textAlign: TextAlign.right,
+                                    ),
+                                    Text(
+                                      "${printingSalesHeadModel.disratio}",
+                                      textAlign: TextAlign.left,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                width: MediaQuery.sizeOf(context).width * 0.9,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
                                       'الصافي',
                                       textAlign: TextAlign.right,
                                     ),
@@ -254,6 +271,10 @@ class PrintingScreen extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.all(8.0),
+            child: Text('الخصم'),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
             child: Text('الاجمالي'),
           ),
         ],
@@ -272,6 +293,10 @@ class PrintingScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(item.price.toString()),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(item.disam.toString()),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),

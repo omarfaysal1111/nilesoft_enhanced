@@ -23,3 +23,8 @@ class DocPreviewUnsentLoaded extends PreviewState {
 
   DocPreviewUnsentLoaded({required this.salesModel});
 }
+
+class OnInvoiceDeleted extends PreviewState {
+  final int id;
+  OnInvoiceDeleted({required this.id});
+}

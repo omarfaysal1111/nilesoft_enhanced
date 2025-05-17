@@ -10,7 +10,19 @@ class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
     on<OnPreviewInitial>(_onPreviewInitial);
     on<OnPreviewSent>(_onPreviewSentInitial);
     on<OnPreviewUnsent>(_onPreviewUnsentInitial);
+    on<OnInvoiceDelete>(_onDeleteInvoice);
   }
+  Future<void> _onDeleteInvoice(
+      OnInvoiceDelete event, Emitter<PreviewState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    await invoiceRepoImpl.deleteInvoice(
+        id: event.id, tableName: DatabaseConstants.salesInvoiceHeadTable);
+
+    await invoiceRepoImpl.deleteInvoice(
+        id: event.id, tableName: DatabaseConstants.salesInvoiceDtlTable);
+    emit(OnInvoiceDeleted(id: event.id));
+  }
+
   Future<void> _onPreviewInitial(
       OnPreviewInitial event, Emitter<PreviewState> emit) async {
     InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();

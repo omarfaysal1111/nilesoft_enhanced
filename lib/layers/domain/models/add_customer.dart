@@ -10,7 +10,9 @@ class AddCustomerModel {
   String? phone1;
   String? phone2;
   String? phone3;
-
+  int? cityid;
+  String? governmentid;
+  String? areaid;
   String? userid;
   String? username;
   int? branchid;
@@ -23,6 +25,9 @@ class AddCustomerModel {
       this.main,
       this.name,
       this.phone1,
+      required this.areaid,
+      required this.cityid,
+      required this.governmentid,
       this.phone2,
       this.phone3,
       this.userid,
@@ -36,6 +41,9 @@ class AddCustomerModel {
     glacctype = res["glacctype"];
     main = res["main"];
     phone1 = res["phone1"];
+    governmentid = res["governmentid"];
+    cityid = res["cityid"];
+    areaid = res["areaid"];
     phone2 = res["phone2"];
     phone3 = res["phone3"];
     userid = res["userid"];
@@ -54,6 +62,9 @@ class AddCustomerModel {
       "phone2": "",
       "phone3": "",
       "userid": "",
+      "cityid": cityid,
+      "areaid": areaid,
+      "governmentid": governmentid,
       "username": name,
       "branchid": "0"
     };

@@ -11,3 +11,5 @@ class CashInPrevLoaded extends CashinPrevState {
 
   CashInPrevLoaded({required this.cashinModel});
 }
+
+class CashInDeleted extends CashinPrevState {}

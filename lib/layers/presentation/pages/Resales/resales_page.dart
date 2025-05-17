@@ -27,7 +27,9 @@ class ResalesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => ResalesBloc()..add(ReInitializeDataEvent()),
-      child: const ResalesPageContent(),
+      child: const ResalesPageContent(
+        sent: 0,
+      ),
     );
   }
 }
@@ -49,7 +51,8 @@ String selectedValue = '1';
 bool isEditting = false;
 
 class ResalesPageContent extends StatelessWidget {
-  const ResalesPageContent({super.key});
+  const ResalesPageContent({super.key, required this.sent});
+  final int sent;
 
   @override
   Widget build(BuildContext context) {
@@ -101,24 +104,52 @@ class ResalesPageContent extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     child: BlocConsumer<ResalesBloc, ResalesState>(
                       listener: (context, state) {
+                        if (state is ResalesInitial) {
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          customers = [];
+                          selected = null;
+                          desc.text = "";
+                          tax = 0;
+                          disamController.text = "";
+                          disratController.text = "";
+                          dtl = [];
+                          customers = [];
+                          isEditting = false;
+
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          tax = 0;
+                        }
                         if (state is ResaleToEdit) {
                           dtl = state.salesDtlModel;
                           customers = state.customers;
+                          disamController.text =
+                              state.salesHeadModel.disam.toString();
+                          disratController.text =
+                              state.salesHeadModel.disratio.toString();
                           selected = CustomersModel(
                               state.salesHeadModel.accid,
                               state.salesHeadModel.clientName,
                               state.salesHeadModel.invType);
                           isEditting = true;
                           final myDtl = state.salesDtlModel;
-                          for (var i = 0; i < myDtl.length; i++) {
-                            net = net +
-                                ((myDtl[i].qty)! * (myDtl[i].price)! -
-                                    (myDtl[i].disam)! +
-                                    (myDtl[i].tax)!);
-                            dis = dis + dtl![i].disam!;
-                            tax = tax + dtl![i].tax!;
-                            total = total + dtl![i].price!;
+                          for (var item in myDtl) {
+                            // Calculate item total before discount
+                            double itemTotal =
+                                (item.qty ?? 0) * (item.price ?? 0);
+                            // Add to running total
+                            total += itemTotal;
+
+                            // Add discounts and tax
+                            dis += (item.disam! * item.qty!);
+                            tax += item.tax! * item.qty! * item.price! / 100;
                           }
+
+                          // Calculate final net amount
+                          net = total - dis + tax;
                         }
                         if (state is ResaleUpdateSucc) {
                           total = 0;
@@ -155,7 +186,8 @@ class ResalesPageContent extends StatelessWidget {
                             sent: 0,
                             net: net,
                             disam: double.parse(disamController.text),
-                            disrat: double.tryParse(disratController.text) ?? 0,
+                            disratio:
+                                double.tryParse(disratController.text) ?? 0,
                             docDate: formattedDate,
                             mobile_uuid: mobileUuid,
                             tax: tax,
@@ -172,7 +204,20 @@ class ResalesPageContent extends StatelessWidget {
                                     printingSalesHeadModel: salesHeadModel,
                                     id: salesHeadModel.accid.toString(),
                                     numOfSerials: 0),
-                              ));
+                              )).then((o) {
+                            total = 0;
+                            net = 0;
+                            dis = 0;
+                            customers = [];
+                            selected = null;
+                            desc.text = "";
+                            tax = 0;
+                            disamController.text = "";
+                            disratController.text = "";
+                            dtl = [];
+                            customers = [];
+                            isEditting = false;
+                          });
                           total = 0;
                           net = 0;
                           dis = 0;
@@ -245,7 +290,7 @@ class ResalesPageContent extends StatelessWidget {
                         children: [
                           const Text('اجل'),
                           Radio<String>(
-                            value: '2',
+                            value: '1',
                             groupValue: selectedValue,
                             onChanged: (String? value) {
                               bloc.add(OnSelectCheckBox(value: value!));
@@ -255,7 +300,7 @@ class ResalesPageContent extends StatelessWidget {
                       ),
                       const Text('نقدي'),
                       Radio<String>(
-                        value: '1',
+                        value: '0',
                         groupValue: selectedValue,
                         onChanged: (String? value) {
                           bloc.add(OnSelectCheckBox(value: value!));
@@ -269,129 +314,159 @@ class ResalesPageContent extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: width * 0.4,
-                      child: CustomButton(
-                        color: Colors.black87,
-                        text: "حفظ الفاتورة",
-                        onPressed: () {
-                          if (!isEditting) {
-                            if (selected == null) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("برجاء اختيار العميل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else if (dtl == [] ||
-                                dtl == null ||
-                                dtl!.isEmpty) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text("برجاء اضافة صنف واحد علي الاقل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else {
-                              String formattedDate =
-                                  intl.DateFormat('dd-MM-yyyy')
-                                      .format(DateTime.now());
-                              SalesHeadModel salesHeadModel = SalesHeadModel(
-                                accid: selected!.id,
-                                dis1: dis,
-                                invoiceno: docNo,
-                                sent: 0,
-                                net: net,
-                                docDate: formattedDate,
-                                tax: tax,
-                                disam: double.parse(disamController.text),
-                                disrat:
-                                    double.tryParse(disratController.text) ?? 0,
-                                total: total,
-                                clientName: selected!.name,
-                                descr: desc.text,
-                              );
+                      child: sent == 0
+                          ? CustomButton(
+                              color: Colors.black87,
+                              text: "حفظ الفاتورة",
+                              onPressed: () {
+                                if (!isEditting) {
+                                  if (selected == null) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text("برجاء اختيار العميل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else if (dtl == [] ||
+                                      dtl == null ||
+                                      dtl!.isEmpty) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "برجاء اضافة صنف واحد علي الاقل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else {
+                                    var uuid = const Uuid();
+                                    String mobileUuid = uuid.v1().toString();
 
-                              bloc.add(ReSaveButtonClicked(
-                                  salesHeadModel: salesHeadModel,
-                                  salesDtlModel: dtl!));
-                            }
-                          } else {
-                            if (selected == null) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("برجاء اختيار العميل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else if (dtl == [] ||
-                                dtl == null ||
-                                dtl!.isEmpty) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text("برجاء اضافة صنف واحد علي الاقل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else {
-                              String formattedDate =
-                                  intl.DateFormat('dd-MM-yyyy')
-                                      .format(DateTime.now());
-                              SalesHeadModel salesHeadModel = SalesHeadModel(
-                                accid: selected!.id,
-                                dis1: dis,
-                                invoiceno: docNo,
-                                sent: 0,
-                                id: int.parse(dtl![0].id.toString()),
-                                net: net,
-                                docDate: formattedDate,
-                                tax: tax,
-                                total: total,
-                                clientName: selected!.name,
-                                descr: desc.text,
-                              );
+                                    String formattedDate =
+                                        intl.DateFormat('yyyy-MM-dd')
+                                            .format(DateTime.now());
+                                    SalesHeadModel salesHeadModel =
+                                        SalesHeadModel(
+                                      accid: selected!.id,
+                                      dis1: dis,
+                                      invoiceno: docNo,
+                                      invType: selectedValue,
+                                      sent: 0,
+                                      disam: double.tryParse(
+                                              disamController.text) ??
+                                          0,
+                                      disratio: double.tryParse(
+                                              disratController.text) ??
+                                          0,
+                                      net: net,
+                                      docDate: formattedDate,
+                                      mobile_uuid: mobileUuid,
+                                      tax: tax,
+                                      total: total,
+                                      clientName: selected!.name,
+                                      descr: desc.text,
+                                    );
 
-                              bloc.add(OnUpdateResale(
-                                  headModel: salesHeadModel, dtlModel: dtl!));
-                            }
-                          }
-                        },
-                      ),
+                                    bloc.add(ReSaveButtonClicked(
+                                        salesHeadModel: salesHeadModel,
+                                        salesDtlModel: dtl!));
+                                  }
+                                } else {
+                                  if (selected == null) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text("برجاء اختيار العميل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else if (dtl == [] ||
+                                      dtl == null ||
+                                      dtl!.isEmpty) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "برجاء اضافة صنف واحد علي الاقل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else {
+                                    String formattedDate =
+                                        intl.DateFormat('yyyy-MM-dd')
+                                            .format(DateTime.now());
+                                    var uuid = const Uuid();
+                                    String mobileUuid = uuid.v1().toString();
+                                    SalesHeadModel salesHeadModel =
+                                        SalesHeadModel(
+                                      accid: selected!.id,
+                                      dis1: dis,
+                                      invoiceno: docNo,
+                                      sent: 0,
+                                      id: int.parse(dtl![0].id.toString()),
+                                      net: net,
+                                      docDate: formattedDate,
+                                      tax: tax,
+                                      disam: double.tryParse(
+                                              disamController.text) ??
+                                          0,
+                                      disratio: double.tryParse(
+                                              disratController.text) ??
+                                          0,
+                                      mobile_uuid: mobileUuid,
+                                      total: total,
+                                      clientName: selected!.name,
+                                      descr: desc.text,
+                                    );
+
+                                    bloc.add(OnUpdateResale(
+                                        headModel: salesHeadModel,
+                                        dtlModel: dtl!));
+                                  }
+                                }
+                              },
+                            )
+                          : const SizedBox(),
                     ),
                     SizedBox(
                       width: width * 0.4,
-                      child: CustomButton(
-                        text: "اضافة صنف",
-                        onPressed: () {
-                          bloc.add(ReFetchClientsEvent());
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            showDialog(
-                              context: context,
-                              builder: (dialogContext) {
-                                return BlocProvider.value(
-                                  value: BlocProvider.of<ResalesBloc>(context),
-                                  child: AddnewPopup(
-                                    id: headid,
-                                    isEdit: false,
-                                  ),
-                                );
+                      child: sent == 0
+                          ? CustomButton(
+                              text: "اضافة صنف",
+                              onPressed: () {
+                                bloc.add(ReFetchClientsEvent());
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return BlocProvider.value(
+                                        value: BlocProvider.of<ResalesBloc>(
+                                            context),
+                                        child: AddnewPopup(
+                                          id: headid,
+                                          isEdit: false,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                });
                               },
-                            );
-                          });
-                        },
-                      ),
+                            )
+                          : const SizedBox(),
                     ),
                   ],
                 ),
@@ -401,6 +476,7 @@ class ResalesPageContent extends StatelessWidget {
                     listener: (context, state) {
                       if (state is ResalesEdittedState) {
                         dtl?[state.index] = state.editedItem;
+
                         bloc.add(ResalesPageLoded());
                       }
                       if (state is ResalesInitial) {
@@ -417,15 +493,22 @@ class ResalesPageContent extends StatelessWidget {
 
                         // Calculate totals from items
                         for (var item in myDtl) {
-                          // Calculate item total before discount
-                          double itemTotal =
-                              (item.qty ?? 0) * (item.price ?? 0);
-                          // Add to running total
-                          total += itemTotal;
+                          // Calculate item subtotal before discounts and tax
+                          double qty = item.qty ?? 0;
+                          double price = item.price ?? 0;
+                          double itemSubtotal = qty * price;
 
-                          // Add discounts and tax
-                          dis += item.disam ?? 0;
-                          tax += item.tax ?? 0;
+                          // Calculate item discount (per unit discount * quantity)
+                          double itemDiscount = (item.disam ?? 0) * qty;
+
+                          // Calculate item tax ((tax rate / 100) * subtotal)
+                          double itemTax =
+                              ((item.tax ?? 0) / 100) * itemSubtotal;
+
+                          // Add to running totals
+                          total += itemSubtotal;
+                          dis += itemDiscount;
+                          tax += itemTax;
                         }
 
                         // Calculate final net amount
@@ -462,13 +545,39 @@ class ResalesPageContent extends StatelessWidget {
                                 price: dtl![index].price.toString(),
                                 discount: dtl![index].disam.toString(),
                                 quantity: dtl![index].qty.toString(),
-                                tax: dtl![index].tax.toString(),
-                                total:
-                                    ((dtl![index].qty)! * (dtl![index].price)! -
-                                            (dtl![index].disam)! +
-                                            (dtl![index].tax)!)
-                                        .toString(),
+                                tax: (((dtl![index].tax ?? 0) / 100) *
+                                        (dtl![index].qty ?? 0) *
+                                        (dtl![index].price ?? 0))
+                                    .toStringAsFixed(2),
+                                total: ((dtl![index].qty ?? 0) *
+                                        (dtl![index].price ?? 0))
+                                    .toString(),
                                 onDelete: () {
+                                  dtl!.removeAt(index);
+                                  total = 0;
+                                  net = 0;
+                                  dis = 0;
+                                  tax = 0;
+
+                                  // Calculate totals from items
+                                  for (var item in dtl!) {
+                                    // Calculate item total before discount
+                                    double itemTotal =
+                                        (item.qty ?? 0) * (item.price ?? 0);
+                                    // Add to running total
+                                    total += itemTotal;
+
+                                    // Add discounts and tax
+                                    dis += (item.disam! * item.qty!);
+                                    tax += item.tax! *
+                                        item.qty! *
+                                        item.price! /
+                                        100;
+                                  }
+
+                                  // Calculate final net amount
+                                  net = total - dis + tax;
+                                  bloc.add(ReOnDeleteCard());
                                   // Implement deletion logic
                                 },
                                 onEdit: () {
@@ -510,19 +619,45 @@ class ResalesPageContent extends StatelessWidget {
                                 price: dtl![index].price.toString(),
                                 discount: dtl![index].disam.toString(),
                                 quantity: dtl![index].qty.toString(),
-                                tax: dtl![index].tax.toString(),
-                                total:
-                                    ((dtl![index].qty)! * (dtl![index].price)! -
-                                            (dtl![index].disam)! +
-                                            (dtl![index].tax)!)
-                                        .toString(),
+                                tax: (((dtl![index].tax ?? 0) / 100) *
+                                        (dtl![index].qty ?? 0) *
+                                        (dtl![index].price ?? 0))
+                                    .toStringAsFixed(2),
+                                total: ((dtl![index].qty ?? 0) *
+                                        (dtl![index].price ?? 0))
+                                    .toString(),
                                 onDelete: () {
-                                  // Implement deletion logic
+                                  dtl!.removeAt(index);
+                                  total = 0;
+                                  net = 0;
+                                  dis = 0;
+                                  tax = 0;
+
+                                  // Calculate totals from items
+                                  for (var item in dtl!) {
+                                    // Calculate item total before discount
+                                    double itemTotal =
+                                        (item.qty ?? 0) * (item.price ?? 0);
+                                    // Add to running total
+                                    total += itemTotal;
+
+                                    // Add discounts and tax
+                                    dis += (item.disam! * item.qty!);
+                                    tax += item.tax! *
+                                        item.qty! *
+                                        item.price! /
+                                        100;
+                                  }
+
+                                  // Calculate final net amount
+                                  net = total - dis + tax;
+                                  bloc.add(ReOnDeleteCard());
                                 },
                                 onEdit: () {
                                   // bloc.add(EditPressed(
                                   //     salesDtlModel: chosenClients[index],
                                   //     index: index));
+                                  editindex = index;
                                   editindex = index;
                                   bloc.add(ReEditPressed(
                                       salesDtlModel: dtl![index],
@@ -536,9 +671,7 @@ class ResalesPageContent extends StatelessWidget {
                                           value: BlocProvider.of<ResalesBloc>(
                                               context),
                                           child: AddnewPopup(
-                                            isEdit: true,
-                                            id: headid,
-                                          ),
+                                              isEdit: true, id: headid),
                                         );
                                       },
                                     );
@@ -585,13 +718,41 @@ class ResalesPageContent extends StatelessWidget {
                                     price: dtl![index].price.toString(),
                                     discount: dtl![index].disam.toString(),
                                     quantity: dtl![index].qty.toString(),
-                                    tax: dtl![index].tax.toString(),
+                                    tax: (((dtl![index].tax ?? 0) / 100) *
+                                            (dtl![index].qty ?? 0) *
+                                            (dtl![index].price ?? 0))
+                                        .toStringAsFixed(2),
                                     total: ((dtl![index].qty ?? 0) *
                                                 (dtl![index].price ?? 0) -
-                                            (dtl![index].disam ?? 0) +
-                                            (dtl![index].tax ?? 0))
-                                        .toStringAsFixed(2),
+                                            ((dtl![index].disam ?? 0) *
+                                                (dtl![index].qty ?? 0)))
+                                        .toString(),
                                     onDelete: () {
+                                      dtl!.removeAt(index);
+                                      total = 0;
+                                      net = 0;
+                                      dis = 0;
+                                      tax = 0;
+
+                                      // Calculate totals from items
+                                      for (var item in dtl!) {
+                                        // Calculate item total before discount
+                                        double itemTotal =
+                                            (item.qty ?? 0) * (item.price ?? 0);
+                                        // Add to running total
+                                        total += itemTotal;
+
+                                        // Add discounts and tax
+                                        dis += (item.disam! * item.qty!);
+                                        tax += item.tax! *
+                                            item.qty! *
+                                            item.price! /
+                                            100;
+                                      }
+
+                                      // Calculate final net amount
+                                      net = total - dis + tax;
+                                      bloc.add(ReOnDeleteCard());
                                       // Implement deletion logic
                                     },
                                     onEdit: () {

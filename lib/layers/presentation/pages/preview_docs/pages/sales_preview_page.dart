@@ -18,34 +18,35 @@ class SalesPreviewPage extends StatefulWidget {
 class _SalesPreviewPageState extends State<SalesPreviewPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int currentTabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(_onTabChanged); // Listen for tab changes
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_onTabChanged);
+    context.read<PreviewBloc>().add(OnPreviewSent());
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(_onTabChanged); // Remove listener
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
   }
 
   void _onTabChanged() {
-    if (_tabController.indexIsChanging)
-      return; // Ignore if the index is still changing
+    if (_tabController.indexIsChanging) return;
 
-    // Dispatch events based on the selected tab
+    setState(() {
+      currentTabIndex = _tabController.index;
+    });
+
     switch (_tabController.index) {
       case 0:
-        context.read<PreviewBloc>().add(OnPreviewInitial());
-        break;
-      case 1:
         context.read<PreviewBloc>().add(OnPreviewSent());
         break;
-      case 2:
+      case 1:
         context.read<PreviewBloc>().add(OnPreviewUnsent());
         break;
     }
@@ -76,7 +77,6 @@ class _SalesPreviewPageState extends State<SalesPreviewPage>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'الجميع'),
             Tab(text: 'المرسلة'),
             Tab(text: 'الغير مرسلة'),
           ],
@@ -90,179 +90,86 @@ class _SalesPreviewPageState extends State<SalesPreviewPage>
       body: TabBarView(
         controller: _tabController,
         children: [
-          // First tab: الجميع
-          BlocConsumer<PreviewBloc, PreviewState>(
-            listener: (BuildContext context, PreviewState state) {},
-            builder: (BuildContext context, PreviewState state) {
-              if (state is DocPreviewInitial) {
-                context.read<PreviewBloc>().add(OnPreviewInitial());
-                return const Center(
-                  child: Text(
-                    "جاري التحميل",
-                    style: TextStyle(
-                      fontFamily: 'Almarai',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-              }
-              if (state is DocPreviewLoaded) {
-                return ListView.builder(
-                  itemCount: state.salesModel.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DocInfoCard(
-                        customerName:
-                            state.salesModel[index].clientName.toString(),
-                        dateValue: state.salesModel[index].docDate.toString(),
-                        netValue: state.salesModel[index].net ?? 0,
-                        docNumber: state.salesModel[index].invoiceno.toString(),
-                        onViewPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider(
-                                create: (context) => InvoiceBloc()
-                                  ..add(OnInvoiceToEdit(
-                                      state.salesModel[index].id!)),
-                                child: const InvoicePageContent(
-                                  extraTitle: "المبيعات",
-                                  invoiceType: 0,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              }
-              return const Center(
-                child: Text(
-                  "لا توجد بيانات",
-                  style: TextStyle(fontFamily: 'Almarai'),
-                ),
-              );
-            },
-          ),
-          // Second tab: المرسلة
-          BlocConsumer<PreviewBloc, PreviewState>(
-            listener: (BuildContext context, PreviewState state) {},
-            builder: (BuildContext context, PreviewState state) {
-              if (state is DocPreviewInitial) {
-                context.read<PreviewBloc>().add(OnPreviewSent());
-                return const Center(
-                  child: Text(
-                    "جاري التحميل",
-                    style: TextStyle(
-                      fontFamily: 'Almarai',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-              }
-              if (state is DocPreviewLoaded) {
-                return ListView.builder(
-                  itemCount: state.salesModel.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DocInfoCard(
-                        customerName:
-                            state.salesModel[index].clientName.toString(),
-                        dateValue: state.salesModel[index].docDate.toString(),
-                        netValue: state.salesModel[index].net ?? 0,
-                        docNumber: state.salesModel[index].invoiceno.toString(),
-                        onViewPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider(
-                                create: (context) => InvoiceBloc()
-                                  ..add(OnInvoiceToEdit(
-                                      state.salesModel[index].id!)),
-                                child: const InvoicePageContent(
-                                  extraTitle: "المبيعات",
-                                  invoiceType: 0,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              }
-              return const Center(
-                child: Text(
-                  "لا توجد بيانات",
-                  style: TextStyle(fontFamily: 'Almarai'),
-                ),
-              );
-            },
-          ),
-          // Third tab: الغير مرسلة
-          BlocConsumer<PreviewBloc, PreviewState>(
-            listener: (BuildContext context, PreviewState state) {},
-            builder: (BuildContext context, PreviewState state) {
-              if (state is DocPreviewInitial) {
-                context.read<PreviewBloc>().add(OnPreviewUnsent());
-                return const Center(
-                  child: Text(
-                    "جاري التحميل",
-                    style: TextStyle(
-                      fontFamily: 'Almarai',
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                );
-              }
-              if (state is DocPreviewLoaded) {
-                return ListView.builder(
-                  itemCount: state.salesModel.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: DocInfoCard(
-                        customerName:
-                            state.salesModel[index].clientName.toString(),
-                        dateValue: state.salesModel[index].docDate.toString(),
-                        netValue: state.salesModel[index].net ?? 0,
-                        docNumber: state.salesModel[index].invoiceno.toString(),
-                        onViewPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider(
-                                create: (context) => InvoiceBloc()
-                                  ..add(OnInvoiceToEdit(
-                                      state.salesModel[index].id!)),
-                                child: const InvoicePageContent(
-                                  extraTitle: "المبيعات",
-                                  invoiceType: 0,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              }
-              return const Center(
-                child: Text(
-                  "لا توجد بيانات",
-                  style: TextStyle(fontFamily: 'Almarai'),
-                ),
-              );
-            },
-          ),
+          _buildSalesPreviewContent(isSentTab: true),
+          _buildSalesPreviewContent(isSentTab: false),
         ],
       ),
+    );
+  }
+
+  Widget _buildSalesPreviewContent({required bool isSentTab}) {
+    return BlocConsumer<PreviewBloc, PreviewState>(
+      listener: (BuildContext context, PreviewState state) {
+        if (state is OnInvoiceDeleted) {
+          context.read<PreviewBloc>().add(OnPreviewInitial());
+        }
+      },
+      builder: (BuildContext context, PreviewState state) {
+        if (state is DocPreviewInitial) {
+          return const Center(
+            child: Text(
+              "جاري التحميل",
+              style: TextStyle(
+                fontFamily: 'Almarai',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          );
+        }
+
+        if (state is DocPreviewLoaded) {
+          return ListView.builder(
+            itemCount: state.salesModel.length,
+            itemBuilder: (context, index) {
+              final item = state.salesModel[index];
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Stack(
+                  children: [
+                    DocInfoCard(
+                      customerName: item.clientName.toString(),
+                      dateValue: item.docDate.toString(),
+                      netValue: item.net ?? 0,
+                      docNumber: item.invoiceno.toString(),
+                      onViewPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BlocProvider(
+                              create: (context) =>
+                                  InvoiceBloc()..add(OnInvoiceToEdit(item.id!)),
+                              child: InvoicePageContent(
+                                extraTitle: "المبيعات",
+                                sent: isSentTab ? 1 : 0,
+                                invoiceType: 0,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      sent: isSentTab ? 1 : 0,
+                      onDelete: () {
+                        if (!isSentTab) {
+                          context
+                              .read<PreviewBloc>()
+                              .add(OnInvoiceDelete(id: item.id!));
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }
+
+        return const Center(
+          child: Text(
+            "لا توجد بيانات",
+            style: TextStyle(fontFamily: 'Almarai'),
+          ),
+        );
+      },
     );
   }
 }

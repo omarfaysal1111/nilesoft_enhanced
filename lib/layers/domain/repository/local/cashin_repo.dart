@@ -12,4 +12,6 @@ abstract class CashinRepo {
   Future<void> updateCashIn(
       {required CashinModel model, required String tableName});
   Future<void> createCashInDtl({required CashInDtl cashinDtl});
+  Future<List<CashinModel>> getSentInvoices({required String tableName});
+  Future<List<CashinModel>> getUnsentInvoices({required String tableName});
 }

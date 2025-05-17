@@ -33,6 +33,8 @@ class OnDisamChanged extends ResalesEvent {
   OnDisamChanged(this.total, this.previousDis, this.net, {required this.value});
 }
 
+class ReOnDeleteCard extends ResalesEvent {}
+
 class OnDisratChanged extends ResalesEvent {
   final double value;
   final double total;

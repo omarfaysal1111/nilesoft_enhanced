@@ -137,6 +137,8 @@ class DisratChanged extends InvoiceState {
   DisratChanged(this.net, {required this.amValue, required this.ratValue});
 }
 
+class CardDeleted extends InvoiceState {}
+
 class QRCodeInitial extends InvoiceState {}
 
 class QRCodeScanning extends InvoiceState {}

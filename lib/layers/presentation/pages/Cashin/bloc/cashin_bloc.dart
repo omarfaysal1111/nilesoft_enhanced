@@ -87,7 +87,7 @@ class CashinBloc extends Bloc<CashinEvent, CashinState> {
     List<Map<String, Object?>> queryResult1 = await dbHelper.db.rawQuery(s1);
     docNumber = "MOB${queryResult1[0]["m"]}";
     String s2 =
-        "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
+        "SELECT MAX(id) as latestId FROM ${DatabaseConstants.cashinHeadTable}";
     List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
 
     if (queryResult2[0]["latestId"].toString() != "null") {

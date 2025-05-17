@@ -11,3 +11,8 @@ class ReDocPreviewLoaded extends RePreviewState {
 
   ReDocPreviewLoaded({required this.salesModel});
 }
+
+class OnReInvoiceDeleted extends RePreviewState {
+  final int id;
+  OnReInvoiceDeleted({required this.id});
+}

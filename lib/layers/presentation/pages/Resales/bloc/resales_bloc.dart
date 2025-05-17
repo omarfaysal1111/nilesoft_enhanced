@@ -25,6 +25,7 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     on<ReOnDiscountChanged>(_onDiscountChanged);
     on<ReOnDiscountRatioChanged>(_onDiscountRatioChanged);
     on<ReEditPressed>(_onEditPressed);
+    on<ReOnDeleteCard>(_onDeleteCard);
     on<ReEditResalesItemEvent>(_onEditItem);
     on<OnResaleToEdit>(_onInvoiceToEdit);
     on<OnUpdateResale>(_onUpdatingInvoice);
@@ -152,6 +153,10 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
         customers: customers));
   }
 
+  void _onDeleteCard(ReOnDeleteCard event, Emitter<ResalesState> emit) {
+    emit(ReCardDeleted());
+  }
+
   Future<void> _onFetchCustomers(
       ReFetchCustomersEvent event, Emitter<ResalesState> emit) async {
     DatabaseHelper dbHelper = DatabaseHelper();
@@ -268,6 +273,7 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
 
   Future<void> _onInitializeData(
       ReInitializeDataEvent event, Emitter<ResalesState> emit) async {
+    emit(ResalesInitial());
     add(ReFetchClientsEvent());
     add(ReFetchCustomersEvent());
   }

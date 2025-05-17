@@ -20,7 +20,7 @@ class DatabaseHelper {
   }
   Future<void> initDB() async {
     String path = await getDatabasesPath();
-    db = await openDatabase(join(path, 'NileSoftv1.db'),
+    db = await openDatabase(join(path, 'NileSoftv7.db'),
         onCreate: (database, version) async {
       await database.execute(
         """
@@ -77,6 +77,30 @@ class DatabaseHelper {
                net REAL ALLOW NULL,
 
               sent INTEGER ALLOW NULL
+            )
+          """,
+      );
+      await database.execute(
+        """
+            CREATE TABLE areas (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              name TEXT ALLOW NULL
+            )
+          """,
+      );
+      await database.execute(
+        """
+            CREATE TABLE cities (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              name TEXT ALLOW NULL
+            )
+          """,
+      );
+      await database.execute(
+        """
+            CREATE TABLE govs (
+              id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              name TEXT ALLOW NULL
             )
           """,
       );

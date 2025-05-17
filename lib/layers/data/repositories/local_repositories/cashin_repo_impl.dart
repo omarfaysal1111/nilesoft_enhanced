@@ -14,9 +14,10 @@ class CashinRepoImpl implements CashinRepo {
   }
 
   @override
-  Future<void> deleteCashIn({required int id}) {
-    //
-    throw UnimplementedError();
+  Future<void> deleteCashIn({required int id}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    await _databaseHelper.deleteRecord(DatabaseConstants.cashinHeadTable, id);
+    await _databaseHelper.deleteRecord(DatabaseConstants.cashInDtlTable, id);
   }
 
   @override
@@ -54,5 +55,20 @@ class CashinRepoImpl implements CashinRepo {
     DatabaseConstants.startDB(_databaseHelper);
     await _databaseHelper.insertRecord<CashInDtl>(
         cashinDtl, DatabaseConstants.cashInDtlTable);
+  }
+
+  @override
+  Future<List<CashinModel>> getSentInvoices({required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getRecordWhereSent(
+        tableName, 1, CashinModel.fromMap);
+  }
+
+  @override
+  Future<List<CashinModel>> getUnsentInvoices(
+      {required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+    return await _databaseHelper.getRecordWhereSent(
+        tableName, 0, CashinModel.fromMap);
   }
 }

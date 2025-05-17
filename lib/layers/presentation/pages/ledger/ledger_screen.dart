@@ -12,6 +12,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_bloc.d
 import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_state.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_ledger.dart';
 
 String fromDate = "";
 String toDate = "";
@@ -53,10 +54,31 @@ class LedgerScreen extends StatelessWidget {
           backgroundColor: Colors.white,
           appBar: AppBar(
             backgroundColor: Colors.white,
-            title: const Row(
+            title: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Directionality(
+                IconButton(
+                    onPressed: () async {
+                      if (ledgers.isNotEmpty && selectedCustomer != null) {
+                        await generateAndShareLedgerPdf(
+                          ledgers: ledgers,
+                          customerName: selectedCustomer!.name ?? '',
+                          fromDate: fromDate,
+                          toDate: toDate,
+                          openbal: openbal,
+                          debit: debit,
+                          credit: credit,
+                          currentbal: currentbal,
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('يرجى تحديد البيانات أولاً')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.share)),
+                const Directionality(
                   textDirection: TextDirection.rtl,
                   child: Text(
                     "تقرير كشف حساب عميل",

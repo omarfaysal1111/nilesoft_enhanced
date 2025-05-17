@@ -33,8 +33,11 @@ class InvoicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => InvoiceBloc()..add(InitializeDataEvent()),
-      child:
-          InvoicePageContent(extraTitle: extraTitle, invoiceType: invoiceType),
+      child: InvoicePageContent(
+        extraTitle: extraTitle,
+        invoiceType: invoiceType,
+        sent: 0,
+      ),
     );
   }
 }
@@ -57,9 +60,13 @@ String selectedValue = '1';
 
 class InvoicePageContent extends StatelessWidget {
   const InvoicePageContent(
-      {super.key, required this.extraTitle, required this.invoiceType});
+      {super.key,
+      required this.extraTitle,
+      required this.invoiceType,
+      required this.sent});
   final String extraTitle;
   final int invoiceType;
+  final int sent;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +124,25 @@ class InvoicePageContent extends StatelessWidget {
                     textDirection: TextDirection.rtl,
                     child: BlocConsumer<InvoiceBloc, InvoiceState>(
                       listener: (context, state) {
+                        if (state is InvoiceInitial) {
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          customers = [];
+                          selected = null;
+                          desc.text = "";
+                          tax = 0;
+                          disamController.text = "";
+                          disratController.text = "";
+                          dtl = [];
+                          customers = [];
+                          isEditting = false;
+
+                          total = 0;
+                          net = 0;
+                          dis = 0;
+                          tax = 0;
+                        }
                         if (state is CheckBoxSelected) {
                           selectedValue = state.value;
                         }
@@ -136,21 +162,23 @@ class InvoicePageContent extends StatelessWidget {
                         }
                         if (state is InvoiceToEdit) {
                           dtl = state.salesDtlModel;
+                          headid = state.salesHeadModel.id ?? 0;
                           isEditting = true;
                           customers = state.customers;
+                          disamController.text =
+                              state.salesHeadModel.disam.toString();
+                          disratController.text =
+                              state.salesHeadModel.disratio.toString();
                           selected = CustomersModel(
                               state.salesHeadModel.accid,
                               state.salesHeadModel.clientName,
                               state.salesHeadModel.invType);
                           final myDtl = state.salesDtlModel;
                           for (var i = 0; i < myDtl.length; i++) {
-                            net = net +
-                                ((myDtl[i].qty)! * (myDtl[i].price)! -
-                                    (myDtl[i].disam)! +
-                                    (myDtl[i].tax)!);
-                            dis = dis + dtl![i].disam!;
-                            tax = tax + dtl![i].tax!;
-                            total = total + dtl![i].price!;
+                            dis = dis + dtl![i].disam! * dtl![i].qty!;
+                            tax = tax + dtl![i].tax! * dtl![i].qty!;
+                            total = total + dtl![i].price! * dtl![i].qty!;
+                            net = total - dis + tax;
                           }
                         }
                         if (state is SaveSuccess) {
@@ -170,7 +198,11 @@ class InvoicePageContent extends StatelessWidget {
                             accid: selected!.id,
                             dis1: dis,
                             invoiceno: docNo,
+                            invType: selectedValue,
                             sent: 0,
+                            disam: double.tryParse(disamController.text) ?? 0,
+                            disratio:
+                                double.tryParse(disratController.text) ?? 0,
                             net: net,
                             docDate: formattedDate,
                             mobile_uuid: mobileUuid,
@@ -188,7 +220,20 @@ class InvoicePageContent extends StatelessWidget {
                                     printingSalesHeadModel: salesHeadModel,
                                     id: salesHeadModel.accid.toString(),
                                     numOfSerials: 0),
-                              ));
+                              )).then((o) {
+                            total = 0;
+                            net = 0;
+                            dis = 0;
+                            customers = [];
+                            selected = null;
+                            desc.text = "";
+                            tax = 0;
+                            disamController.text = "";
+                            disratController.text = "";
+                            dtl = [];
+                            customers = [];
+                            isEditting = false;
+                          });
                           total = 0;
                           net = 0;
                           dis = 0;
@@ -278,7 +323,7 @@ class InvoicePageContent extends StatelessWidget {
                             children: [
                               const Text('اجل'),
                               Radio<String>(
-                                value: '2',
+                                value: '1',
                                 groupValue: selectedValue,
                                 onChanged: (String? value) {
                                   bloc.add(OnSelectCheckBox(value: value!));
@@ -288,7 +333,7 @@ class InvoicePageContent extends StatelessWidget {
                           ),
                           const Text('نقدي'),
                           Radio<String>(
-                            value: '1',
+                            value: '0',
                             groupValue: selectedValue,
                             onChanged: (String? value) {
                               bloc.add(OnSelectCheckBox(value: value!));
@@ -303,135 +348,159 @@ class InvoicePageContent extends StatelessWidget {
                   children: [
                     SizedBox(
                       width: width * 0.4,
-                      child: CustomButton(
-                        color: Colors.black87,
-                        text: "حفظ الفاتورة",
-                        onPressed: () {
-                          if (!isEditting) {
-                            if (selected == null) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("برجاء اختيار العميل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else if (dtl == [] ||
-                                dtl == null ||
-                                dtl!.isEmpty) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text("برجاء اضافة صنف واحد علي الاقل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else {
-                              var uuid = const Uuid();
+                      child: sent == 0
+                          ? CustomButton(
+                              color: Colors.black87,
+                              text: "حفظ الفاتورة",
+                              onPressed: () {
+                                if (!isEditting) {
+                                  if (selected == null) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text("برجاء اختيار العميل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else if (dtl == [] ||
+                                      dtl == null ||
+                                      dtl!.isEmpty) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "برجاء اضافة صنف واحد علي الاقل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else {
+                                    var uuid = const Uuid();
 
-                              // ignore: non_constant_identifier_names
-                              String mobile_uuid = uuid.v1().toString();
-                              String formattedDate =
-                                  intl.DateFormat('yyyy-MM-dd')
-                                      .format(DateTime.now());
-                              SalesHeadModel salesHeadModel = SalesHeadModel(
-                                accid: selected!.id,
-                                dis1: dis,
-                                invoiceno: docNo,
-                                sent: 0,
-                                disam: double.parse(disamController.text),
-                                disrat:
-                                    double.tryParse(disratController.text) ?? 0,
-                                net: net,
-                                docDate: formattedDate,
-                                invType: selectedValue,
-                                mobile_uuid: mobile_uuid,
-                                tax: tax,
-                                total: total,
-                                clientName: selected!.name,
-                                descr: desc.text,
-                              );
+                                    // ignore: non_constant_identifier_names
+                                    String mobile_uuid = uuid.v1().toString();
+                                    String formattedDate =
+                                        intl.DateFormat('yyyy-MM-dd')
+                                            .format(DateTime.now());
+                                    SalesHeadModel salesHeadModel =
+                                        SalesHeadModel(
+                                      accid: selected!.id,
+                                      dis1: dis,
+                                      invoiceno: docNo,
+                                      sent: 0,
+                                      disam: double.parse(disamController.text),
+                                      disratio: double.tryParse(
+                                              disratController.text) ??
+                                          0,
+                                      net: net,
+                                      docDate: formattedDate,
+                                      invType: selectedValue,
+                                      mobile_uuid: mobile_uuid,
+                                      tax: tax,
+                                      total: total,
+                                      clientName: selected!.name,
+                                      descr: desc.text,
+                                    );
 
-                              bloc.add(SaveButtonClicked(
-                                  salesHeadModel: salesHeadModel,
-                                  salesDtlModel: dtl!));
-                            }
-                          } else {
-                            if (selected == null) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("برجاء اختيار العميل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else if (dtl == [] ||
-                                dtl == null ||
-                                dtl!.isEmpty) {
-                              SchedulerBinding.instance
-                                  .addPostFrameCallback((_) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text("برجاء اضافة صنف واحد علي الاقل"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              });
-                            } else {
-                              String formattedDate =
-                                  intl.DateFormat('dd-MM-yyyy')
-                                      .format(DateTime.now());
-                              SalesHeadModel salesHeadModel = SalesHeadModel(
-                                accid: selected!.id,
-                                dis1: dis,
-                                invoiceno: docNo,
-                                sent: 0,
-                                id: int.parse(dtl![0].id.toString()),
-                                net: net,
-                                docDate: formattedDate,
-                                tax: tax,
-                                total: total,
-                                clientName: selected!.name,
-                                descr: desc.text,
-                              );
+                                    bloc.add(SaveButtonClicked(
+                                        salesHeadModel: salesHeadModel,
+                                        salesDtlModel: dtl!));
+                                  }
+                                } else {
+                                  if (selected == null) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text("برجاء اختيار العميل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else if (dtl == [] ||
+                                      dtl == null ||
+                                      dtl!.isEmpty) {
+                                    SchedulerBinding.instance
+                                        .addPostFrameCallback((_) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "برجاء اضافة صنف واحد علي الاقل"),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    });
+                                  } else {
+                                    var uuid = const Uuid();
 
-                              bloc.add(OnUpdateInvoice(
-                                  headModel: salesHeadModel, dtlModel: dtl!));
-                            }
-                          }
-                        },
-                      ),
+                                    // ignore: non_constant_identifier_names
+                                    String mobile_uuid = uuid.v1().toString();
+                                    String formattedDate =
+                                        intl.DateFormat('yyyy-MM-dd')
+                                            .format(DateTime.now());
+                                    SalesHeadModel salesHeadModel =
+                                        SalesHeadModel(
+                                      id: headid,
+                                      accid: selected!.id,
+                                      dis1: dis,
+                                      invoiceno: docNo,
+                                      sent: 0,
+                                      disam: double.parse(disamController.text),
+                                      disratio: double.tryParse(
+                                              disratController.text) ??
+                                          0,
+                                      net: net,
+                                      docDate: formattedDate,
+                                      invType: selectedValue,
+                                      mobile_uuid: mobile_uuid,
+                                      tax: tax,
+                                      total: total,
+                                      clientName: selected!.name,
+                                      descr: desc.text,
+                                    );
+
+                                    bloc.add(OnUpdateInvoice(
+                                        headModel: salesHeadModel,
+                                        dtlModel: dtl ?? []));
+                                  }
+                                }
+                              },
+                            )
+                          : const SizedBox(),
                     ),
                     SizedBox(
                       width: width * 0.4,
-                      child: CustomButton(
-                        text: "اضافة صنف",
-                        onPressed: () {
-                          bloc.add(FetchClientsEvent());
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            showDialog(
-                              context: context,
-                              builder: (dialogContext) {
-                                return BlocProvider.value(
-                                  value: BlocProvider.of<InvoiceBloc>(context),
-                                  child: AddnewPopup(
-                                    isEdit: false,
-                                    headId: headid,
-                                  ),
-                                );
+                      child: sent == 0
+                          ? CustomButton(
+                              text: "اضافة صنف",
+                              onPressed: () {
+                                bloc.add(FetchClientsEvent());
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (dialogContext) {
+                                      return BlocProvider.value(
+                                        value: BlocProvider.of<InvoiceBloc>(
+                                            context),
+                                        child: AddnewPopup(
+                                          isEdit: false,
+                                          headId: headid,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                });
                               },
-                            );
-                          });
-                        },
-                      ),
+                            )
+                          : const SizedBox(),
                     ),
                   ],
                 ),
@@ -439,6 +508,9 @@ class InvoicePageContent extends StatelessWidget {
                 Expanded(
                   child: BlocConsumer<InvoiceBloc, InvoiceState>(
                     listener: (context, state) {
+                      if (state is CardDeleted) {
+                        dtl = dtl;
+                      }
                       if (state is InvoiceEdittedState) {
                         dtl?[state.index] = state.editedItem;
                         bloc.add(InvoicePageLoded());
@@ -464,8 +536,8 @@ class InvoicePageContent extends StatelessWidget {
                           total += itemTotal;
 
                           // Add discounts and tax
-                          dis += item.disam ?? 0;
-                          tax += item.tax ?? 0;
+                          dis += (item.disam! * item.qty!);
+                          tax += item.tax! * item.qty! * item.price! / 100;
                         }
 
                         // Calculate final net amount
@@ -502,13 +574,34 @@ class InvoicePageContent extends StatelessWidget {
                                 discount: dtl![index].disam.toString(),
                                 quantity: dtl![index].qty.toString(),
                                 tax: dtl![index].tax.toString(),
-                                total:
-                                    ((dtl![index].qty)! * (dtl![index].price)! -
-                                            (dtl![index].disam)! +
-                                            (dtl![index].tax)!)
-                                        .toString(),
+                                total: (dtl![index].price! * dtl![index].qty!)
+                                    .toString(),
                                 onDelete: () {
-                                  // Implement deletion logic
+                                  dtl!.removeAt(index);
+                                  total = 0;
+                                  net = 0;
+                                  dis = 0;
+                                  tax = 0;
+
+                                  // Calculate totals from items
+                                  for (var item in dtl!) {
+                                    // Calculate item total before discount
+                                    double itemTotal =
+                                        (item.qty ?? 0) * (item.price ?? 0);
+                                    // Add to running total
+                                    total += itemTotal;
+
+                                    // Add discounts and tax
+                                    dis += (item.disam! * item.qty!);
+                                    tax += item.tax! *
+                                        item.qty! *
+                                        item.price! /
+                                        100;
+                                  }
+
+                                  // Calculate final net amount
+                                  net = total - dis + tax;
+                                  bloc.add(OnDeleteCard());
                                 },
                                 onEdit: () {
                                   editindex = index;
@@ -550,13 +643,34 @@ class InvoicePageContent extends StatelessWidget {
                                 discount: dtl![index].disam.toString(),
                                 quantity: dtl![index].qty.toString(),
                                 tax: dtl![index].tax.toString(),
-                                total:
-                                    ((dtl![index].qty)! * (dtl![index].price)! -
-                                            (dtl![index].disam)! +
-                                            (dtl![index].tax)!)
-                                        .toString(),
+                                total: (dtl![index].price! * dtl![index].qty!)
+                                    .toString(),
                                 onDelete: () {
-                                  // Implement deletion logic
+                                  dtl!.removeAt(index);
+                                  total = 0;
+                                  net = 0;
+                                  dis = 0;
+                                  tax = 0;
+
+                                  // Calculate totals from items
+                                  for (var item in dtl!) {
+                                    // Calculate item total before discount
+                                    double itemTotal =
+                                        (item.qty ?? 0) * (item.price ?? 0);
+                                    // Add to running total
+                                    total += itemTotal;
+
+                                    // Add discounts and tax
+                                    dis += (item.disam! * item.qty!);
+                                    tax += item.tax! *
+                                        item.qty! *
+                                        item.price! /
+                                        100;
+                                  }
+
+                                  // Calculate final net amount
+                                  net = total - dis + tax;
+                                  bloc.add(OnDeleteCard());
                                 },
                                 onEdit: () {
                                   // bloc.add(EditPressed(
@@ -626,12 +740,34 @@ class InvoicePageContent extends StatelessWidget {
                                     quantity: dtl![index].qty.toString(),
                                     tax: dtl![index].tax.toString(),
                                     total: ((dtl![index].qty)! *
-                                                (dtl![index].price)! -
-                                            (dtl![index].disam)! +
-                                            (dtl![index].tax)!)
+                                            (dtl![index].price)!)
                                         .toString(),
                                     onDelete: () {
-                                      // Implement deletion logic
+                                      dtl!.removeAt(index);
+                                      total = 0;
+                                      net = 0;
+                                      dis = 0;
+                                      tax = 0;
+
+                                      // Calculate totals from items
+                                      for (var item in dtl!) {
+                                        // Calculate item total before discount
+                                        double itemTotal =
+                                            (item.qty ?? 0) * (item.price ?? 0);
+                                        // Add to running total
+                                        total += itemTotal;
+
+                                        // Add discounts and tax
+                                        dis += (item.disam! * item.qty!);
+                                        tax += item.tax! *
+                                            item.qty! *
+                                            item.price! /
+                                            100;
+                                      }
+
+                                      // Calculate final net amount
+                                      net = total - dis + tax;
+                                      bloc.add(OnDeleteCard());
                                     },
                                     onEdit: () {
                                       // bloc.add(EditPressed(
@@ -702,12 +838,12 @@ class InvoicePageContent extends StatelessWidget {
                       ),
                     ),
                     child: SummaryCard(
-                      total: net.toString(),
+                      total: total.toString(),
                       disamController: disamController,
                       disratController: disratController,
                       discount: dis.toString(),
                       tax: tax.toString(),
-                      net: total.toString(),
+                      net: net.toString(),
                       amChanged: (String value) {
                         double amValue = double.tryParse(value) ?? 0;
                         net = total - amValue + tax;
@@ -743,16 +879,19 @@ class InvoicePageContent extends StatelessWidget {
                     disamController: disamController,
                     disratController: disratController,
                     discount: dis.toString(),
-                    tax: tax.toString(),
-                    net: net.toString(),
+                    tax: (tax).toString(),
+                    net: net.toString(), // Show net amount // Show total amount
                     amChanged: (String value) {
                       double amValue = double.tryParse(value) ?? 0;
+                      // Calculate net: total - discount + tax
                       net = total - amValue + tax;
                       bloc.add(OnDisamChanged(total, dis, net, value: amValue));
                     },
                     ratChanged: (String value) {
                       double ratValue = double.tryParse(value) ?? 0;
+                      // Calculate discount amount from rate
                       double amValue = (ratValue / 100) * total;
+                      // Calculate net: total - discount + tax
                       net = total - amValue + tax;
                       bloc.add(
                           OnDisratChanged(total, dis, net, value: ratValue));

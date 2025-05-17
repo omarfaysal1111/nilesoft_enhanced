@@ -32,20 +32,19 @@ class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
           headTableName,
           int.parse(invoicesHead[i]["id"].toString()),
           SalesHeadModel.fromMap);
-      salesHeadModel!.invType = "0";
 
-      salesHeadModel.cashaccid = settingsModel[0].cashaccId;
+      salesHeadModel!.cashaccid = settingsModel[0].cashaccId;
       salesHeadModel.invenid = settingsModel[0].invId;
       salesHeadModel.visaid = settingsModel[0].visaId;
       invoices.add(SalesModel(
           salesHeadModel: salesHeadModel, salesdtlModel: salesDtlModel));
 
-      await MainFun.postReq(SalesModel.fromMap, endPoint, invoices[i].toMap());
+      await MainFun.postReq(SalesModel.fromMap, endPoint, invoices[0].toMap());
       if (kDebugMode) {
-        print(invoices[i].toMap());
+        print(invoices[0].toMap());
       }
       databaseHelper.db.rawUpdate(
-          "UPDATE $headTableName SET sent = 1 where id='${invoices[i].salesHeadModel!.id}'");
+          "UPDATE $headTableName SET sent = 1 where id='${invoices[0].salesHeadModel!.id}'");
     }
   }
 }

@@ -39,7 +39,7 @@ class CashinModel implements BaseModel {
   double? total;
   double? disc;
   double? net1;
-
+  int? sent;
   int? branchid;
   int? shiftid;
 
@@ -49,6 +49,7 @@ class CashinModel implements BaseModel {
     this.docNo,
     this.total,
     this.accId,
+    this.sent,
     this.clint,
     this.mobileuuid,
     this.descr,
@@ -58,6 +59,7 @@ class CashinModel implements BaseModel {
     docDate = res['docdate'];
     total = res['total'];
     clint = res["client"];
+    sent = res["sent"];
     mobileuuid = res["mobile_uuid"];
     docNo = res["docno"];
     descr = res["descr"];
@@ -69,6 +71,7 @@ class CashinModel implements BaseModel {
       "id": id,
       "docdate": docDate,
       "total": total,
+      "sent": sent,
       "descr": descr,
       "docno": docNo,
       "client": clint,

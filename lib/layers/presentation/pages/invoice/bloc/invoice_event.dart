@@ -97,6 +97,8 @@ class QRCodeDetected extends InvoiceEvent {
   QRCodeDetected(this.qrCode);
 }
 
+class OnDeleteCard extends InvoiceEvent {}
+
 class OnDisamChanged extends InvoiceEvent {
   final double value;
   final double total;

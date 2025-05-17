@@ -4,7 +4,6 @@ import 'package:nilesoft_erp/layers/presentation/components/invoice_info.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_state.dart';
@@ -19,6 +18,7 @@ class ReSalesPreviewPage extends StatefulWidget {
 class _ReSalesPreviewPageState extends State<ReSalesPreviewPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int sent = 1;
 
   @override
   void initState() {
@@ -35,8 +35,9 @@ class _ReSalesPreviewPageState extends State<ReSalesPreviewPage>
   }
 
   void _onTabChanged() {
-    if (_tabController.indexIsChanging)
+    if (_tabController.indexIsChanging) {
       return; // Ignore if the index is still changing
+    }
 
     // Dispatch events based on the selected tab
     switch (_tabController.index) {
@@ -118,6 +119,14 @@ class _ReSalesPreviewPageState extends State<ReSalesPreviewPage>
           );
         }
         if (state is ReDocPreviewLoaded) {
+          if (state.salesModel.isNotEmpty) {
+            if (state.salesModel[0].sent != 1) {
+              sent = 0;
+            }
+            if (state is OnReInvoiceDeleted) {
+              context.read<RePreviewBloc>().add(ReOnPreviewInitial());
+            }
+          }
           return ListView.builder(
             itemCount: state.salesModel.length,
             itemBuilder: (context, index) {
@@ -135,10 +144,19 @@ class _ReSalesPreviewPageState extends State<ReSalesPreviewPage>
                         builder: (_) => BlocProvider(
                           create: (context) => ResalesBloc()
                             ..add(OnResaleToEdit(state.salesModel[index].id!)),
-                          child: const ResalesPageContent(),
+                          child: ResalesPageContent(
+                            sent: sent,
+                          ),
                         ),
                       ),
                     );
+                  },
+                  sent: sent,
+                  onDelete: () {
+                    if (sent == 0) {
+                      context.read<RePreviewBloc>().add(
+                          OnReInvoiceDelete(id: state.salesModel[index].id!));
+                    }
                   },
                 ),
               );

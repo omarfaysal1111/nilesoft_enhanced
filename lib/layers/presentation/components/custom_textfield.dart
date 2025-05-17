@@ -9,12 +9,14 @@ class CustomTextField extends StatelessWidget {
   final bool obscureText;
   final ValueChanged<String> onChanged;
   final Duration debounceDuration;
+  final bool? readonly;
   final TextStyle? hintStyle;
   final VoidCallback? onTap;
   const CustomTextField({
     super.key,
     required this.hintText,
     this.controller,
+    this.readonly,
     this.debounceDuration = const Duration(milliseconds: 900),
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
@@ -37,6 +39,7 @@ class CustomTextField extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: TextFormField(
+        readOnly: readonly ?? false,
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,

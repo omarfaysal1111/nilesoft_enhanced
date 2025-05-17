@@ -5,6 +5,6 @@ import 'package:nilesoft_erp/layers/domain/repository/remote/remote_customers_re
 class RemoteCustomerRepoImpl implements RemoteCustomersRepo {
   @override
   Future<List<CustomersModel>> getAllCustomers() async {
-    return await MainFun.getReq(CustomersModel.fromMap, "nsbase/getaccounts");
+    return await MainFun.getReq(CustomersModel.fromMap, "nsbase/getclients");
   }
 }

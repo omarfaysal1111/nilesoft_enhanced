@@ -20,6 +20,7 @@ bool isEditting = false;
 List<CustomersModel>? customers;
 CustomersModel? selected;
 int id = 0;
+int mysent = 0;
 
 class CashinPage extends StatelessWidget {
   const CashinPage({super.key});
@@ -36,7 +37,6 @@ class CashinPage extends StatelessWidget {
         isEditting = false;
         customers = [];
         id = -1;
-        //desc.dispose();
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -66,14 +66,15 @@ class CashinPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: BlocConsumer<CashinBloc, CashinState>(
-                        listener: (context, state) {
+                  textDirection: TextDirection.rtl,
+                  child: BlocConsumer<CashinBloc, CashinState>(
+                    listener: (context, state) {
                       if (state is CashInToEditState) {
                         customers = state.customers;
                         isEditting = true;
                         id = state.cashinModel.id!;
                         desc.text = state.cashinModel.descr.toString();
+                        mysent = state.cashinModel.sent!;
                         amount.text = state.cashinModel.total.toString();
                         selected = CustomersModel(state.cashinModel.accId,
                             state.cashinModel.clint, "1");
@@ -100,87 +101,111 @@ class CashinPage extends StatelessWidget {
                         });
                         Navigator.pop(context);
                       }
-                    }, builder: (context, state) {
+                    },
+                    builder: (context, state) {
                       if (state is CashinInitial) {
                         return const Center(child: CircularProgressIndicator());
                       } else if (state is CashinLoadedState) {
                         docNo = state.docNo!;
                         customers = state.customers;
                         return SearchableDropdown(
-                            customers: state.customers,
-                            selectedCustomer: state.selectedCustomer,
-                            onCustomerSelected: (val) {
-                              if (val != null) {
-                                selected = val;
-                                _customersModel = val;
-                                bloc.add(CustomerSelectedCashEvent(
-                                    selectedCustomer: val));
-                              }
-                            },
-                            width: MediaQuery.sizeOf(context).width,
-                            onSearch: (v) {});
-                      }
-                      return SearchableDropdown(
-                          customers: customers,
-                          selectedCustomer: selected,
-                          onCustomerSelected: (val) {
-                            if (val != null) {
-                              selected = val;
-                              _customersModel = val;
-                              bloc.add(CustomerSelectedCashEvent(
-                                  selectedCustomer: val));
-                            }
-                          },
+                          customers: state.customers,
+                          selectedCustomer: state.selectedCustomer,
+                          onCustomerSelected: mysent == 1
+                              ? (va) {}
+                              : (val) {
+                                  if (val != null) {
+                                    selected = val;
+                                    _customersModel = val;
+                                    bloc.add(CustomerSelectedCashEvent(
+                                        selectedCustomer: val));
+                                  }
+                                },
                           width: MediaQuery.sizeOf(context).width,
-                          onSearch: (v) {});
-                    })),
-                const SizedBox(
-                  height: 20,
-                ),
-                CustomTextField(
-                    hintText: "البيان", controller: desc, onChanged: (val) {}),
-                const SizedBox(
-                  height: 20,
-                ),
-                CustomTextField(
-                    hintText: "المبلغ",
-                    controller: amount,
-                    onChanged: (val) {}),
-                const SizedBox(
-                  height: 40,
-                ),
-                CustomButton(
-                    text: "انهاء سند القبض النقدي",
-                    onPressed: () {
-                      String formattedDate =
-                          intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
-                      if (!isEditting) {
-                        var uuid = const Uuid();
-                        String mobileUuid = uuid.v1().toString();
-                        bloc.add(SaveCashinPressed(
-                            cashinModel: CashinModel(
-                                accId: _customersModel!.id.toString(),
-                                descr: desc.text,
-                                docDate: formattedDate,
-                                mobileuuid: mobileUuid,
-                                docNo: docNo,
-                                clint: _customersModel!.name.toString(),
-                                total: double.parse(amount.text))));
-                      } else {
-                        var uuid = const Uuid();
-                        String mobileUuid = uuid.v1().toString();
-                        bloc.add(OnCashinUpdate(
-                            cashinModel: CashinModel(
-                                accId: selected!.id.toString(),
-                                descr: desc.text,
-                                id: id,
-                                docDate: formattedDate,
-                                docNo: docNo,
-                                mobileuuid: mobileUuid,
-                                clint: selected!.name.toString(),
-                                total: double.parse(amount.text))));
+                          onSearch: (v) {},
+                        );
                       }
-                    })
+
+                      return SearchableDropdown(
+                        customers: customers,
+                        selectedCustomer: selected,
+                        onCustomerSelected: mysent == 1
+                            ? (va) {}
+                            : (val) {
+                                if (val != null) {
+                                  selected = val;
+                                  _customersModel = val;
+                                  bloc.add(CustomerSelectedCashEvent(
+                                      selectedCustomer: val));
+                                }
+                              },
+                        width: MediaQuery.sizeOf(context).width,
+                        onSearch: (v) {},
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  hintText: "البيان",
+                  controller: desc,
+                  onChanged: (val) {},
+                  readonly: mysent == 1 ? true : false,
+                ),
+                const SizedBox(height: 20),
+                CustomTextField(
+                  hintText: "المبلغ",
+                  controller: amount,
+                  onChanged: (val) {},
+                  readonly: mysent == 1 ? true : false,
+                ),
+                const SizedBox(height: 40),
+                CustomButton(
+                  text: "انهاء سند القبض النقدي",
+                  onPressed: mysent == 1
+                      ? () {
+                          Navigator.pop(context);
+                        }
+                      : () {
+                          if (mysent != 1) {
+                            String formattedDate = intl.DateFormat('yyyy-MM-dd')
+                                .format(DateTime.now());
+                            var uuid = const Uuid();
+                            String mobileUuid = uuid.v1().toString();
+
+                            if (!isEditting) {
+                              bloc.add(SaveCashinPressed(
+                                cashinModel: CashinModel(
+                                  accId: _customersModel!.id.toString(),
+                                  descr: desc.text,
+                                  docDate: formattedDate,
+                                  mobileuuid: mobileUuid,
+                                  docNo: docNo,
+                                  sent: 0,
+                                  clint: _customersModel!.name.toString(),
+                                  total: double.parse(amount.text),
+                                ),
+                              ));
+                            } else {
+                              bloc.add(OnCashinUpdate(
+                                cashinModel: CashinModel(
+                                  accId: selected!.id.toString(),
+                                  descr: desc.text,
+                                  id: id,
+                                  docDate: formattedDate,
+                                  sent: mysent,
+                                  docNo: docNo,
+                                  mobileuuid: mobileUuid,
+                                  clint: selected!.name.toString(),
+                                  total: double.parse(amount.text),
+                                ),
+                              ));
+                            }
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                ),
               ],
             ),
           ),

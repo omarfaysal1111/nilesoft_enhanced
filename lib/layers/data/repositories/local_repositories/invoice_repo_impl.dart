@@ -24,7 +24,12 @@ class InvoiceRepoImpl implements InvoiceRepo {
   }
 
   @override
-  Future<void> deleteInvoice({required int id}) async {}
+  Future<void> deleteInvoice(
+      {required int id, required String tableName}) async {
+    DatabaseConstants.startDB(_databaseHelper);
+
+    await _databaseHelper.deleteRecord(tableName, id);
+  }
 
   @override
   Future<void> editInvoice(

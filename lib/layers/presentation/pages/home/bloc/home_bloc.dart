@@ -1,6 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/local_areas_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/areas_repo_model_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_cashin_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/city.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_customer_repo_impl.dart';
@@ -31,6 +34,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         List<CustomersModel> customers = await customersRepo.getAllCustomers();
         await customerlocal.addAllCustomers(
             customers: customers, tableName: DatabaseConstants.customersTable);
+        AreasRepoModelImpl areasRepoModelImpl = AreasRepoModelImpl();
+        LocalsAreasRepoImpl localsAreasRepoImpl = LocalsAreasRepoImpl();
+        List<CityModel> cities = await areasRepoModelImpl.getCities();
+        List<CityModel> areas = await areasRepoModelImpl.getAreas();
+        List<CityModel> govs = await areasRepoModelImpl.getGovs();
+        localsAreasRepoImpl.deleteAllAreas(tableName: 'areas');
+        localsAreasRepoImpl.deleteAllAreas(tableName: 'cities');
+        localsAreasRepoImpl.deleteAllAreas(tableName: 'govs');
+        localsAreasRepoImpl.addAllAreas(areas: areas, tableName: 'areas');
+        localsAreasRepoImpl.addAllAreas(areas: cities, tableName: 'cities');
+        localsAreasRepoImpl.addAllAreas(areas: govs, tableName: 'govs');
+
         emit(state.copyWith(isUpdateSubmitted: false, isUpdateSucc: true));
       } catch (e) {
         throw Exception(e);

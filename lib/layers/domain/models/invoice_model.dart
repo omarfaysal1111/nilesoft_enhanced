@@ -26,6 +26,8 @@ class SalesModel implements BaseModel {
       "invoiceno": salesHeadModel!.invoiceno,
       "total": salesHeadModel!.total,
       "dis1": salesHeadModel!.dis1,
+      "disam": salesHeadModel!.disam,
+      "disratio": salesHeadModel!.disratio,
       "visaid": salesHeadModel!.visaid,
       "invenid": salesHeadModel!.invenid,
       "cashaccid": salesHeadModel!.cashaccid,
@@ -63,7 +65,7 @@ class SalesHeadModel implements BaseModel {
   double? net;
   String? invType;
   double? disam;
-  double? disrat;
+  double? disratio;
   // String? visaId;
   int? sent;
 
@@ -75,7 +77,7 @@ class SalesHeadModel implements BaseModel {
       this.invType,
       this.sent,
       this.disam,
-      this.disrat,
+      this.disratio,
       // this.coinPrice,
 //this.docdate,
       this.tax,
@@ -97,10 +99,11 @@ class SalesHeadModel implements BaseModel {
         descr = res["descr"],
         id = res["id"],
         disam = res["disam"],
-        disrat = res["disrat"],
+        disratio = res["disratio"],
         docDate = res["docdate"],
         invType = res["invtype"],
         sent = res["sent"],
+        mobile_uuid = res["mobile_uuid"],
         clientName = res["clientName"],
         total = res["total"],
         dis1 = res["dis1"],
@@ -117,7 +120,7 @@ class SalesHeadModel implements BaseModel {
       // "invtime": invTime,
       "sent": sent,
       "disam": disam,
-      "disratio": disrat,
+      "disratio": disratio,
       "id": id,
       //  "docdate": docdate,
       // "invtype": invType,

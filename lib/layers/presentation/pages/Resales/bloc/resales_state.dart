@@ -78,6 +78,8 @@ class DisratChanged extends ResalesState {
   DisratChanged(this.net, {required this.amValue, required this.ratValue});
 }
 
+class ReCardDeleted extends ResalesState {}
+
 class QRCodeInitial extends ResalesState {}
 
 class QRCodeScanning extends ResalesState {}

@@ -10,6 +10,7 @@ class RePreviewBloc extends Bloc<RePreviewEvent, RePreviewState> {
     on<ReOnPreviewInitial>(_onPreviewInitial);
     on<ReOnPreviewSent>(_onPreviewSentInitial);
     on<ReOnPreviewUnsent>(_onPreviewUnsentInitial);
+    on<OnReInvoiceDelete>(_onReDeleteInvoice);
   }
   Future<void> _onPreviewInitial(
       ReOnPreviewInitial event, Emitter<RePreviewState> emit) async {
@@ -33,5 +34,16 @@ class RePreviewBloc extends Bloc<RePreviewEvent, RePreviewState> {
     List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getUnsentInvoices(
         tableName: DatabaseConstants.reSaleInvoiceHeadTable);
     emit(ReDocPreviewLoaded(salesModel: invoicesHead));
+  }
+
+  Future<void> _onReDeleteInvoice(
+      OnReInvoiceDelete event, Emitter<RePreviewState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    await invoiceRepoImpl.deleteInvoice(
+        id: event.id, tableName: DatabaseConstants.reSaleInvoiceHeadTable);
+
+    await invoiceRepoImpl.deleteInvoice(
+        id: event.id, tableName: DatabaseConstants.reSaleInvoiceDtlTable);
+    emit(OnReInvoiceDeleted(id: event.id));
   }
 }

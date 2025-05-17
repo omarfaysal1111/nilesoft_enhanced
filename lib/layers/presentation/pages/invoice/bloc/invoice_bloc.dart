@@ -21,7 +21,9 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     on<AddClientToInvoiceEvent>(_onAddClientToInvoice);
     on<FetchCustomersEvent>(_onFetchCutomers);
     on<CustomerSelectedEvent>(_onCutomersSelected);
+    on<OnDeleteCard>(_onDeleteCard);
     on<InitializeDataEvent>((event, emit) async {
+      emit(InvoiceInitial());
       add(FetchClientsEvent());
       add(FetchCustomersEvent());
     });
@@ -88,6 +90,10 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     emit(AddNewInvoiceState(
       chosenItems: chosenItems,
     )); // Emit updated state
+  }
+
+  void _onDeleteCard(OnDeleteCard event, Emitter<InvoiceState> emit) {
+    emit(CardDeleted());
   }
 
   Future<void> _onFetchClients(

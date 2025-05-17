@@ -6,13 +6,16 @@ class DocInfoCard extends StatelessWidget {
   final double netValue;
   final VoidCallback onViewPressed;
   final String docNumber;
-
+  final int sent;
+  final VoidCallback onDelete;
   const DocInfoCard({
     super.key,
     required this.customerName,
     required this.dateValue,
     required this.netValue,
+    required this.onDelete,
     required this.onViewPressed,
+    required this.sent,
     required this.docNumber,
   });
 
@@ -121,7 +124,13 @@ class DocInfoCard extends StatelessWidget {
           Container(
             margin: const EdgeInsets.all(8.0),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                sent == 0
+                    ? IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: onDelete)
+                    : const SizedBox(),
                 ElevatedButton(
                   onPressed: onViewPressed,
                   style: ElevatedButton.styleFrom(
