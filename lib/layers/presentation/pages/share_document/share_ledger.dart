@@ -1,5 +1,6 @@
 // ledger_pdf_generator.dart
 import 'dart:io';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
@@ -21,6 +22,10 @@ Future<void> generateAndShareLedgerPdf({
   final headers = ['التاريخ', 'البيان', 'نوع', 'رقم', 'مدين', 'دائن', 'الرصيد'];
   final format = NumberFormat('#,##0.00', 'en');
 
+  // Load Arabic font
+  final fontData = await rootBundle.load('fonts/Almarai-Regular.ttf');
+  final arabicFont = pw.Font.ttf(fontData);
+
   List<pw.TableRow> buildTableRows() {
     return [
       pw.TableRow(
@@ -30,7 +35,8 @@ Future<void> generateAndShareLedgerPdf({
                   padding: const pw.EdgeInsets.all(4),
                   child: pw.Text(h,
                       textAlign: pw.TextAlign.center,
-                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                      style: pw.TextStyle(
+                          font: arabicFont, fontWeight: pw.FontWeight.bold)),
                 ))
             .toList(),
       ),
@@ -47,7 +53,9 @@ Future<void> generateAndShareLedgerPdf({
           ]
               .map((text) => pw.Padding(
                     padding: const pw.EdgeInsets.all(4),
-                    child: pw.Text(text ?? '', textAlign: pw.TextAlign.center),
+                    child: pw.Text(text ?? '',
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(font: arabicFont)),
                   ))
               .toList(),
         );
@@ -65,10 +73,12 @@ Future<void> generateAndShareLedgerPdf({
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text('تقرير كشف حساب العميل',
-                  style: pw.TextStyle(fontSize: 24)),
+                  style: pw.TextStyle(fontSize: 24, font: arabicFont)),
               pw.SizedBox(height: 5),
-              pw.Text('العميل: $customerName'),
-              pw.Text('من: $fromDate  إلى: $toDate'),
+              pw.Text('العميل: $customerName',
+                  style: pw.TextStyle(font: arabicFont)),
+              pw.Text('من: $fromDate  إلى: $toDate',
+                  style: pw.TextStyle(font: arabicFont)),
               pw.SizedBox(height: 10),
               pw.Table(
                 border: pw.TableBorder.all(),
@@ -76,11 +86,15 @@ Future<void> generateAndShareLedgerPdf({
               ),
               pw.SizedBox(height: 10),
               pw.Text(
-                  'الرصيد الافتتاحي: ${format.format(double.parse(openbal))}'),
-              pw.Text('إجمالي المدين: ${format.format(double.parse(debit))}'),
-              pw.Text('إجمالي الدائن: ${format.format(double.parse(credit))}'),
+                  'الرصيد الافتتاحي: ${format.format(double.parse(openbal))}',
+                  style: pw.TextStyle(font: arabicFont)),
+              pw.Text('إجمالي المدين: ${format.format(double.parse(debit))}',
+                  style: pw.TextStyle(font: arabicFont)),
+              pw.Text('إجمالي الدائن: ${format.format(double.parse(credit))}',
+                  style: pw.TextStyle(font: arabicFont)),
               pw.Text(
-                  'الرصيد الحالي: ${format.format(double.parse(currentbal))}'),
+                  'الرصيد الحالي: ${format.format(double.parse(currentbal))}',
+                  style: pw.TextStyle(font: arabicFont)),
             ],
           ),
         ),

@@ -10,6 +10,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_bloc.d
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_state.dart';
 import 'package:intl/intl.dart' as intl;
+import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_cashin.dart';
 import 'package:uuid/uuid.dart';
 
 CustomersModel? _customersModel;
@@ -88,7 +89,7 @@ class CashinPage extends StatelessWidget {
                             ),
                           );
                         });
-                        Navigator.pop(context);
+                        // Navigator.pop(context);
                       }
                       if (state is CashInUpdateSucc) {
                         SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -99,7 +100,7 @@ class CashinPage extends StatelessWidget {
                             ),
                           );
                         });
-                        Navigator.pop(context);
+                        // Navigator.pop(context);
                       }
                     },
                     builder: (context, state) {
@@ -164,7 +165,7 @@ class CashinPage extends StatelessWidget {
                   text: "انهاء سند القبض النقدي",
                   onPressed: mysent == 1
                       ? () {
-                          Navigator.pop(context);
+                          //  Navigator.pop(context);
                         }
                       : () {
                           if (mysent != 1) {
@@ -201,8 +202,25 @@ class CashinPage extends StatelessWidget {
                                 ),
                               ));
                             }
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => ShareCashin(
+                                        printingCashinHeadModel: CashinModel(
+                                          accId: selected!.id.toString(),
+                                          descr: desc.text,
+                                          id: id,
+                                          docDate: formattedDate,
+                                          sent: mysent,
+                                          docNo: docNo,
+                                          mobileuuid: mobileUuid,
+                                          clint: selected!.name.toString(),
+                                          total: double.parse(amount.text),
+                                        ),
+                                        id: selected!.id.toString(),
+                                        numOfSerials: 0)));
                           } else {
-                            Navigator.pop(context);
+                            //  Navigator.pop(context);
                           }
                         },
                 ),

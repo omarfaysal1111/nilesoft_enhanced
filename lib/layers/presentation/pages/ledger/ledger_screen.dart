@@ -33,10 +33,9 @@ class LedgerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final bloc = context.read<LedgerBloc>();
     double width = MediaQuery.sizeOf(context).width;
-    double height = MediaQuery.sizeOf(context).width;
+    double height = MediaQuery.sizeOf(context).height;
 
     return PopScope(
-      // ignore: deprecated_member_use
       onPopInvoked: (didPop) {
         fromDate = "";
         toDate = "";
@@ -51,225 +50,222 @@ class LedgerScreen extends StatelessWidget {
         recievedLen = 0;
       },
       child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
           backgroundColor: Colors.white,
-          appBar: AppBar(
-            backgroundColor: Colors.white,
-            title: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                IconButton(
-                    onPressed: () async {
-                      if (ledgers.isNotEmpty && selectedCustomer != null) {
-                        await generateAndShareLedgerPdf(
-                          ledgers: ledgers,
-                          customerName: selectedCustomer!.name ?? '',
-                          fromDate: fromDate,
-                          toDate: toDate,
-                          openbal: openbal,
-                          debit: debit,
-                          credit: credit,
-                          currentbal: currentbal,
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('يرجى تحديد البيانات أولاً')),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.share)),
-                const Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Text(
-                    "تقرير كشف حساب عميل",
-                    style: TextStyle(
-                      fontFamily: 'Almarai',
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.right,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                onPressed: () async {
+                  if (ledgers.isNotEmpty && selectedCustomer != null) {
+                    await generateAndShareLedgerPdf(
+                      ledgers: ledgers,
+                      customerName: selectedCustomer!.name ?? '',
+                      fromDate: fromDate,
+                      toDate: toDate,
+                      openbal: openbal,
+                      debit: debit,
+                      credit: credit,
+                      currentbal: currentbal,
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('يرجى تحديد البيانات أولاً')),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.share),
+              ),
+              const Directionality(
+                textDirection: TextDirection.rtl,
+                child: Text(
+                  "تقرير كشف حساب عميل",
+                  style: TextStyle(
+                    fontFamily: 'Almarai',
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          body: BlocConsumer<LedgerBloc, LedgerState>(
-            listener: (BuildContext context, LedgerState state) {
-              if (state is LedgerPageChanged) {
-                recievedLen += state.ledger.length;
-                ledgers += state.ledger;
-                if (ledgers.length != numberOfRows) {
-                  if (ledgers.length == recievedLen) {
-                    LedgerParametersModel ledgerParam = LedgerParametersModel(
-                        accid: selectedCustomer?.id,
-                        firstrow: ledgers.length,
-                        fromdate: fromDate,
-                        todate: toDate,
-                        openbal: ledgers[ledgers.length].balance,
-                        type: "3");
-                    bloc.add(
-                        OnLedgerPageChanged(ledgerParameters: ledgerParam));
-                  }
-                }
-              }
-              if (state is LedgerSubmitted) {
-                openbal = state.ledgerFirstRes.openbal.toString();
-                debit = state.ledgerFirstRes.totalDebit.toString();
-                credit = state.ledgerFirstRes.totalCridet.toString();
-                currentbal = state.ledgerFirstRes.currentBalance.toString();
-                numberOfRows = state.ledgerFirstRes.noofrows ?? 0;
+        ),
+        body: BlocConsumer<LedgerBloc, LedgerState>(
+          listener: (BuildContext context, LedgerState state) {
+            if (state is LedgerPageChanged) {
+              recievedLen += state.ledger.length;
+              ledgers += state.ledger;
 
-                if (ledgers.isEmpty) {
-                  LedgerParametersModel ledgerParam = LedgerParametersModel(
-                      accid: selectedCustomer?.id,
-                      firstrow: 0,
-                      fromdate: fromDate,
-                      todate: toDate,
-                      openbal: double.parse(openbal),
-                      type: "3");
-                  bloc.add(OnLedgerPageChanged(ledgerParameters: ledgerParam));
-                }
+              if (ledgers.length != numberOfRows &&
+                  ledgers.length == recievedLen) {
+                LedgerParametersModel ledgerParam = LedgerParametersModel(
+                  accid: selectedCustomer?.id,
+                  firstrow: ledgers.length,
+                  fromdate: fromDate,
+                  todate: toDate,
+                  openbal: ledgers.isNotEmpty ? ledgers.last.balance : 0,
+                  type: "3",
+                );
+                bloc.add(OnLedgerPageChanged(ledgerParameters: ledgerParam));
               }
-              if (state is LedgerLoaded) {
-                customers = state.customers;
-                selectedCustomer = state.selectedCustomer;
-              }
-              if (state is FromDateChanged) {
-                DateTime parsedDate =
-                    intl.DateFormat('yyyy-MM-dd').parse(state.date);
-                String formattedDate =
-                    intl.DateFormat('yyyy-MM-dd').format(parsedDate);
-                fromDate = formattedDate;
-              }
+            }
 
-              if (state is ToDateChanged) {
-                DateTime parsedDate =
-                    intl.DateFormat('yyyy-MM-dd').parse(state.date);
-                String formattedDate =
-                    intl.DateFormat('yyyy-MM-dd').format(parsedDate);
-                toDate = formattedDate;
+            if (state is LedgerSubmitted) {
+              openbal = state.ledgerFirstRes.openbal.toString();
+              debit = state.ledgerFirstRes.totalDebit.toString();
+              credit = state.ledgerFirstRes.totalCridet.toString();
+              currentbal = state.ledgerFirstRes.currentBalance.toString();
+              numberOfRows = state.ledgerFirstRes.noofrows ?? 0;
+
+              if (ledgers.isEmpty) {
+                LedgerParametersModel ledgerParam = LedgerParametersModel(
+                  accid: selectedCustomer?.id,
+                  firstrow: 0,
+                  fromdate: fromDate,
+                  todate: toDate,
+                  openbal: double.parse(openbal),
+                  type: "3",
+                );
+                bloc.add(OnLedgerPageChanged(ledgerParameters: ledgerParam));
               }
-            },
-            builder: (context, state) {
-              return Stack(
-                children: [
-                  SizedBox(
-                    height: height * 0.03,
-                  ),
-                  Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          SizedBox(
-                              width: width * 0.48,
-                              child: DatePickerField(
-                                  label: toDate,
-                                  onDateSelected: (val) {
-                                    bloc.add(
-                                        OnToDateChanged(date: val.toString()));
-                                  })),
-                          SizedBox(
-                              width: width * 0.48,
-                              child: DatePickerField(
-                                  label: fromDate,
-                                  onDateSelected: (val) {
-                                    bloc.add(OnFromDateChanged(
-                                        date: val.toString()));
-                                  })),
-                        ],
-                      ),
-                      SizedBox(
-                        height: height * 0.03,
-                      ),
-                      SizedBox(
-                        width: width * 0.97,
-                        height: 57,
-                        child: SearchableDropdown(
-                          onSearch: (val) {},
-                          customers: customers, // Pass the list of customers
-                          selectedCustomer:
-                              selectedCustomer, // The current selection
-                          onCustomerSelected: (value) {
-                            if (value != null) {
-                              selectedCustomer = value;
-                              bloc.add(CustomerSelectedEvent(
-                                  selectedCustomer: value));
-                            }
-                          },
-                          width: width, // Pass the width for layout
-                        ),
-                      ),
-                      SizedBox(
-                        height: height * 0.03,
-                      ),
-                      SizedBox(
-                        width: width * 0.96,
-                        child: CustomButton(
-                            text: "موافق",
-                            onPressed: () {
-                              LedgerParametersModel ledgerParam =
-                                  LedgerParametersModel(
-                                      accid: selectedCustomer?.id,
-                                      firstrow: 0,
-                                      fromdate: fromDate,
-                                      todate: toDate,
-                                      openbal: 0,
-                                      type: "3");
-                              bloc.add(OnLedgerSubmit(
-                                  ledgerParameters: ledgerParam));
-                            }),
-                      ),
-                      SizedBox(
-                        height: height * 0.02,
-                      ),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 180.0),
-                          child: ListView.builder(
-                            itemCount: ledgers.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: LedgerInfoCard(
-                                    date: ledgers[index].docdate.toString(),
-                                    docNumber: ledgers[index].docno2.toString(),
-                                    description:
-                                        ledgers[index].descr.toString(),
-                                    debit: ledgers[index].debit.toString(),
-                                    credit: ledgers[index].cridet.toString(),
-                                    balance: ledgers[index].balance.toString()),
-                              );
+            }
+
+            if (state is LedgerLoaded) {
+              customers = state.customers;
+              selectedCustomer = state.selectedCustomer;
+            }
+
+            if (state is FromDateChanged) {
+              fromDate = intl.DateFormat('yyyy-MM-dd').format(
+                intl.DateFormat('yyyy-MM-dd').parse(state.date),
+              );
+            }
+
+            if (state is ToDateChanged) {
+              toDate = intl.DateFormat('yyyy-MM-dd').format(
+                intl.DateFormat('yyyy-MM-dd').parse(state.date),
+              );
+            }
+          },
+          builder: (context, state) {
+            return Stack(
+              children: [
+                Column(
+                  children: [
+                    SizedBox(height: height * 0.02),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        SizedBox(
+                          width: width * 0.48,
+                          child: DatePickerField(
+                            label: toDate,
+                            onDateSelected: (val) {
+                              bloc.add(OnToDateChanged(date: val.toString()));
                             },
                           ),
                         ),
-                      )
-                    ],
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: const BoxDecoration(
-                        color: Color(0xff39B3BD),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(16.0),
-                          topRight: Radius.circular(16.0),
+                        SizedBox(
+                          width: width * 0.48,
+                          child: DatePickerField(
+                            label: fromDate,
+                            onDateSelected: (val) {
+                              bloc.add(OnFromDateChanged(date: val.toString()));
+                            },
+                          ),
                         ),
-                      ),
-                      child: SummaryLedgCard(
-                        openbal: openbal,
-                        credit: credit,
-                        currentbal: currentbal,
-                        debit: debit,
+                      ],
+                    ),
+                    SizedBox(height: height * 0.02),
+                    SizedBox(
+                      width: width * 0.97,
+                      height: 57,
+                      child: SearchableDropdown(
+                        onSearch: (val) {},
+                        customers: customers,
+                        selectedCustomer: selectedCustomer,
+                        onCustomerSelected: (value) {
+                          if (value != null) {
+                            selectedCustomer = value;
+                            bloc.add(OnCustomerSelected(
+                                selectedCustomer: value, customers: customers));
+                          }
+                        },
+                        width: width,
                       ),
                     ),
+                    SizedBox(height: height * 0.02),
+                    SizedBox(
+                      width: width * 0.96,
+                      child: CustomButton(
+                        text: "موافق",
+                        onPressed: () {
+                          LedgerParametersModel ledgerParam =
+                              LedgerParametersModel(
+                            accid: selectedCustomer?.id,
+                            firstrow: 0,
+                            fromdate: fromDate,
+                            todate: toDate,
+                            openbal: 0,
+                            type: "3",
+                          );
+                          bloc.add(
+                              OnLedgerSubmit(ledgerParameters: ledgerParam));
+                        },
+                      ),
+                    ),
+                    SizedBox(height: height * 0.02),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 180.0),
+                        child: ListView.builder(
+                          itemCount: ledgers.length,
+                          itemBuilder: (context, index) {
+                            final ledger = ledgers[index];
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: LedgerInfoCard(
+                                date: ledger.docdate.toString(),
+                                docNumber: ledger.docno2.toString(),
+                                description: ledger.descr.toString(),
+                                debit: ledger.debit.toString(),
+                                credit: ledger.cridet.toString(),
+                                balance: ledger.balance.toString(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: const BoxDecoration(
+                      color: Color(0xff39B3BD),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16.0),
+                        topRight: Radius.circular(16.0),
+                      ),
+                    ),
+                    child: SummaryLedgCard(
+                      openbal: openbal,
+                      credit: credit,
+                      currentbal: currentbal,
+                      debit: debit,
+                    ),
                   ),
-                ],
-              );
-            },
-          )),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }

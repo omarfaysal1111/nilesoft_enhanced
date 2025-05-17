@@ -1,17 +1,16 @@
 import 'dart:io';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:intl/intl.dart' as c;
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/home_page.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:intl/intl.dart' as c;
+import 'package:pdf/pdf.dart';
 import 'package:share_plus/share_plus.dart';
 
 class PrintingScreen extends StatelessWidget {
@@ -28,52 +27,123 @@ class PrintingScreen extends StatelessWidget {
     required this.numOfSerials,
   });
 
+  Future<void> generateAndSharePdf(BuildContext context) async {
+    final pdf = pw.Document();
+    final ttf = await rootBundle.load("fonts/Almarai-Regular.ttf");
+    final arabicFont = pw.Font.ttf(ttf);
+
+    pdf.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        textDirection: pw.TextDirection.rtl,
+        build: (pw.Context context) {
+          return pw.Padding(
+            padding: const pw.EdgeInsets.all(24.0),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text("فاتورة مبيعات",
+                    style: pw.TextStyle(
+                      font: arabicFont,
+                      fontSize: 24,
+                      fontWeight: pw.FontWeight.bold,
+                    )),
+                pw.SizedBox(height: 12),
+                pw.Text("رقم الفاتورة: ${printingSalesHeadModel.invoiceno}",
+                    style: pw.TextStyle(font: arabicFont)),
+                pw.Text("اسم العميل: ${printingSalesHeadModel.clientName}",
+                    style: pw.TextStyle(font: arabicFont)),
+                pw.Text(
+                    "تاريخ الفاتورة: ${intl.DateFormat('yyyy-MM-dd').format(DateTime.now())}",
+                    style: pw.TextStyle(font: arabicFont)),
+                pw.SizedBox(height: 16),
+                pw.Table.fromTextArray(
+                  headers: ['الصنف', 'الكمية', 'السعر', 'الخصم', 'الاجمالي'],
+                  data: printingSalesDtlModel.map((item) {
+                    return [
+                      item.itemName.toString(),
+                      item.qty.toString(),
+                      item.price.toString(),
+                      item.disam.toString(),
+                      (item.price! * double.parse(item.qty.toString()))
+                          .toStringAsFixed(2),
+                    ];
+                  }).toList(),
+                  headerStyle: pw.TextStyle(
+                    font: arabicFont,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                  cellStyle: pw.TextStyle(font: arabicFont),
+                  cellAlignment: pw.Alignment.centerRight,
+                  border: pw.TableBorder.all(),
+                ),
+                pw.SizedBox(height: 20),
+                pw.Divider(),
+                pw.SizedBox(height: 8),
+                pw.Align(
+                  alignment: pw.Alignment.centerRight,
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      _buildSummaryRow(
+                          arabicFont, "الاجمالي", printingSalesHeadModel.total),
+                      _buildSummaryRow(
+                          arabicFont, "الضريبة", printingSalesHeadModel.tax),
+                      _buildSummaryRow(
+                          arabicFont, "الخصم", printingSalesHeadModel.dis1),
+                      _buildSummaryRow(arabicFont, "خصم على الفاتورة",
+                          printingSalesHeadModel.disratio),
+                      _buildSummaryRow(
+                          arabicFont, "الصافي", printingSalesHeadModel.net,
+                          isBold: true),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+
+    final outputDir = await getTemporaryDirectory();
+    final file = File("${outputDir.path}/invoice.pdf");
+    await file.writeAsBytes(await pdf.save());
+
+    await Share.shareXFiles([XFile(file.path)], text: 'فاتورة المبيعات');
+  }
+
+  pw.Widget _buildSummaryRow(pw.Font font, String label, dynamic value,
+      {bool isBold = false}) {
+    final style = pw.TextStyle(
+      font: font,
+      fontSize: 12,
+      fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
+    );
+
+    return pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(label, style: style),
+          pw.Text(value.toString(), style: style),
+        ],
+      ),
+    );
+  }
+
   final GlobalKey _globalKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    Future<void> captureAndSharePdf() async {
-      try {
-        RenderRepaintBoundary? boundary = _globalKey.currentContext
-            ?.findRenderObject() as RenderRepaintBoundary?;
-
-        if (boundary == null) {
-          debugPrint("RenderRepaintBoundary is null");
-          return;
-        }
-
-        final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-        final ui.Image image = await boundary.toImage(pixelRatio: pixelRatio);
-        final ByteData? byteData =
-            await image.toByteData(format: ui.ImageByteFormat.png);
-        final Uint8List pngBytes = byteData!.buffer.asUint8List();
-
-        final pdf = pw.Document();
-        final imageProvider = pw.MemoryImage(pngBytes);
-
-        pdf.addPage(
-          pw.Page(
-            build: (context) => pw.Center(child: pw.Image(imageProvider)),
-          ),
-        );
-
-        final outputDir = await getTemporaryDirectory();
-        final pdfFile = File("${outputDir.path}/invoice.pdf");
-        await pdfFile.writeAsBytes(await pdf.save());
-
-        await Share.shareXFiles([XFile(pdfFile.path)], text: 'Invoice');
-      } catch (e) {
-        debugPrint("Error capturing or sharing PDF: $e");
-      }
-    }
-
     return Scaffold(
       backgroundColor: Colors.white,
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           CustomButton(
-            onPressed: () async => await captureAndSharePdf(),
+            onPressed: () async => await generateAndSharePdf(context),
             text: ("ارسال الفاتورة"),
           ),
           CustomButton(
@@ -88,7 +158,7 @@ class PrintingScreen extends StatelessWidget {
                 ),
               );
             },
-            text: (" الي الرئيسية"),
+            text: ("الي الرئيسية"),
           ),
         ],
       ),
@@ -115,134 +185,58 @@ class PrintingScreen extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Container(
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black, width: 2)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.black, width: 2),
+          ),
           child: Center(
             child: RepaintBoundary(
               key: _globalKey,
               child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(printingSalesHeadModel.invoiceno.toString()),
-                    Text(printingSalesHeadModel.clientName.toString()),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(c.DateFormat('yyyy-MM-dd').format(DateTime.now())),
-                      ],
+                    Text(
+                      "رقم الفاتورة: ${printingSalesHeadModel.invoiceno}",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Almarai',
+                      ),
+                      textAlign: TextAlign.right,
                     ),
-                    const SizedBox(height: 16),
+                    Text(
+                      "العميل: ${printingSalesHeadModel.clientName}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Almarai',
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                    const Divider(thickness: 1.5),
+                    Text(
+                      "التاريخ: ${c.DateFormat('yyyy-MM-dd').format(DateTime.now())}",
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontFamily: 'Almarai'),
+                    ),
+                    const SizedBox(height: 12),
                     Table(
-                      border: TableBorder.all(),
+                      border: TableBorder.symmetric(
+                        inside: BorderSide(color: Colors.grey.shade300),
+                        outside:
+                            const BorderSide(color: Colors.black, width: 1.5),
+                      ),
+                      columnWidths: const {
+                        0: FlexColumnWidth(2),
+                        1: FlexColumnWidth(1.2),
+                        2: FlexColumnWidth(1.2),
+                        3: FlexColumnWidth(1),
+                        4: FlexColumnWidth(1.5),
+                      },
                       children: _buildTableRows(),
                     ),
                     const SizedBox(height: 16),
-                    Directionality(
-                      textDirection: ui.TextDirection.rtl,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Column(
-                            children: [
-                              SizedBox(
-                                width: MediaQuery.sizeOf(context).width * 0.9,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'الاجمالي ',
-                                      textAlign: TextAlign.right,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          "${printingSalesHeadModel.total}",
-                                          textAlign: TextAlign.right,
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                width: MediaQuery.sizeOf(context).width * 0.9,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'الضريبة',
-                                      textAlign: TextAlign.right,
-                                    ),
-                                    Text(
-                                      "${printingSalesHeadModel.tax}",
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                width: MediaQuery.sizeOf(context).width * 0.9,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'الخصم',
-                                      textAlign: TextAlign.right,
-                                    ),
-                                    Text(
-                                      "${printingSalesHeadModel.dis1}",
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                width: MediaQuery.sizeOf(context).width * 0.9,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'الخصم علي الفاتورة',
-                                      textAlign: TextAlign.right,
-                                    ),
-                                    Text(
-                                      "${printingSalesHeadModel.disratio}",
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                width: MediaQuery.sizeOf(context).width * 0.9,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'الصافي',
-                                      textAlign: TextAlign.right,
-                                    ),
-                                    Text(
-                                      "${printingSalesHeadModel.net}",
-                                      textAlign: TextAlign.left,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                        ],
-                      ),
-                    )
+                    _buildSummaryCard(context),
                   ],
                 ),
               ),
@@ -253,59 +247,98 @@ class PrintingScreen extends StatelessWidget {
     );
   }
 
-  List<TableRow> _buildTableRows() {
-    return [
-      const TableRow(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('الصنف'),
+  Widget _buildSummaryCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Directionality(
+          textDirection: TextDirection.rtl,
+          child: Column(
+            children: [
+              _buildSummaryRow2('الاجمالي', "${printingSalesHeadModel.total}"),
+              _buildSummaryRow2('الضريبة', "${printingSalesHeadModel.tax}"),
+              _buildSummaryRow2('الخصم', "${printingSalesHeadModel.dis1}"),
+              _buildSummaryRow2(
+                  'الخصم علي الفاتورة', "${printingSalesHeadModel.disratio}"),
+              const Divider(),
+              _buildSummaryRow2('الصافي', "${printingSalesHeadModel.net}",
+                  isBold: true),
+            ],
           ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('الكمية'),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('السعر'),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('الخصم'),
-          ),
-          Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('الاجمالي'),
-          ),
-        ],
-      ),
-      ...printingSalesDtlModel.map(
-        (item) => TableRow(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(item.itemName.toString()),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(item.qty.toString()),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(item.price.toString()),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(item.disam.toString()),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                  (item.price! * double.parse(item.qty.toString())).toString()),
-            ),
-          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSummaryRow2(String label, String value, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label,
+              style: TextStyle(
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+          Text(value,
+              style: TextStyle(
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
+        ],
+      ),
+    );
+  }
+
+  List<TableRow> _buildTableRows() {
+    return [
+      TableRow(
+        decoration: BoxDecoration(color: Colors.grey.shade200),
+        children: const [
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('الصنف', textAlign: TextAlign.center)),
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('الكمية', textAlign: TextAlign.center)),
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('السعر', textAlign: TextAlign.center)),
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('الخصم', textAlign: TextAlign.center)),
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('الاجمالي', textAlign: TextAlign.center)),
+        ],
+      ),
+      ...printingSalesDtlModel.map((item) => TableRow(
+            children: [
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text(item.itemName ?? '', textAlign: TextAlign.center)),
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text(item.qty.toString(), textAlign: TextAlign.center)),
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text(item.price.toString(), textAlign: TextAlign.center)),
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child:
+                      Text(item.disam.toString(), textAlign: TextAlign.center)),
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    (item.price! * double.parse(item.qty.toString()))
+                        .toString(),
+                    textAlign: TextAlign.center,
+                  )),
+            ],
+          )),
     ];
   }
 }
