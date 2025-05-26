@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+android/app/.cxx/RelWithDebInfo/136n1d5l/x86/configure_fingerprint.bin
+android/app/.cxx/RelWithDebInfo/136n1d5l/arm64-v8a/configure_fingerprint.bin
+android/app/.cxx/RelWithDebInfo/136n1d5l/armeabi-v7a/configure_fingerprint.bin
+android/app/.cxx/RelWithDebInfo/136n1d5l/x86/configure_fingerprint.bin
+android/app/.cxx/RelWithDebInfo/136n1d5l/x86_64/configure_fingerprint.bin
