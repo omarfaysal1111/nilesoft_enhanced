@@ -276,6 +276,7 @@ class AddnewPopup extends StatelessWidget {
               child: CustomTextField(
                 onChanged: (value) {},
                 hintText: "السعر",
+                readonly: true,
                 controller: priceControlleer,
               ),
             ),

@@ -11,6 +11,7 @@ class CustomTextField extends StatelessWidget {
   final Duration debounceDuration;
   final bool? readonly;
   final TextStyle? hintStyle;
+
   final VoidCallback? onTap;
   const CustomTextField({
     super.key,
