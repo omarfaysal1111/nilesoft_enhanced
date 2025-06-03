@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/domain/models/baisc_response.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
 import 'package:nilesoft_erp/layers/data/remote/data_sources.dart';
@@ -39,12 +40,16 @@ class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
       invoices.add(SalesModel(
           salesHeadModel: salesHeadModel, salesdtlModel: salesDtlModel));
 
-      await MainFun.postReq(SalesModel.fromMap, endPoint, invoices[0].toMap());
+      var res = await MainFun.postReq(
+          ResponseModel.fromJson, endPoint, invoices[0].toMap());
+
       if (kDebugMode) {
         print(invoices[0].toMap());
       }
-      databaseHelper.db.rawUpdate(
-          "UPDATE $headTableName SET sent = 1 where id='${invoices[0].salesHeadModel!.id}'");
+      if (res.message == 0) {
+        databaseHelper.db.rawUpdate(
+            "UPDATE $headTableName SET sent = 1 where id='${invoices[0].salesHeadModel!.id}'");
+      } else {}
     }
   }
 }

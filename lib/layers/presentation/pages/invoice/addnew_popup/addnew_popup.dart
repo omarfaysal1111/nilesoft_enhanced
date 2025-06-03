@@ -297,7 +297,7 @@ class AddnewPopup extends StatelessWidget {
                 onChanged: (value) {},
                 keyboardType: TextInputType.number,
                 hintText: "السعر",
-                readonly: true,
+                //readonly: true,
                 controller: priceControlleer,
               ),
             ),

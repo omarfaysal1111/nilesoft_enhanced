@@ -9,6 +9,7 @@ import 'package:nilesoft_erp/layers/data/repositories/local_repositories/invoice
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/items_repo_impl.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';
 
 class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   final List<SalesDtlModel> chosenItems =
@@ -85,7 +86,7 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     if (chosenItems.isEmpty) {
       chosenItems.add(event.updatedItem);
     } else {
-      chosenItems[event.index] = event.updatedItem;
+      dtl![event.index] = event.updatedItem;
     }
     emit(AddNewInvoiceState(
       chosenItems: chosenItems,

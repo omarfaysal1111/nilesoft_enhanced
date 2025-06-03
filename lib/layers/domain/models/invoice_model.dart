@@ -199,4 +199,15 @@ class SalesDtlModel implements BaseModel {
       "tax": tax,
     };
   }
+
+  SalesDtlModel clone() {
+    return SalesDtlModel(
+      id: id,
+      itemName: itemName,
+      price: price,
+      disam: disam,
+      qty: qty,
+      tax: tax,
+    );
+  }
 }

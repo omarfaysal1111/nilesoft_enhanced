@@ -445,6 +445,7 @@ class InvoicePageContent extends StatelessWidget {
                                     String formattedDate =
                                         intl.DateFormat('yyyy-MM-dd')
                                             .format(DateTime.now());
+
                                     SalesHeadModel salesHeadModel =
                                         SalesHeadModel(
                                       id: headid,
@@ -557,8 +558,11 @@ class InvoicePageContent extends StatelessWidget {
                     builder: (context, state) {
                       if (state is AddNewInvoiceState) {
                         final chosenClients = state.chosenItems;
-                        dtl = chosenClients;
-
+                        if (!isEditting) {
+                          dtl = chosenClients;
+                        } else {
+                          dtl![editindex] = chosenClients[0].clone();
+                        }
                         if (chosenClients.isEmpty) {
                           return const Center(child: Text("جاري اضافة الصنف"));
                         }
@@ -606,8 +610,10 @@ class InvoicePageContent extends StatelessWidget {
                                 onEdit: () {
                                   editindex = index;
                                   bloc.add(EditPressed(
-                                      salesDtlModel: dtl![index],
-                                      index: index));
+                                    salesDtlModel:
+                                        dtl![index].clone(), // pass a copy
+                                    index: index,
+                                  ));
                                   WidgetsBinding.instance
                                       .addPostFrameCallback((_) {
                                     showDialog(
@@ -678,8 +684,10 @@ class InvoicePageContent extends StatelessWidget {
                                   //     index: index));
                                   editindex = index;
                                   bloc.add(EditPressed(
-                                      salesDtlModel: dtl![index],
-                                      index: index));
+                                    salesDtlModel:
+                                        dtl![index].clone(), // pass a copy
+                                    index: index,
+                                  ));
                                   WidgetsBinding.instance
                                       .addPostFrameCallback((_) {
                                     showDialog(
@@ -773,11 +781,13 @@ class InvoicePageContent extends StatelessWidget {
                                       // bloc.add(EditPressed(
                                       //     salesDtlModel: chosenClients[index],
                                       //     index: index));
-                                      editindex = index;
+                                      // editindex = index;
                                       editindex = index;
                                       bloc.add(EditPressed(
-                                          salesDtlModel: dtl![index],
-                                          index: index));
+                                        salesDtlModel:
+                                            dtl![index].clone(), // pass a copy
+                                        index: index,
+                                      ));
                                       WidgetsBinding.instance
                                           .addPostFrameCallback((_) {
                                         showDialog(
