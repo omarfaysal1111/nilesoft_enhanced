@@ -126,7 +126,7 @@ class _CashinPreviewPageState extends State<CashinPreviewPage>
                 child: DocInfoCard(
                   customerName: item.clint.toString(),
                   dateValue: item.docDate.toString(),
-                  netValue: item.net1 ?? 0,
+                  netValue: item.total ?? 0,
                   docNumber: item.docNo.toString(),
                   onViewPressed: () {
                     Navigator.push(

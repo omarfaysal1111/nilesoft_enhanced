@@ -11,7 +11,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_stat
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
 
 class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
-  final List<SalesDtlModel> chosenItems = []; // Central storage of chosen items
+  List<SalesDtlModel> chosenItems = []; // Central storage of chosen items
   String myDocNo = "";
   ResalesBloc() : super(ResalesInitial()) {
     // Registering event handlers
@@ -68,9 +68,12 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
       OnUpdateResale event, Emitter<ResalesState> emit) async {
     emit(UpdatingResale());
     InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
-    await invoiceRepoImpl.updateSalesHead(
+    int id = await invoiceRepoImpl.updateSalesHead(
         head: event.headModel,
         tableName: DatabaseConstants.reSaleInvoiceHeadTable);
+    for (var i = 0; i < event.dtlModel.length; i++) {
+      event.dtlModel[i].id = event.headModel.id.toString();
+    }
     await invoiceRepoImpl.updateSalesDtl(
         dtl: event.dtlModel,
         tableName: DatabaseConstants.reSaleInvoiceDtlTable);
@@ -122,9 +125,13 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
       ReSaveButtonClicked event, Emitter<ResalesState> emit) async {
     try {
       InvoiceRepoImpl invoiceRepo = InvoiceRepoImpl();
-      await invoiceRepo.addInvoiceHead(
+      int id = await invoiceRepo.addInvoiceHead(
           invoiceHead: event.salesHeadModel,
           tableName: DatabaseConstants.reSaleInvoiceHeadTable);
+
+      for (var i = 0; i < event.salesDtlModel.length; i++) {
+        event.salesDtlModel[i].id = id.toString();
+      }
       await invoiceRepo.addInvoiceDtl(
           invoiceDtl: event.salesDtlModel,
           tableName: DatabaseConstants.reSaleInvoiceDtlTable);
@@ -176,7 +183,8 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
           queryResult2[0]["latestId"].toString() == null) {
         id = 1;
       } else {
-        id += int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = id + 1;
       }
       emit(ResalesPageLoaded(
           customers: customers, docNo: await generateDocNumber(), id: id));
@@ -201,7 +209,8 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
           queryResult2[0]["latestId"].toString() == null) {
         id = 1;
       } else {
-        id += int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = id + 1;
       }
       emit(ResalesPageLoaded(
         customers: currentState.customers,
@@ -241,6 +250,7 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
 
   void _onAddClientToResales(
       ReAddClientToResalesEvent event, Emitter<ResalesState> emit) {
+    chosenItems = event.allDtl;
     chosenItems.add(event.item); // Update the central list
     emit(AddNewResalesState(chosenItems: chosenItems));
   }

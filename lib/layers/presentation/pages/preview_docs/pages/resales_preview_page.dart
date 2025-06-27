@@ -145,8 +145,7 @@ class _ReSalesPreviewPageState extends State<ReSalesPreviewPage>
                           create: (context) => ResalesBloc()
                             ..add(OnResaleToEdit(state.salesModel[index].id!)),
                           child: ResalesPageContent(
-                            sent: sent,
-                          ),
+                              sent: sent, editid: state.salesModel[index].id!),
                         ),
                       ),
                     );

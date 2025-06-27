@@ -9,11 +9,9 @@ import 'package:nilesoft_erp/layers/data/repositories/local_repositories/invoice
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/items_repo_impl.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_state.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart';
 
 class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
-  final List<SalesDtlModel> chosenItems =
-      []; // Central storage of chosen clients
+  List<SalesDtlModel> chosenItems = []; // Central storage of chosen clients
   String myDocNo = "";
   InvoiceBloc() : super(InvoiceInitial()) {
     on<SaveButtonClicked>(_onSaveClicked);
@@ -83,11 +81,15 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   }
 
   void _onEdit(EditInvoiceItemEvent event, Emitter<InvoiceState> emit) {
+    chosenItems = event.allDtl;
+    // chosenItems = [];
     if (chosenItems.isEmpty) {
-      chosenItems.add(event.updatedItem);
+      chosenItems.add(event.updatedItem[0]);
     } else {
-      dtl![event.index] = event.updatedItem;
+      chosenItems[event.index] = event.updatedItem[0];
     }
+    //chosenItems = event.updatedItem;
+
     emit(AddNewInvoiceState(
       chosenItems: chosenItems,
     )); // Emit updated state
@@ -117,9 +119,12 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     DatabaseHelper databaseHelper = DatabaseHelper();
     DatabaseConstants.startDB(databaseHelper);
 
-    await invoiceRepoImpl.addInvoiceHead(
+    int id = await invoiceRepoImpl.addInvoiceHead(
         invoiceHead: event.salesHeadModel,
         tableName: DatabaseConstants.salesInvoiceHeadTable);
+    for (var i = 0; i < event.salesDtlModel.length; i++) {
+      event.salesDtlModel[i].id = id.toString();
+    }
     await invoiceRepoImpl.addInvoiceDtl(
         invoiceDtl: event.salesDtlModel,
         tableName: DatabaseConstants.salesInvoiceDtlTable);
@@ -171,7 +176,8 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
           queryResult2[0]["latestId"].toString() == null) {
         id = 1;
       } else {
-        id += int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = id + 1;
       }
       emit(InvoicePageLoaded(
           customers: customers, docNo: await generateDocNumber(), id: id));
@@ -215,7 +221,8 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
           queryResult2[0]["latestId"].toString() == null) {
         id = 1;
       } else {
-        id += int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = int.parse(queryResult2[0]["latestId"].toString().trim());
+        id = id + 1;
       }
       emit(InvoicePageLoaded(
           customers: currentState.customers,
@@ -237,6 +244,9 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
     await invoiceRepoImpl.updateSalesHead(
         head: event.headModel,
         tableName: DatabaseConstants.salesInvoiceHeadTable);
+    for (var i = 0; i < event.dtlModel.length; i++) {
+      event.dtlModel[i].id = event.headModel.id.toString();
+    }
     await invoiceRepoImpl.updateSalesDtl(
         dtl: event.dtlModel, tableName: DatabaseConstants.salesInvoiceDtlTable);
     emit(UpdateSucc());
@@ -302,6 +312,8 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
 
   void _onAddClientToInvoice(
       AddClientToInvoiceEvent event, Emitter<InvoiceState> emit) {
+    chosenItems = event.allDtl;
+
     chosenItems.add(event.item); // Update the central list
     emit(AddNewInvoiceState(
       chosenItems: chosenItems,

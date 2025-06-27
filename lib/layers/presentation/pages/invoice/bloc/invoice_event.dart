@@ -26,7 +26,7 @@ class OnInvoiceToEdit extends InvoiceEvent {
 }
 
 class EditPressed extends InvoiceEvent {
-  final SalesDtlModel salesDtlModel;
+  final List<SalesDtlModel> salesDtlModel;
   final int index;
 
   EditPressed({required this.salesDtlModel, required this.index});
@@ -79,14 +79,16 @@ class SearchClientsEvent extends InvoiceEvent {
 
 class AddClientToInvoiceEvent extends InvoiceEvent {
   final SalesDtlModel item;
-
-  AddClientToInvoiceEvent(this.item);
+  final List<SalesDtlModel> allDtl;
+  AddClientToInvoiceEvent(this.item, this.allDtl);
 }
 
 class EditInvoiceItemEvent extends InvoiceEvent {
-  final SalesDtlModel updatedItem;
+  final List<SalesDtlModel> updatedItem;
   final int index;
-  EditInvoiceItemEvent(this.updatedItem, this.index);
+  final List<SalesDtlModel> allDtl;
+
+  EditInvoiceItemEvent(this.updatedItem, this.index, this.allDtl);
 }
 
 class StartScanning extends InvoiceEvent {}

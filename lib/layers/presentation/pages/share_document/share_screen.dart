@@ -262,7 +262,7 @@ class PrintingScreen extends StatelessWidget {
               _buildSummaryRow2('الضريبة', "${printingSalesHeadModel.tax}"),
               _buildSummaryRow2('الخصم', "${printingSalesHeadModel.dis1}"),
               _buildSummaryRow2(
-                  'الخصم علي الفاتورة', "${printingSalesHeadModel.disratio}"),
+                  'الخصم علي الفاتورة', "${printingSalesHeadModel.disam}"),
               const Divider(),
               _buildSummaryRow2('الصافي', "${printingSalesHeadModel.net}",
                   isBold: true),

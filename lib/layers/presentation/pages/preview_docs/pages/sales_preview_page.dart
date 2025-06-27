@@ -138,10 +138,11 @@ class _SalesPreviewPageState extends State<SalesPreviewPage>
                             builder: (_) => BlocProvider(
                               create: (context) =>
                                   InvoiceBloc()..add(OnInvoiceToEdit(item.id!)),
-                              child: InvoicePageContent(
+                              child: InvoiceEditingContent(
                                 extraTitle: "المبيعات",
                                 sent: isSentTab ? 1 : 0,
                                 invoiceType: 0,
+                                editid: item.id,
                               ),
                             ),
                           ),

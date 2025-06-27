@@ -24,10 +24,17 @@ int idx = 0;
 
 class AddnewPopup extends StatelessWidget {
   const AddnewPopup(
-      {super.key, required this.isEdit, this.toEdit, required this.id});
+      {super.key,
+      required this.isEdit,
+      this.toEdit,
+      required this.allDtl,
+      required this.id,
+      required this.headid});
   final bool isEdit;
   final SalesDtlModel? toEdit;
   final int id;
+  final int headid;
+  final List<SalesDtlModel> allDtl;
   @override
   Widget build(BuildContext context) {
     final bloc = context.read<ResalesBloc>();
@@ -374,21 +381,31 @@ class AddnewPopup extends StatelessWidget {
   }
 
   void _handleConfirm(BuildContext context, ResalesBloc bloc) {
-    SalesDtlModel salesDtlModel = SalesDtlModel(
-      price: double.tryParse(priceControlleer.text),
-      disam: double.tryParse(disControlleer.text),
-      disratio: double.tryParse(disRatioControlleer.text),
-      id: headid.toString(),
-      itemId: selectedItem?.itemid.toString(),
-      itemName: selectedItem?.name.toString(),
-      qty: double.tryParse(qtyControlleer.text),
-      tax: double.tryParse(taxControlleer.text),
-    );
-
     if (isEdit) {
+      SalesDtlModel salesDtlModel = SalesDtlModel(
+        innerid: toEdit!.innerid,
+        price: double.tryParse(priceControlleer.text),
+        disam: double.tryParse(disControlleer.text),
+        disratio: double.tryParse(disRatioControlleer.text),
+        id: headid.toString(),
+        itemId: selectedItem?.itemid.toString(),
+        itemName: selectedItem?.name.toString(),
+        qty: double.tryParse(qtyControlleer.text),
+        tax: double.tryParse(taxControlleer.text),
+      );
       bloc.add(ReEditResalesItemEvent(salesDtlModel, idx));
     } else if (selectedItem != null) {
-      bloc.add(ReAddClientToResalesEvent(salesDtlModel));
+      SalesDtlModel salesDtlModel = SalesDtlModel(
+        price: double.tryParse(priceControlleer.text),
+        disam: double.tryParse(disControlleer.text),
+        disratio: double.tryParse(disRatioControlleer.text),
+        id: headid.toString(),
+        itemId: selectedItem?.itemid.toString(),
+        itemName: selectedItem?.name.toString(),
+        qty: double.tryParse(qtyControlleer.text),
+        tax: double.tryParse(taxControlleer.text),
+      );
+      bloc.add(ReAddClientToResalesEvent(salesDtlModel, allDtl));
     }
     Navigator.pop(context);
   }

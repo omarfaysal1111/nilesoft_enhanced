@@ -20,7 +20,7 @@ class ItemSelected extends InvoiceState {
 }
 
 class EditState extends InvoiceState {
-  final SalesDtlModel salesDtlModel;
+  final List<SalesDtlModel> salesDtlModel;
   final int index;
   final List<ItemsModel> items;
   EditState(

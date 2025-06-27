@@ -141,7 +141,10 @@ class SalesHeadModel implements BaseModel {
 }
 
 class SalesDtlModel implements BaseModel {
+  SalesHeadModel salesHeadModel = SalesHeadModel();
   String? id;
+  int? innerid;
+
   String? itemId;
   String? itemName;
   double? qty;
@@ -155,6 +158,7 @@ class SalesDtlModel implements BaseModel {
     this.id,
     this.itemId,
     this.itemName,
+    this.innerid,
     // this.discount,
     this.price,
     this.disam,
@@ -168,6 +172,7 @@ class SalesDtlModel implements BaseModel {
         itemName = res["itemName"],
         qty = res["qty"],
         price = res["price"],
+        innerid = int.parse(res['innerid'].toString()),
         disam = res["disam"],
         disratio = res["disratio"],
         tax = res["tax"],
@@ -203,6 +208,7 @@ class SalesDtlModel implements BaseModel {
   SalesDtlModel clone() {
     return SalesDtlModel(
       id: id,
+      innerid: innerid,
       itemName: itemName,
       price: price,
       disam: disam,

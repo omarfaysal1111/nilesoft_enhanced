@@ -20,7 +20,7 @@ class DatabaseHelper {
   }
   Future<void> initDB() async {
     String path = await getDatabasesPath();
-    db = await openDatabase(join(path, 'NileSoftv7.db'),
+    db = await openDatabase(join(path, 'NileSoftv9.db'),
         onCreate: (database, version) async {
       await database.execute(
         """
@@ -45,6 +45,7 @@ class DatabaseHelper {
       );
       await database.execute("""
             CREATE TABLE salesInvoiceDtl (
+              innerid INTEGER PRIMARY KEY AUTOINCREMENT, 
               id TEXT ALLOW NULL,
               itemId TEXT ALLOW NULL,
               itemName TEXT ALLOW NULL,
@@ -106,6 +107,7 @@ class DatabaseHelper {
       );
       await database.execute("""
             CREATE TABLE ResalesInvoiceDtl (
+              innerid INTEGER PRIMARY KEY AUTOINCREMENT, 
               id TEXT ALLOW NULL,
               itemId TEXT ALLOW NULL,
               itemName TEXT ALLOW NULL,
@@ -258,8 +260,8 @@ CREATE TABLE settings (
 
   Future<int> insertRecord<T extends BaseModel>(
       T model, String tableName) async {
-    int result = await db.insert(tableName, model.toMap());
-    return result;
+    int id = await db.insert(tableName, model.toMap());
+    return id; // this is the new row IDt;
   }
 
   Future<int> insertListRecords<T extends BaseModel>(
@@ -318,11 +320,11 @@ CREATE TABLE settings (
   }
 
   Future<int> updateRecordStringId<T extends BaseModel>(
-      T model, String tableName, String id) async {
+      T model, String tableName, int id) async {
     int result = await db.update(
       tableName,
       model.toMap(),
-      where: 'id = ?',
+      where: 'innerid = ?',
       whereArgs: [id],
     );
     return result;

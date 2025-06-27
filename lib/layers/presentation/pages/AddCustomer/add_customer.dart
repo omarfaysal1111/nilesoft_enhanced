@@ -178,7 +178,7 @@ class AddCustomer extends StatelessWidget {
                                 governmentid: selectedGov!.id.toString(),
                                 areaid: selectedArea!.id.toString(),
                                 cityid: int.parse(
-                                  selectedArea!.id,
+                                  selectedCity!.id,
                                 ));
                             bloc.add(
                                 OnAddCustomer(customerModel: addClientModel));

@@ -98,8 +98,8 @@ class ReOnDiscountRatioChanged extends ResalesEvent {
 
 class ReAddClientToResalesEvent extends ResalesEvent {
   final SalesDtlModel item;
-
-  ReAddClientToResalesEvent(this.item);
+  final List<SalesDtlModel> allDtl;
+  ReAddClientToResalesEvent(this.item, this.allDtl);
 }
 
 class ReEditResalesItemEvent extends ResalesEvent {

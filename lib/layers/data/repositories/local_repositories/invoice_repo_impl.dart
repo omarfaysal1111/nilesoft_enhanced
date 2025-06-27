@@ -76,10 +76,11 @@ class InvoiceRepoImpl implements InvoiceRepo {
   }
 
   @override
-  Future<void> addInvoiceHead(
+  Future<int> addInvoiceHead(
       {required SalesHeadModel invoiceHead, required String tableName}) async {
     DatabaseConstants.startDB(_databaseHelper);
-    await _databaseHelper.insertRecord<SalesHeadModel>(invoiceHead, tableName);
+    return await _databaseHelper.insertRecord<SalesHeadModel>(
+        invoiceHead, tableName);
   }
 
   @override
@@ -125,16 +126,21 @@ class InvoiceRepoImpl implements InvoiceRepo {
       {required List<SalesDtlModel> dtl, required String tableName}) async {
     DatabaseConstants.startDB(_databaseHelper);
     for (var i = 0; i < dtl.length; i++) {
-      await _databaseHelper.updateRecordStringId(
-          dtl[i], tableName, dtl[i].id.toString());
+      if (dtl[i].innerid != null) {
+        await _databaseHelper.updateRecordStringId(
+            dtl[i], tableName, int.parse(dtl[i].innerid.toString()));
+      } else {
+        await _databaseHelper.insertRecord(dtl[i], tableName);
+      }
     }
   }
 
   @override
-  Future<void> updateSalesHead(
+  Future<int> updateSalesHead(
       {required SalesHeadModel head, required String tableName}) async {
     DatabaseConstants.startDB(_databaseHelper);
-    await _databaseHelper.updateRecord(head, tableName, head.id!);
+    int res = await _databaseHelper.updateRecord(head, tableName, head.id!);
+    return res;
   }
 
   @override

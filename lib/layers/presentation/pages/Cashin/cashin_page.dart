@@ -23,8 +23,31 @@ CustomersModel? selected;
 int id = 0;
 int mysent = 0;
 
-class CashinPage extends StatelessWidget {
+class CashinPage extends StatefulWidget {
   const CashinPage({super.key});
+
+  @override
+  State<CashinPage> createState() => _CashinPageState();
+}
+
+class _CashinPageState extends State<CashinPage> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    clear();
+  }
+
+  void clear() {
+    setState(() {
+      desc.text = "";
+      amount.text = "";
+      docNo = "";
+      isEditting = false;
+      customers = [];
+      id = -1;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,7 +241,21 @@ class CashinPage extends StatelessWidget {
                                           total: double.parse(amount.text),
                                         ),
                                         id: selected!.id.toString(),
-                                        numOfSerials: 0)));
+                                        numOfSerials: 0))).then(
+                              (value) {
+                                setState(() {
+                                  desc.clear();
+                                  amount.clear();
+                                  docNo = "";
+                                  isEditting = false;
+                                  customers = [];
+                                  selected = null;
+                                  _customersModel = null;
+                                  id = 0;
+                                  mysent = 0;
+                                });
+                              },
+                            );
                           } else {
                             //  Navigator.pop(context);
                           }

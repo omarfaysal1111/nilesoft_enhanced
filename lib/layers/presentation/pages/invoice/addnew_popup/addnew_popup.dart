@@ -21,8 +21,13 @@ ItemsModel? selectedItem;
 int idx = 0;
 
 class AddnewPopup extends StatelessWidget {
+  final List<SalesDtlModel> allDtl;
   const AddnewPopup(
-      {super.key, required this.isEdit, this.toEdit, required this.headId});
+      {super.key,
+      required this.isEdit,
+      this.toEdit,
+      required this.headId,
+      required this.allDtl});
   final bool isEdit;
   final SalesDtlModel? toEdit;
   final int headId;
@@ -119,15 +124,16 @@ class AddnewPopup extends StatelessWidget {
       idx = state.index;
       myItems = state.items;
       // Populate controllers
-      priceControlleer.text = state.salesDtlModel.price.toString();
-      disControlleer.text = state.salesDtlModel.disam.toString();
-      disRatioControlleer.text = state.salesDtlModel.disratio.toString();
-      taxControlleer.text = state.salesDtlModel.tax.toString();
-      qtyControlleer.text = state.salesDtlModel.qty.toString();
+      priceControlleer.text = state.salesDtlModel[state.index].price.toString();
+      disControlleer.text = state.salesDtlModel[state.index].disam.toString();
+      disRatioControlleer.text =
+          state.salesDtlModel[state.index].disratio.toString();
+      taxControlleer.text = state.salesDtlModel[state.index].tax.toString();
+      qtyControlleer.text = state.salesDtlModel[state.index].qty.toString();
 
       // Set selectedItem based on itemId
       selectedItem = myItems.firstWhere(
-        (item) => item.name == state.salesDtlModel.itemName,
+        (item) => item.name == state.salesDtlModel[state.index].itemName,
       );
     } else if (state is DiscountChanged) {
       disControlleer.text = state.amount.toString();
@@ -297,7 +303,7 @@ class AddnewPopup extends StatelessWidget {
                 onChanged: (value) {},
                 keyboardType: TextInputType.number,
                 hintText: "السعر",
-                //readonly: true,
+                readonly: true,
                 controller: priceControlleer,
               ),
             ),
@@ -398,21 +404,33 @@ class AddnewPopup extends StatelessWidget {
   }
 
   void _handleConfirm(BuildContext context, InvoiceBloc bloc) {
-    SalesDtlModel salesDtlModel = SalesDtlModel(
-      price: double.tryParse(priceControlleer.text),
-      disam: double.tryParse(disControlleer.text),
-      disratio: double.tryParse(disRatioControlleer.text),
-      id: headId.toString(),
-      itemId: selectedItem?.itemid.toString(),
-      itemName: selectedItem?.name.toString(),
-      qty: double.tryParse(qtyControlleer.text),
-      tax: double.tryParse(taxControlleer.text),
-    );
-
     if (isEdit) {
-      bloc.add(EditInvoiceItemEvent(salesDtlModel, idx));
+      SalesDtlModel salesDtlModel = SalesDtlModel(
+        innerid: toEdit!.innerid,
+        price: double.tryParse(priceControlleer.text),
+        disam: double.tryParse(disControlleer.text),
+        disratio: double.tryParse(disRatioControlleer.text),
+        id: headId.toString(),
+        itemId: selectedItem?.itemid.toString(),
+        itemName: selectedItem?.name.toString(),
+        qty: double.tryParse(qtyControlleer.text),
+        tax: double.tryParse(taxControlleer.text),
+      );
+
+      bloc.add(EditInvoiceItemEvent([salesDtlModel], idx, allDtl));
     } else if (selectedItem != null) {
-      bloc.add(AddClientToInvoiceEvent(salesDtlModel));
+      SalesDtlModel salesDtlModel = SalesDtlModel(
+        // innerid: toEdit!.innerid,
+        price: double.tryParse(priceControlleer.text),
+        disam: double.tryParse(disControlleer.text),
+        disratio: double.tryParse(disRatioControlleer.text),
+        id: headId.toString(),
+        itemId: selectedItem?.itemid.toString(),
+        itemName: selectedItem?.name.toString(),
+        qty: double.tryParse(qtyControlleer.text),
+        tax: double.tryParse(taxControlleer.text),
+      );
+      bloc.add(AddClientToInvoiceEvent(salesDtlModel, allDtl));
     }
     Navigator.pop(context);
   }
