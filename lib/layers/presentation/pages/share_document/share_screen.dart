@@ -33,75 +33,77 @@ class PrintingScreen extends StatelessWidget {
     final arabicFont = pw.Font.ttf(ttf);
 
     pdf.addPage(
-      pw.Page(
+      pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         textDirection: pw.TextDirection.rtl,
         build: (pw.Context context) {
-          return pw.Padding(
-            padding: const pw.EdgeInsets.all(24.0),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Text("فاتورة مبيعات",
-                    style: pw.TextStyle(
+          return [
+            pw.Padding(
+              padding: const pw.EdgeInsets.all(24.0),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text("فاتورة مبيعات",
+                      style: pw.TextStyle(
+                        font: arabicFont,
+                        fontSize: 24,
+                        fontWeight: pw.FontWeight.bold,
+                      )),
+                  pw.SizedBox(height: 12),
+                  pw.Text("رقم الفاتورة: ${printingSalesHeadModel.invoiceno}",
+                      style: pw.TextStyle(font: arabicFont)),
+                  pw.Text("اسم العميل: ${printingSalesHeadModel.clientName}",
+                      style: pw.TextStyle(font: arabicFont)),
+                  pw.Text(
+                      "تاريخ الفاتورة: ${intl.DateFormat('yyyy-MM-dd').format(DateTime.now())}",
+                      style: pw.TextStyle(font: arabicFont)),
+                  pw.SizedBox(height: 16),
+                  pw.Table.fromTextArray(
+                    headers: ['الصنف', 'الكمية', 'السعر', 'الخصم', 'الاجمالي'],
+                    data: printingSalesDtlModel.map((item) {
+                      return [
+                        item.itemName.toString(),
+                        item.qty.toString(),
+                        item.price.toString(),
+                        item.disam.toString(),
+                        (item.price! * double.parse(item.qty.toString()))
+                            .toStringAsFixed(2),
+                      ];
+                    }).toList(),
+                    headerStyle: pw.TextStyle(
                       font: arabicFont,
-                      fontSize: 24,
                       fontWeight: pw.FontWeight.bold,
-                    )),
-                pw.SizedBox(height: 12),
-                pw.Text("رقم الفاتورة: ${printingSalesHeadModel.invoiceno}",
-                    style: pw.TextStyle(font: arabicFont)),
-                pw.Text("اسم العميل: ${printingSalesHeadModel.clientName}",
-                    style: pw.TextStyle(font: arabicFont)),
-                pw.Text(
-                    "تاريخ الفاتورة: ${intl.DateFormat('yyyy-MM-dd').format(DateTime.now())}",
-                    style: pw.TextStyle(font: arabicFont)),
-                pw.SizedBox(height: 16),
-                pw.Table.fromTextArray(
-                  headers: ['الصنف', 'الكمية', 'السعر', 'الخصم', 'الاجمالي'],
-                  data: printingSalesDtlModel.map((item) {
-                    return [
-                      item.itemName.toString(),
-                      item.qty.toString(),
-                      item.price.toString(),
-                      item.disam.toString(),
-                      (item.price! * double.parse(item.qty.toString()))
-                          .toStringAsFixed(2),
-                    ];
-                  }).toList(),
-                  headerStyle: pw.TextStyle(
-                    font: arabicFont,
-                    fontWeight: pw.FontWeight.bold,
+                    ),
+                    cellStyle: pw.TextStyle(font: arabicFont),
+                    cellAlignment: pw.Alignment.centerRight,
+                    border: pw.TableBorder.all(),
                   ),
-                  cellStyle: pw.TextStyle(font: arabicFont),
-                  cellAlignment: pw.Alignment.centerRight,
-                  border: pw.TableBorder.all(),
-                ),
-                pw.SizedBox(height: 20),
-                pw.Divider(),
-                pw.SizedBox(height: 8),
-                pw.Align(
-                  alignment: pw.Alignment.centerRight,
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      _buildSummaryRow(
-                          arabicFont, "الاجمالي", printingSalesHeadModel.total),
-                      _buildSummaryRow(
-                          arabicFont, "الضريبة", printingSalesHeadModel.tax),
-                      _buildSummaryRow(
-                          arabicFont, "الخصم", printingSalesHeadModel.dis1),
-                      _buildSummaryRow(arabicFont, "خصم على الفاتورة",
-                          printingSalesHeadModel.disratio),
-                      _buildSummaryRow(
-                          arabicFont, "الصافي", printingSalesHeadModel.net,
-                          isBold: true),
-                    ],
+                  pw.SizedBox(height: 20),
+                  pw.Divider(),
+                  pw.SizedBox(height: 8),
+                  pw.Align(
+                    alignment: pw.Alignment.centerRight,
+                    child: pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.end,
+                      children: [
+                        _buildSummaryRow(arabicFont, "الاجمالي",
+                            printingSalesHeadModel.total),
+                        _buildSummaryRow(
+                            arabicFont, "الضريبة", printingSalesHeadModel.tax),
+                        _buildSummaryRow(
+                            arabicFont, "الخصم", printingSalesHeadModel.dis1),
+                        _buildSummaryRow(arabicFont, "خصم على الفاتورة",
+                            printingSalesHeadModel.disratio),
+                        _buildSummaryRow(
+                            arabicFont, "الصافي", printingSalesHeadModel.net,
+                            isBold: true),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
+                ],
+              ),
+            )
+          ];
         },
       ),
     );
@@ -137,114 +139,117 @@ class PrintingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          CustomButton(
-            onPressed: () async => await generateAndSharePdf(context),
-            text: ("ارسال الفاتورة"),
+    return WillPopScope(
+        onWillPop: () async => false,
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          floatingActionButton: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              CustomButton(
+                onPressed: () async => await generateAndSharePdf(context),
+                text: ("ارسال الفاتورة"),
+              ),
+              CustomButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider(
+                        create: (context) => HomeBloc(),
+                        child: const HomePage(),
+                      ),
+                    ),
+                  );
+                },
+                text: ("الي الرئيسية"),
+              ),
+            ],
           ),
-          CustomButton(
-            onPressed: () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BlocProvider(
-                    create: (context) => HomeBloc(),
-                    child: const HomePage(),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            automaticallyImplyLeading: false,
+            title: const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Text(
+                    "مشاركة الفاتورة",
+                    style: TextStyle(
+                      fontFamily: 'Almarai',
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 ),
-              );
-            },
-            text: ("الي الرئيسية"),
-          ),
-        ],
-      ),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: Text(
-                "مشاركة الفاتورة",
-                style: TextStyle(
-                  fontFamily: 'Almarai',
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.right,
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.black, width: 2),
           ),
-          child: Center(
-            child: RepaintBoundary(
-              key: _globalKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      "رقم الفاتورة: ${printingSalesHeadModel.invoiceno}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Almarai',
-                      ),
-                      textAlign: TextAlign.right,
+          body: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.black, width: 2),
+              ),
+              child: Center(
+                child: RepaintBoundary(
+                  key: _globalKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          "رقم الفاتورة: ${printingSalesHeadModel.invoiceno}",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Almarai',
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        Text(
+                          "العميل: ${printingSalesHeadModel.clientName}",
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontFamily: 'Almarai',
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                        const Divider(thickness: 1.5),
+                        Text(
+                          "التاريخ: ${c.DateFormat('yyyy-MM-dd').format(DateTime.now())}",
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontFamily: 'Almarai'),
+                        ),
+                        const SizedBox(height: 12),
+                        Table(
+                          border: TableBorder.symmetric(
+                            inside: BorderSide(color: Colors.grey.shade300),
+                            outside: const BorderSide(
+                                color: Colors.black, width: 1.5),
+                          ),
+                          columnWidths: const {
+                            0: FlexColumnWidth(2),
+                            1: FlexColumnWidth(1.2),
+                            2: FlexColumnWidth(1.2),
+                            3: FlexColumnWidth(1),
+                            4: FlexColumnWidth(1.5),
+                          },
+                          children: _buildTableRows(),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSummaryCard(context),
+                      ],
                     ),
-                    Text(
-                      "العميل: ${printingSalesHeadModel.clientName}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontFamily: 'Almarai',
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
-                    const Divider(thickness: 1.5),
-                    Text(
-                      "التاريخ: ${c.DateFormat('yyyy-MM-dd').format(DateTime.now())}",
-                      textAlign: TextAlign.right,
-                      style: const TextStyle(fontFamily: 'Almarai'),
-                    ),
-                    const SizedBox(height: 12),
-                    Table(
-                      border: TableBorder.symmetric(
-                        inside: BorderSide(color: Colors.grey.shade300),
-                        outside:
-                            const BorderSide(color: Colors.black, width: 1.5),
-                      ),
-                      columnWidths: const {
-                        0: FlexColumnWidth(2),
-                        1: FlexColumnWidth(1.2),
-                        2: FlexColumnWidth(1.2),
-                        3: FlexColumnWidth(1),
-                        4: FlexColumnWidth(1.5),
-                      },
-                      children: _buildTableRows(),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildSummaryCard(context),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Widget _buildSummaryCard(BuildContext context) {

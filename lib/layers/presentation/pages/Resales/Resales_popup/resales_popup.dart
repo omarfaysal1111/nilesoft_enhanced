@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
@@ -395,18 +396,33 @@ class AddnewPopup extends StatelessWidget {
       );
       bloc.add(ReEditResalesItemEvent(salesDtlModel, idx));
     } else if (selectedItem != null) {
-      SalesDtlModel salesDtlModel = SalesDtlModel(
-        price: double.tryParse(priceControlleer.text),
-        disam: double.tryParse(disControlleer.text),
-        disratio: double.tryParse(disRatioControlleer.text),
-        id: headid.toString(),
-        itemId: selectedItem?.itemid.toString(),
-        itemName: selectedItem?.name.toString(),
-        qty: double.tryParse(qtyControlleer.text),
-        tax: double.tryParse(taxControlleer.text),
-      );
-      bloc.add(ReAddClientToResalesEvent(salesDtlModel, allDtl));
+      if ((selectedItem!.price ?? 0) > 0) {
+        SalesDtlModel salesDtlModel = SalesDtlModel(
+          price: double.tryParse(priceControlleer.text),
+          disam: double.tryParse(disControlleer.text),
+          disratio: double.tryParse(disRatioControlleer.text),
+          id: headid.toString(),
+          itemId: selectedItem?.itemid.toString(),
+          itemName: selectedItem?.name.toString(),
+          qty: double.tryParse(qtyControlleer.text),
+          tax: double.tryParse(taxControlleer.text),
+        );
+        bloc.add(ReAddClientToResalesEvent(salesDtlModel, allDtl));
+      } else {
+        _showSnackBar("لا يمكن اضافة صنف سعره صفر", context);
+      }
     }
     Navigator.pop(context);
+  }
+
+  void _showSnackBar(String message, BuildContext context) {
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
   }
 }

@@ -212,6 +212,17 @@ class HomePage extends StatelessWidget {
                           ),
                         );
                       });
+                    } else if (state.isSendingSubmitted == true &&
+                        state.isSendingSucc == false &&
+                        state.isSendingLoading == false) {
+                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("يوجد مشكلة في المستندات"),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      });
                     }
                     return SizedBox(
                       width: 160,

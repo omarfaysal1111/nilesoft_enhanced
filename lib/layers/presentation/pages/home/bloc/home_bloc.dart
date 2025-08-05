@@ -68,7 +68,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       remoteCashinRepoImpl.sendInvoices(
           endPoint: "cashin/addnew",
           headTableName: DatabaseConstants.cashinHeadTable);
-      emit(state.copyWith(isSendingSubmitted: false, isSendingSucc: true));
+      if (RemoteInvoiceRepoImpl.problems == 0) {
+        emit(state.copyWith(isSendingSubmitted: false, isSendingSucc: true));
+      } else {
+        emit(state.copyWith(
+            isSendingSubmitted: true,
+            isSendingSucc: false,
+            isSendingLoading: false));
+      }
     });
   }
 }

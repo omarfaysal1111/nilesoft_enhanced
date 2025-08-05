@@ -170,7 +170,9 @@ class AddCustomer extends StatelessWidget {
                         onPressed: () {
                           if (selectedArea != null &&
                               selectedCity != null &&
-                              selectedGov != null) {
+                              selectedGov != null &&
+                              phone.text != "" &&
+                              phone.text != null) {
                             AddCustomerModel addClientModel = AddCustomerModel(
                                 address: address.text,
                                 phone1: phone.text,

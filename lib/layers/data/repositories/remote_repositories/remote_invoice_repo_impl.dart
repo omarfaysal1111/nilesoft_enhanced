@@ -9,6 +9,7 @@ import 'package:nilesoft_erp/layers/data/repositories/local_repositories/setting
 import 'package:nilesoft_erp/layers/domain/repository/remote/remote_invoice_repo.dart';
 
 class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
+  static int problems = 0;
   @override
   Future<void> sendInvoices(
       {required String headTableName,
@@ -49,7 +50,9 @@ class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
       if (res.message == 0) {
         databaseHelper.db.rawUpdate(
             "UPDATE $headTableName SET sent = 1 where id='${invoices[0].salesHeadModel!.id}'");
-      } else {}
+      } else {
+        problems++;
+      }
     }
   }
 }
