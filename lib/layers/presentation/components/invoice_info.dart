@@ -7,6 +7,7 @@ class DocInfoCard extends StatelessWidget {
   final VoidCallback onViewPressed;
   final String docNumber;
   final int sent;
+  final VoidCallback onShare;
   final VoidCallback onDelete;
   const DocInfoCard({
     super.key,
@@ -17,6 +18,7 @@ class DocInfoCard extends StatelessWidget {
     required this.onViewPressed,
     required this.sent,
     required this.docNumber,
+    required this.onShare,
   });
 
   @override
@@ -126,6 +128,11 @@ class DocInfoCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                sent == 1
+                    ? IconButton(
+                        icon: const Icon(Icons.share, color: Colors.red),
+                        onPressed: onShare)
+                    : const SizedBox(),
                 sent == 0
                     ? IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),

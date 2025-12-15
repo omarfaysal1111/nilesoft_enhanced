@@ -17,6 +17,7 @@ class DatabaseConstants {
   static const String customersTable = "Customers";
   static const String settingsTable = "settings";
   static const String itemsTable = "items";
+  static const String mobileItemUnitsTable = "mobileItemUnits";
   static Future<void> startDB(DatabaseHelper databaseHelper) async {
     await databaseHelper.initDB().whenComplete(
       () {

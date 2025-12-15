@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_invoice_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_item_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/repository/remote/remote_invoice_repo.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/sqr_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/add_customer.dart';
@@ -25,6 +28,11 @@ import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_bloc.d
 import 'package:nilesoft_erp/layers/presentation/pages/ledger/bloc/ledger_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/ledger/ledger_screen.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/pages/main_preview_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/login/login_page.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/login/bloc/login_bloc.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nilesoft_erp/main.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -36,6 +44,7 @@ class HomePage extends StatelessWidget {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
+        automaticallyImplyLeading: false,
         title: const Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
@@ -46,6 +55,77 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.logout,
+              color: Colors.red,
+            ),
+            onPressed: () async {
+              // Show confirmation dialog
+              final shouldLogout = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: AlertDialog(
+                      title: const Text(
+                        "تسجيل الخروج",
+                        style: TextStyle(fontFamily: 'Almarai'),
+                      ),
+                      content: const Text(
+                        "هل أنت متأكد من تسجيل الخروج؟",
+                        style: TextStyle(fontFamily: 'Almarai'),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text(
+                            "إلغاء",
+                            style: TextStyle(fontFamily: 'Almarai'),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text(
+                            "تسجيل الخروج",
+                            style: TextStyle(
+                              fontFamily: 'Almarai',
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+
+              if (shouldLogout == true) {
+                // Clear SharedPreferences
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.remove("user_token");
+
+                // Clear the token in MyApp
+                MyApp.token = null;
+
+                // Navigate to login page
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => Provider<LoginBloc>(
+                        create: (_) => LoginBloc(),
+                        child: const LoginPage(),
+                      ),
+                    ),
+                    (route) => false,
+                  );
+                }
+              }
+            },
+            tooltip: "تسجيل الخروج",
+          ),
+        ],
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -178,9 +258,23 @@ class HomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   BlocConsumer<HomeBloc, HomeState>(listener: (context, state) {
-                    // if (state.isUpdateSubmitted) {
-                    //  const CircularProgressIndicator();
-                    // }
+                    // Show error message if present
+                    if (state.errorMessage != null &&
+                        !state.isUpdateSubmitted &&
+                        !state.isSendingSubmitted) {
+                      SchedulerBinding.instance.addPostFrameCallback((_) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              state.errorMessage!,
+                              style: const TextStyle(fontFamily: 'Almarai'),
+                            ),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      });
+                    }
                   }, builder: (BuildContext context, HomeState state) {
                     if (state.isUpdateSubmitted) {
                       SchedulerBinding.instance.addPostFrameCallback((_) {
@@ -203,23 +297,117 @@ class HomePage extends StatelessWidget {
                         );
                       });
                     }
-                    if (state.isSendingSucc) {
+                    if (state.isSendingSucc && !state.isSendingSubmitted) {
                       SchedulerBinding.instance.addPostFrameCallback((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("تم ارسال البيانات"),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
+                        if (state.messages != null &&
+                            state.messages!.isNotEmpty) {
+                          // Show errors in a modal dialog that blocks all interactions
+                          showDialog(
+                            context: context,
+                            barrierDismissible:
+                                false, // Prevent dismissing by tapping outside
+                            builder: (dialogContext) => WillPopScope(
+                              onWillPop: () async =>
+                                  false, // Prevent dismissing with back button
+                              child: AlertDialog(
+                                title: const Text(
+                                  "تحذيرات",
+                                  style: TextStyle(fontFamily: 'Almarai'),
+                                ),
+                                content: SizedBox(
+                                  width: double.maxFinite,
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: state.messages!.length,
+                                    itemBuilder: (context, index) {
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 8.0),
+                                        child: Text(
+                                          state.messages![index],
+                                          style: const TextStyle(
+                                            fontFamily: 'Almarai',
+                                            color: Colors.orange,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext),
+                                    child: const Text(
+                                      "موافق",
+                                      style: TextStyle(fontFamily: 'Almarai'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Show success message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("تم ارسال البيانات بنجاح"),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       });
-                    } else if (state.isSendingSubmitted == true &&
-                        state.isSendingSucc == false &&
-                        state.isSendingLoading == false) {
+                    } else if (!state.isSendingSubmitted &&
+                        !state.isSendingSucc &&
+                        state.messages != null &&
+                        state.messages!.isNotEmpty) {
+                      // Show errors in a modal dialog that blocks all interactions
                       SchedulerBinding.instance.addPostFrameCallback((_) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("يوجد مشكلة في المستندات"),
-                            duration: Duration(seconds: 2),
+                        showDialog(
+                          context: context,
+                          barrierDismissible:
+                              false, // Prevent dismissing by tapping outside
+                          builder: (dialogContext) => WillPopScope(
+                            onWillPop: () async =>
+                                false, // Prevent dismissing with back button
+                            child: AlertDialog(
+                              title: const Text(
+                                "أخطاء في الإرسال",
+                                style: TextStyle(
+                                  fontFamily: 'Almarai',
+                                  color: Colors.red,
+                                ),
+                              ),
+                              content: SizedBox(
+                                width: double.maxFinite,
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  itemCount: state.messages!.length,
+                                  itemBuilder: (context, index) {
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 8.0),
+                                      child: Text(
+                                        state.messages![index],
+                                        style: const TextStyle(
+                                          fontFamily: 'Almarai',
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dialogContext),
+                                  child: const Text(
+                                    "موافق",
+                                    style: TextStyle(fontFamily: 'Almarai'),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       });
@@ -236,13 +424,49 @@ class HomePage extends StatelessWidget {
                   const SizedBox(
                     height: 20,
                   ),
-                  SizedBox(
-                    width: 164,
-                    child: CustomButton(
-                        text: "ارسال",
-                        onPressed: () {
-                          homeBloc.add(SenddingSumbittedEvent());
-                        }),
+                  BlocBuilder<HomeBloc, HomeState>(
+                    builder: (context, state) {
+                      final isLoading = state.isSendingSubmitted;
+
+                      return SizedBox(
+                        width: 164,
+                        child: ElevatedButton(
+                          onPressed: isLoading
+                              ? null
+                              : () {
+                                  homeBloc.add(SenddingSumbittedEvent());
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xff39B3BD),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 24),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  "ارسال",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontFamily: 'Almarai',
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

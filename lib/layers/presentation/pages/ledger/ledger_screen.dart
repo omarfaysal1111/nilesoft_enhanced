@@ -25,6 +25,8 @@ String currentbal = "0";
 List<LedgerModel> ledgers = [];
 int numberOfRows = 0;
 int recievedLen = 0;
+bool isPaginationComplete = false;
+bool isPaginationLoading = false;
 
 class LedgerScreen extends StatelessWidget {
   const LedgerScreen({super.key});
@@ -48,6 +50,8 @@ class LedgerScreen extends StatelessWidget {
         ledgers = [];
         numberOfRows = 0;
         recievedLen = 0;
+        isPaginationComplete = false;
+        isPaginationLoading = false;
       },
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -56,27 +60,95 @@ class LedgerScreen extends StatelessWidget {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              IconButton(
-                onPressed: () async {
-                  if (ledgers.isNotEmpty && selectedCustomer != null) {
-                    await generateAndShareLedgerPdf(
-                      ledgers: ledgers,
-                      customerName: selectedCustomer!.name ?? '',
-                      fromDate: fromDate,
-                      toDate: toDate,
-                      openbal: openbal,
-                      debit: debit,
-                      credit: credit,
-                      currentbal: currentbal,
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('يرجى تحديد البيانات أولاً')),
-                    );
-                  }
+              BlocBuilder<LedgerBloc, LedgerState>(
+                builder: (context, state) {
+                  // Check if share is allowed
+                  bool canShare = ledgers.isNotEmpty &&
+                      selectedCustomer != null &&
+                      fromDate.isNotEmpty &&
+                      toDate.isNotEmpty &&
+                      isPaginationComplete &&
+                      !isPaginationLoading;
+
+                  return IconButton(
+                    onPressed: canShare
+                        ? () async {
+                            try {
+                              await generateAndShareLedgerPdf(
+                                ledgers: ledgers,
+                                customerName: selectedCustomer!.name ?? '',
+                                fromDate: fromDate,
+                                toDate: toDate,
+                                openbal: openbal,
+                                debit: debit,
+                                credit: credit,
+                                currentbal: currentbal,
+                              );
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'حدث خطأ أثناء مشاركة الملف: ${e.toString()}',
+                                      style: const TextStyle(
+                                          fontFamily: 'Almarai'),
+                                    ),
+                                    backgroundColor: Colors.red,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                        : () {
+                            String message = '';
+                            if (selectedCustomer == null) {
+                              message = 'يرجى اختيار العميل أولاً';
+                            } else if (fromDate.isEmpty || toDate.isEmpty) {
+                              message = 'يرجى تحديد تاريخ البداية والنهاية';
+                            } else if (ledgers.isEmpty) {
+                              message = 'لا توجد بيانات للمشاركة';
+                            } else if (isPaginationLoading) {
+                              message =
+                                  'جاري تحميل البيانات... يرجى الانتظار حتى اكتمال التحميل';
+                            } else if (!isPaginationComplete) {
+                              message =
+                                  'جاري تحميل جميع البيانات... يرجى الانتظار';
+                            } else {
+                              message = 'يرجى تحديد البيانات أولاً';
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  message,
+                                  style: const TextStyle(fontFamily: 'Almarai'),
+                                ),
+                                backgroundColor: Colors.orange,
+                                duration: const Duration(seconds: 3),
+                              ),
+                            );
+                          },
+                    icon: isPaginationLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.grey),
+                            ),
+                          )
+                        : Icon(
+                            Icons.share,
+                            color: canShare ? Colors.blue : Colors.grey,
+                          ),
+                    tooltip: canShare
+                        ? "مشاركة التقرير"
+                        : isPaginationLoading
+                            ? "جاري التحميل..."
+                            : "يرجى الانتظار حتى اكتمال تحميل البيانات",
+                  );
                 },
-                icon: const Icon(Icons.share),
               ),
               const Directionality(
                 textDirection: TextDirection.rtl,
@@ -93,12 +165,31 @@ class LedgerScreen extends StatelessWidget {
         ),
         body: BlocConsumer<LedgerBloc, LedgerState>(
           listener: (BuildContext context, LedgerState state) {
+            if (state is LedgerError) {
+              // Reset pagination flags on error
+              isPaginationLoading = false;
+              isPaginationComplete = false;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    state.errorMessage,
+                    style: const TextStyle(fontFamily: 'Almarai'),
+                  ),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                ),
+              );
+            }
+            
             if (state is LedgerPageChanged) {
               recievedLen += state.ledger.length;
               ledgers += state.ledger;
+              isPaginationLoading = true;
+              isPaginationComplete = false;
 
               if (ledgers.length != numberOfRows &&
                   ledgers.length == recievedLen) {
+                // More pages to load
                 LedgerParametersModel ledgerParam = LedgerParametersModel(
                   accid: selectedCustomer?.id,
                   firstrow: ledgers.length,
@@ -108,6 +199,22 @@ class LedgerScreen extends StatelessWidget {
                   type: "3",
                 );
                 bloc.add(OnLedgerPageChanged(ledgerParameters: ledgerParam));
+              } else if (ledgers.length == numberOfRows) {
+                // Pagination complete
+                isPaginationLoading = false;
+                isPaginationComplete = true;
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'تم تحميل جميع البيانات بنجاح',
+                        style: TextStyle(fontFamily: 'Almarai'),
+                      ),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
               }
             }
 
@@ -117,8 +224,20 @@ class LedgerScreen extends StatelessWidget {
               credit = state.ledgerFirstRes.totalCridet.toString();
               currentbal = state.ledgerFirstRes.currentBalance.toString();
               numberOfRows = state.ledgerFirstRes.noofrows ?? 0;
+              
+              // Reset pagination flags
+              isPaginationComplete = false;
+              isPaginationLoading = false;
+              recievedLen = 0;
+              ledgers = [];
 
-              if (ledgers.isEmpty) {
+              if (numberOfRows == 0) {
+                // No data to load
+                isPaginationComplete = true;
+                isPaginationLoading = false;
+              } else if (ledgers.isEmpty) {
+                // Start pagination
+                isPaginationLoading = true;
                 LedgerParametersModel ledgerParam = LedgerParametersModel(
                   accid: selectedCustomer?.id,
                   firstrow: 0,
@@ -159,20 +278,54 @@ class LedgerScreen extends StatelessWidget {
                       children: [
                         SizedBox(
                           width: width * 0.48,
-                          child: DatePickerField(
-                            label: toDate,
-                            onDateSelected: (val) {
-                              bloc.add(OnToDateChanged(date: val.toString()));
-                            },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Directionality(
+                                textDirection: TextDirection.rtl,
+                                child: Text(
+                                  "الي",
+                                  style: TextStyle(
+                                    fontFamily: 'Almarai',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              DatePickerField(
+                                label: toDate.isEmpty ? "اختر التاريخ" : toDate,
+                                onDateSelected: (val) {
+                                  bloc.add(OnToDateChanged(date: val.toString()));
+                                },
+                              ),
+                            ],
                           ),
                         ),
                         SizedBox(
                           width: width * 0.48,
-                          child: DatePickerField(
-                            label: fromDate,
-                            onDateSelected: (val) {
-                              bloc.add(OnFromDateChanged(date: val.toString()));
-                            },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Directionality(
+                                textDirection: TextDirection.rtl,
+                                child: Text(
+                                  "من",
+                                  style: TextStyle(
+                                    fontFamily: 'Almarai',
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              DatePickerField(
+                                label: fromDate.isEmpty ? "اختر التاريخ" : fromDate,
+                                onDateSelected: (val) {
+                                  bloc.add(OnFromDateChanged(date: val.toString()));
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -219,23 +372,58 @@ class LedgerScreen extends StatelessWidget {
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 180.0),
-                        child: ListView.builder(
-                          itemCount: ledgers.length,
-                          itemBuilder: (context, index) {
-                            final ledger = ledgers[index];
-                            return Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: LedgerInfoCard(
-                                date: ledger.docdate.toString(),
-                                docNumber: ledger.docno2.toString(),
-                                description: ledger.descr.toString(),
-                                debit: ledger.debit.toString(),
-                                credit: ledger.cridet.toString(),
-                                balance: ledger.balance.toString(),
+                        child: ledgers.isEmpty && !isPaginationLoading
+                            ? const Center(
+                                child: Text(
+                                  "لا توجد بيانات",
+                                  style: TextStyle(
+                                    fontFamily: 'Almarai',
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: ledgers.length +
+                                    (isPaginationLoading ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index == ledgers.length &&
+                                      isPaginationLoading) {
+                                    // Show loading indicator at the bottom
+                                    return const Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: Center(
+                                        child: Column(
+                                          children: [
+                                            CircularProgressIndicator(),
+                                            SizedBox(height: 8),
+                                            Text(
+                                              "جاري تحميل البيانات...",
+                                              style: TextStyle(
+                                                fontFamily: 'Almarai',
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  final ledger = ledgers[index];
+                                  return Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: LedgerInfoCard(
+                                      date: ledger.docdate.toString(),
+                                      docNumber: ledger.docno2.toString(),
+                                      description: ledger.descr.toString(),
+                                      debit: ledger.debit.toString(),
+                                      credit: ledger.cridet.toString(),
+                                      balance: ledger.balance.toString(),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
                   ],

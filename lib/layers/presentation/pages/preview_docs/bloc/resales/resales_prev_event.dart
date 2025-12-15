@@ -10,3 +10,9 @@ class OnReInvoiceDelete extends RePreviewEvent {
   final int id;
   OnReInvoiceDelete({required this.id});
 }
+
+class ReOnShareDoc extends RePreviewEvent {
+  final String id;
+
+  ReOnShareDoc({required this.id});
+}

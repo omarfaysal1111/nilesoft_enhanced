@@ -35,6 +35,7 @@ class SalesModel implements BaseModel {
       "invtype": salesHeadModel!.invType,
       "docdate": salesHeadModel!.docDate,
       "net": salesHeadModel!.net,
+      "invtime": salesHeadModel!.invTime,
       // "sent": salesHeadModel!.sent,
       // "visaid": salesHeadModel!.visaId,
       "dtl": salesdtlModel
@@ -45,6 +46,7 @@ class SalesModel implements BaseModel {
 class SalesHeadModel implements BaseModel {
   String? accid;
   String? clientName;
+  String? invTime;
   String? descr;
   String? invoiceno;
   String? cashaccid;
@@ -68,6 +70,7 @@ class SalesHeadModel implements BaseModel {
   double? disratio;
   // String? visaId;
   int? sent;
+  String? docno;
 
   SalesHeadModel(
       {this.accid,
@@ -77,6 +80,7 @@ class SalesHeadModel implements BaseModel {
       this.invType,
       this.sent,
       this.disam,
+      this.invTime,
       this.disratio,
       // this.coinPrice,
 //this.docdate,
@@ -90,7 +94,8 @@ class SalesHeadModel implements BaseModel {
       this.mobile_uuid,
       this.net,
       this.total,
-      this.invoiceno
+      this.invoiceno,
+      this.docno
       // this.visaId,
       // this.cashaccid
       });
@@ -107,9 +112,11 @@ class SalesHeadModel implements BaseModel {
         clientName = res["clientName"],
         total = res["total"],
         dis1 = res["dis1"],
+        invTime = res['invtime'],
         tax = res["tax"],
         net = res["net"],
-        invoiceno = res["invoiceno"];
+        invoiceno = res["invoiceno"],
+        docno = res["docno"]?.toString();
 
   @override
   Map<String, Object?> toMap() {
@@ -120,6 +127,7 @@ class SalesHeadModel implements BaseModel {
       // "invtime": invTime,
       "sent": sent,
       "disam": disam,
+      "invtime": invTime,
       "disratio": disratio,
       "id": id,
       //  "docdate": docdate,
@@ -134,6 +142,7 @@ class SalesHeadModel implements BaseModel {
       "tax": tax,
       "mobile_uuid": mobile_uuid,
       "net": net,
+      "docno": docno,
       // "visaid": visaId,
       // "sent": sent
     };
@@ -152,8 +161,12 @@ class SalesDtlModel implements BaseModel {
   double? tax;
   double? disratio;
   double? disam;
+  String? unitid;
+  String? unitname;
+  double? factor;
   // double? discount;
   int? sent;
+  int? serial;
   SalesDtlModel({
     this.id,
     this.itemId,
@@ -165,6 +178,10 @@ class SalesDtlModel implements BaseModel {
     this.disratio,
     this.qty,
     this.tax,
+    this.unitid,
+    this.unitname,
+    this.factor,
+    this.serial,
   });
   SalesDtlModel.fromMap(Map<String, dynamic> res)
       : id = res["id"],
@@ -172,11 +189,21 @@ class SalesDtlModel implements BaseModel {
         itemName = res["itemName"],
         qty = res["qty"],
         price = res["price"],
-        innerid = int.parse(res['innerid'].toString()),
+        innerid = res['innerid'] != null
+            ? int.parse(res['innerid'].toString())
+            : null,
         disam = res["disam"],
         disratio = res["disratio"],
         tax = res["tax"],
-        sent = res["sent"];
+        sent = res["sent"],
+        unitid = res["unitid"],
+        unitname = res["unitname"],
+        factor = res["factor"] != null
+            ? double.tryParse(res["factor"].toString())
+            : null,
+        serial = res["serial"] != null
+            ? int.tryParse(res["serial"].toString())
+            : null;
 
   @override
   Map<String, Object?> toMap() {
@@ -189,6 +216,10 @@ class SalesDtlModel implements BaseModel {
       "disratio": disratio,
       "price": price,
       "tax": tax,
+      "unitid": unitid,
+      "serial": serial,
+      // "unitname": unitname,
+      // "factor": factor,
     };
   }
 
@@ -202,6 +233,10 @@ class SalesDtlModel implements BaseModel {
       "disratio": disratio,
       "price": price,
       "tax": tax,
+      "unitid": unitid,
+      "unitname": unitname,
+      "factor": factor,
+      "serial": serial,
     };
   }
 
@@ -214,6 +249,10 @@ class SalesDtlModel implements BaseModel {
       disam: disam,
       qty: qty,
       tax: tax,
+      unitid: unitid,
+      unitname: unitname,
+      factor: factor,
+      serial: serial,
     );
   }
 }

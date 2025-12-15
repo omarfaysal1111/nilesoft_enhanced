@@ -13,6 +13,8 @@ class AddCustomerModel {
   int? cityid;
   String? governmentid;
   String? areaid;
+  String? street;
+  String? responsiblePerson;
   String? userid;
   String? username;
   int? branchid;
@@ -24,6 +26,8 @@ class AddCustomerModel {
       this.id,
       this.main,
       this.name,
+      this.street,
+      this.responsiblePerson,
       this.phone1,
       required this.areaid,
       required this.cityid,
@@ -48,6 +52,8 @@ class AddCustomerModel {
     phone3 = res["phone3"];
     userid = res["userid"];
     username = res["username"];
+    street = res["street"];
+    responsiblePerson = res["responsiblePerson"];
   }
   Map<String, Object?> toMap() {
     return {
@@ -60,13 +66,15 @@ class AddCustomerModel {
       "address": address,
       "phone1": phone1,
       "phone2": "",
+      "street": street,
       "phone3": "",
       "userid": "",
       "cityid": cityid,
       "areaid": areaid,
       "governmentid": governmentid,
       "username": name,
-      "branchid": "0"
+      "branchid": "0",
+      "responsibleperson": responsiblePerson,
     };
   }
 }

@@ -13,6 +13,9 @@ import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/bloc/add_cust
 final name = TextEditingController();
 final phone = TextEditingController();
 final address = TextEditingController();
+final street = TextEditingController();
+final responsiblePerson = TextEditingController();
+
 CityModel? selectedArea;
 CityModel? selectedCity;
 CityModel? selectedGov;
@@ -53,6 +56,7 @@ class AddCustomer extends StatelessWidget {
             name.text = "";
             phone.text = "";
             address.text = "";
+            responsiblePerson.text = "";
             if (state.msg == "0") {
               SchedulerBinding.instance.addPostFrameCallback((_) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -83,112 +87,248 @@ class AddCustomer extends StatelessWidget {
         },
         builder: (BuildContext context, AddCustomerState state) {
           if (state is AreasLoaded) {
-            return Center(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    SizedBox(
-                      width: w / 1.1,
-                      height: h / 20,
-                      child: Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: CustomTextField(
-                          hintText: "اسم العميل",
-                          onChanged: (val) {},
-                          controller: name,
-                        ),
+            return Directionality(
+              textDirection: TextDirection.rtl,
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 12.0),
+                    child: Container(
+                      width: w,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            "بيانات العميل",
+                            style: TextStyle(
+                              fontFamily: 'Almarai',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 18,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                          const SizedBox(height: 16),
+                          // اسم العميل
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "اسم العميل",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CustomTextField(
+                            hintText: "اكتب اسم العميل",
+                            onChanged: (val) {},
+                            controller: name,
+                          ),
+                          const SizedBox(height: 16),
+                          // المنطقة
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "المنطقة",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CitiesDropdown(
+                            onSearch: (val) {},
+                            citys: state.areas,
+                            selectedCity: state.selectedArea,
+                            onCitySelected: (value) {
+                              if (value != null) {
+                                bloc.add(OnAreaSelected(selectedArea: value));
+                              }
+                            },
+                            width: MediaQuery.of(context).size.width,
+                            onCustomerSelected: (value) {},
+                            lable: 'المنطقة',
+                          ),
+                          const SizedBox(height: 16),
+                          // المدينة
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "المدينة",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CitiesDropdown(
+                            onSearch: (val) {},
+                            citys: state.cities,
+                            selectedCity: state.selectedCity,
+                            onCitySelected: (value) {
+                              if (value != null) {
+                                bloc.add(OnCitySelected(selectedCity: value));
+                              }
+                            },
+                            width: MediaQuery.of(context).size.width / 1.1,
+                            onCustomerSelected: (value) {},
+                            lable: 'المدينة',
+                          ),
+                          const SizedBox(height: 16),
+                          // المحافظة
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "المحافظة",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CitiesDropdown(
+                            onSearch: (val) {},
+                            citys: state.govs,
+                            selectedCity: state.selectedGov,
+                            onCitySelected: (value) {
+                              if (value != null) {
+                                bloc.add(OnGovSelected(selectedGov: value));
+                              }
+                            },
+                            width: MediaQuery.of(context).size.width,
+                            onCustomerSelected: (value) {},
+                            lable: 'المحافظة',
+                          ),
+                          const SizedBox(height: 16),
+                          // رقم الهاتف
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "رقم الهاتف",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CustomTextField(
+                            hintText: "اكتب رقم الهاتف",
+                            onChanged: (val) {},
+                            controller: phone,
+                          ),
+                          const SizedBox(height: 16),
+                          // العنوان
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "العنوان",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CustomTextField(
+                            hintText: "اكتب العنوان",
+                            onChanged: (val) {},
+                            controller: address,
+                          ),
+                          const SizedBox(height: 16),
+                          // الشارع
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "الشارع",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CustomTextField(
+                            hintText: "اكتب اسم الشارع",
+                            onChanged: (val) {},
+                            controller: street,
+                          ),
+                          const SizedBox(height: 16),
+                          // الشخص المسئول
+                          const Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              "الشخص المسئول",
+                              style: TextStyle(
+                                fontFamily: 'Almarai',
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CustomTextField(
+                            hintText: "اكتب اسم الشخص المسئول",
+                            onChanged: (val) {},
+                            controller: responsiblePerson,
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: CustomButton(
+                              text: "اضافة العميل",
+                              onPressed: () {
+                                if (selectedArea != null &&
+                                    selectedCity != null &&
+                                    selectedGov != null &&
+                                    phone.text != "" &&
+                                    street.text != "") {
+                                  AddCustomerModel addClientModel =
+                                      AddCustomerModel(
+                                    address: address.text,
+                                    phone1: phone.text,
+                                    name: name.text,
+                                    governmentid: selectedGov!.id.toString(),
+                                    street: street.text,
+                                    areaid: selectedArea!.id.toString(),
+                                    cityid: int.parse(
+                                      selectedCity!.id,
+                                    ),
+                                    responsiblePerson: responsiblePerson.text,
+                                  );
+                                  bloc.add(OnAddCustomer(
+                                      customerModel: addClientModel));
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("من فضلك اكمل جميع البيانات"),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    //SizedBox(height: h / 20),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CitiesDropdown(
-                        onSearch: (val) {},
-                        citys: state.areas,
-                        selectedCity: state.selectedArea,
-                        onCitySelected: (value) {
-                          if (value != null) {
-                            bloc.add(OnAreaSelected(selectedArea: value));
-                          }
-                        },
-                        width: MediaQuery.of(context).size.width,
-                        onCustomerSelected: (value) {},
-                        lable: 'المنطقة',
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CitiesDropdown(
-                        onSearch: (val) {},
-                        citys: state.cities,
-                        selectedCity: state.selectedCity,
-                        onCitySelected: (value) {
-                          if (value != null) {
-                            bloc.add(OnCitySelected(selectedCity: value));
-                          }
-                        },
-                        width: MediaQuery.of(context).size.width / 1.1,
-                        onCustomerSelected: (value) {},
-                        lable: 'المدينة',
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CitiesDropdown(
-                        onSearch: (val) {},
-                        citys: state.govs,
-                        selectedCity: state.selectedGov,
-                        onCitySelected: (value) {
-                          if (value != null) {
-                            bloc.add(OnGovSelected(selectedGov: value));
-                          }
-                        },
-                        width: MediaQuery.of(context).size.width,
-                        onCustomerSelected: (value) {},
-                        lable: 'المحافظة',
-                      ),
-                    ),
-                    //SizedBox(height: h / 20),
-                    SizedBox(
-                      width: w / 1.1,
-                      height: h / 20,
-                      child: Directionality(
-                        textDirection: TextDirection.rtl,
-                        child: CustomTextField(
-                          hintText: "رقم الهاتف",
-                          onChanged: (val) {},
-                          controller: phone,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: h / 20),
-                    SizedBox(
-                      width: w * 0.96,
-                      child: CustomButton(
-                        text: "اضافة العميل",
-                        onPressed: () {
-                          if (selectedArea != null &&
-                              selectedCity != null &&
-                              selectedGov != null &&
-                              phone.text != "" &&
-                              phone.text != null) {
-                            AddCustomerModel addClientModel = AddCustomerModel(
-                                address: address.text,
-                                phone1: phone.text,
-                                name: name.text,
-                                governmentid: selectedGov!.id.toString(),
-                                areaid: selectedArea!.id.toString(),
-                                cityid: int.parse(
-                                  selectedCity!.id,
-                                ));
-                            bloc.add(
-                                OnAddCustomer(customerModel: addClientModel));
-                          }
-                        },
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             );

@@ -5,8 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/mobile_item_units_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
+import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/mobile_item_units_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/dropdown/items_dropdown.dart';
+import 'package:nilesoft_erp/layers/presentation/components/dropdown/units_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
@@ -21,7 +27,7 @@ List<ItemsModel> myItems = [];
 ItemsModel? selectedItem;
 int idx = 0;
 
-class AddnewPopup extends StatelessWidget {
+class AddnewPopup extends StatefulWidget {
   final List<SalesDtlModel> allDtl;
   const AddnewPopup(
       {super.key,
@@ -32,6 +38,38 @@ class AddnewPopup extends StatelessWidget {
   final bool isEdit;
   final SalesDtlModel? toEdit;
   final int headId;
+
+  @override
+  State<AddnewPopup> createState() => _AddnewPopupState();
+}
+
+class _AddnewPopupState extends State<AddnewPopup> {
+  List<MobileItemUnitsModel> itemUnits = [];
+  MobileItemUnitsModel? selectedUnit;
+  bool isMultiUnitEnabled = false;
+  bool _editStateHandled = false; // Track if EditState has been handled
+
+  @override
+  void initState() {
+    super.initState();
+    // Load settings when popup opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSettings();
+    });
+  }
+
+  Future<void> _loadSettings() async {
+    SettingsRepoImpl settingsRepo = SettingsRepoImpl();
+    List<SettingsModel> settings = await settingsRepo.getSettings(
+        tableName: DatabaseConstants.settingsTable);
+    if (mounted) {
+      setState(() {
+        if (settings.isNotEmpty) {
+          isMultiUnitEnabled = settings[0].multiunit == true;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +127,95 @@ class AddnewPopup extends StatelessWidget {
     qtyControlleer.clear();
     selectedItem = null;
     myItems = [];
+    _editStateHandled = false; // Reset the flag when resetting
+    setState(() {
+      itemUnits = [];
+      selectedUnit = null;
+    });
+  }
+
+  Future<void> _loadSettingsAndUnits() async {
+    if (!mounted || selectedItem == null || selectedItem!.itemid == null) {
+      if (mounted) {
+        setState(() {
+          itemUnits = [];
+          selectedUnit = null;
+        });
+      }
+      return;
+    }
+
+    // Store itemid in a local variable to avoid null check issues
+    final itemId = selectedItem?.itemid;
+    if (itemId == null) {
+      if (mounted) {
+        setState(() {
+          itemUnits = [];
+          selectedUnit = null;
+        });
+      }
+      return;
+    }
+
+    SettingsRepoImpl settingsRepo = SettingsRepoImpl();
+    List<SettingsModel> settings = await settingsRepo.getSettings(
+        tableName: DatabaseConstants.settingsTable);
+
+    bool multiUnitEnabled = false;
+    if (settings.isNotEmpty) {
+      multiUnitEnabled = settings[0].multiunit == true;
+    }
+
+    MobileItemUnitsRepoImpl unitsRepo = MobileItemUnitsRepoImpl();
+    List<MobileItemUnitsModel> loadedUnits =
+        await unitsRepo.getMobileItemUnitsByItemId(
+            itemId: itemId, tableName: DatabaseConstants.mobileItemUnitsTable);
+
+    // Always add the basic unit from the items table if it exists
+    if (selectedItem!.unitid != null || selectedItem!.unitname != null) {
+      // Create a unit from the item's unit information (basic unit)
+      MobileItemUnitsModel itemUnit = MobileItemUnitsModel(
+        itemid: selectedItem!.itemid,
+        unitid: selectedItem!.unitid,
+        unitname: selectedItem!.unitname,
+        factor: selectedItem!.factor ??
+            1.0, // Default factor to 1.0 if not provided
+      );
+
+      // Check if this unit already exists in loadedUnits (to avoid duplicates)
+      bool unitExists = loadedUnits
+          .any((unit) => unit.unitid == itemUnit.unitid && unit.unitid != null);
+
+      // If not found, add the basic unit from items table
+      if (!unitExists) {
+        loadedUnits.insert(
+            0, itemUnit); // Insert at the beginning as the basic unit
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        isMultiUnitEnabled = multiUnitEnabled;
+        itemUnits = loadedUnits;
+        // Select first unit by default if available
+        if (itemUnits.isNotEmpty && selectedUnit == null) {
+          selectedUnit = itemUnits[0];
+          _updatePriceWithFactor();
+        }
+      });
+    }
+  }
+
+  void _updatePriceWithFactor() {
+    if (selectedUnit != null &&
+        selectedUnit!.factor != null &&
+        selectedItem != null &&
+        selectedItem!.price != null) {
+      // Always use the base item price and apply the new factor
+      double basePrice = selectedItem!.price!;
+      double adjustedPrice = basePrice * selectedUnit!.factor!;
+      priceControlleer.text = adjustedPrice.toStringAsFixed(2);
+    }
   }
 
   void _handleStateChange(InvoiceState state, BuildContext context) {
@@ -100,11 +227,16 @@ class AddnewPopup extends StatelessWidget {
     }
 
     if (state is QRCodeSuccess) {
+      selectedItem = state.item;
       priceControlleer.text = state.item.price.toString();
       disControlleer.text = "0";
       disRatioControlleer.text = "0";
       taxControlleer.text = "0";
       qtyControlleer.text = "0";
+      // Load units when barcode is scanned
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadSettingsAndUnits();
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('QR Code Found: ${state.qrCode}')),
       );
@@ -120,22 +252,63 @@ class AddnewPopup extends StatelessWidget {
       disRatioControlleer.text = "0";
       taxControlleer.text = "0";
       qtyControlleer.text = "0";
+      selectedItem = state.selectedClient;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadSettingsAndUnits();
+      });
     }
-    if (state is EditState) {
-      idx = state.index;
-      myItems = state.items;
-      // Populate controllers
-      priceControlleer.text = state.salesDtlModel[state.index].price.toString();
-      disControlleer.text = state.salesDtlModel[state.index].disam.toString();
-      disRatioControlleer.text =
-          state.salesDtlModel[state.index].disratio.toString();
-      taxControlleer.text = state.salesDtlModel[state.index].tax.toString();
-      qtyControlleer.text = state.salesDtlModel[state.index].qty.toString();
+    if (state is EditState && !_editStateHandled) {
+      // Only handle EditState once to prevent resetting controllers on every state change
+      _editStateHandled = true;
+      // Defer all state changes to after build completes
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
 
-      // Set selectedItem based on itemId
-      selectedItem = myItems.firstWhere(
-        (item) => item.name == state.salesDtlModel[state.index].itemName,
-      );
+        idx = state.index;
+        myItems = state.items;
+        // Populate controllers
+        priceControlleer.text =
+            state.salesDtlModel[state.index].price.toString();
+        disControlleer.text = state.salesDtlModel[state.index].disam.toString();
+        disRatioControlleer.text =
+            state.salesDtlModel[state.index].disratio.toString();
+        taxControlleer.text = state.salesDtlModel[state.index].tax.toString();
+        qtyControlleer.text = state.salesDtlModel[state.index].qty.toString();
+
+        // Set selectedItem based on itemId
+        selectedItem = myItems.firstWhere(
+          (item) => item.name == state.salesDtlModel[state.index].itemName,
+        );
+
+        // Load units and set selected unit if available
+        _loadSettingsAndUnits().then((_) {
+          if (mounted) {
+            if (state.salesDtlModel[state.index].unitid != null) {
+              setState(() {
+                selectedUnit = itemUnits.firstWhere(
+                  (unit) =>
+                      unit.unitid == state.salesDtlModel[state.index].unitid,
+                  orElse: () => itemUnits.isNotEmpty
+                      ? itemUnits[0]
+                      : MobileItemUnitsModel(),
+                );
+              });
+              // Update price with the selected unit's factor
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _updatePriceWithFactor();
+              });
+            } else if (itemUnits.isNotEmpty) {
+              // If no unitid in saved data, use first unit and update price
+              setState(() {
+                selectedUnit = itemUnits[0];
+              });
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _updatePriceWithFactor();
+              });
+            }
+          }
+        });
+      });
     } else if (state is DiscountChanged) {
       disControlleer.text = state.amount.toString();
       disRatioControlleer.text = state.ratio.toString();
@@ -149,13 +322,24 @@ class AddnewPopup extends StatelessWidget {
       InvoiceState state, InvoiceBloc bloc, BuildContext context) {
     if (state is QRCodeSuccess) {
       selectedItem = state.item;
+      // Load units when barcode is scanned
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadSettingsAndUnits();
+      });
       return SearchableItemDropdown(
           items: myItems,
           selecteditem: state.item,
           onItemSelected: (val) {
             if (val != null) {
               selectedItem = val;
+              setState(() {
+                selectedUnit = null;
+                itemUnits = [];
+              });
               bloc.add(ClientSelectedEvent(val));
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _loadSettingsAndUnits();
+              });
             }
           },
           width: double.infinity,
@@ -184,7 +368,14 @@ class AddnewPopup extends StatelessWidget {
           onItemSelected: (val) {
             if (val != null) {
               selectedItem = val;
+              setState(() {
+                selectedUnit = null;
+                itemUnits = [];
+              });
               bloc.add(ClientSelectedEvent(val));
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _loadSettingsAndUnits();
+              });
             }
           },
           width: double.infinity,
@@ -320,6 +511,8 @@ class AddnewPopup extends StatelessWidget {
                 onChanged: (val) {
                   _handleDiscountChange(bloc, val);
                 },
+                                readonly: true,
+
                 hintText: "الخصم",
                 keyboardType: TextInputType.number,
                 controller: disControlleer,
@@ -331,6 +524,7 @@ class AddnewPopup extends StatelessWidget {
                 onChanged: (value) {
                   _handleDiscountRatioChange(bloc, value);
                 },
+                readonly: true,
                 hintText: "الخصم٪",
                 keyboardType: TextInputType.number,
                 controller: disRatioControlleer,
@@ -348,6 +542,23 @@ class AddnewPopup extends StatelessWidget {
             controller: taxControlleer,
           ),
         ),
+        if (itemUnits.isNotEmpty && isMultiUnitEnabled) ...[
+          const SizedBox(height: 12),
+          UnitsDropdown(
+            units: itemUnits,
+            selectedUnit: selectedUnit,
+            onUnitSelected: (unit) {
+              setState(() {
+                selectedUnit = unit;
+              });
+              // Update price after setState completes
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _updatePriceWithFactor();
+              });
+            },
+            width: 270,
+          ),
+        ],
       ],
     );
   }
@@ -405,20 +616,23 @@ class AddnewPopup extends StatelessWidget {
   }
 
   void _handleConfirm(BuildContext context, InvoiceBloc bloc) {
-    if (isEdit) {
+    if (widget.isEdit) {
       SalesDtlModel salesDtlModel = SalesDtlModel(
-        innerid: toEdit!.innerid,
+        innerid: widget.toEdit!.innerid,
         price: double.tryParse(priceControlleer.text),
         disam: double.tryParse(disControlleer.text),
         disratio: double.tryParse(disRatioControlleer.text),
-        id: headId.toString(),
+        id: widget.headId.toString(),
         itemId: selectedItem?.itemid.toString(),
         itemName: selectedItem?.name.toString(),
         qty: double.tryParse(qtyControlleer.text),
         tax: double.tryParse(taxControlleer.text),
+        unitid: selectedUnit?.unitid,
+        unitname: selectedUnit?.unitname,
+        factor: selectedUnit?.factor,
       );
 
-      bloc.add(EditInvoiceItemEvent([salesDtlModel], idx, allDtl));
+      bloc.add(EditInvoiceItemEvent([salesDtlModel], idx, widget.allDtl));
     } else if (selectedItem != null) {
       if (selectedItem!.price != null) {
         if ((selectedItem?.price ?? 0) > 0) {
@@ -427,13 +641,16 @@ class AddnewPopup extends StatelessWidget {
             price: double.tryParse(priceControlleer.text),
             disam: double.tryParse(disControlleer.text),
             disratio: double.tryParse(disRatioControlleer.text),
-            id: headId.toString(),
+            id: widget.headId.toString(),
             itemId: selectedItem?.itemid.toString(),
             itemName: selectedItem?.name.toString(),
             qty: double.tryParse(qtyControlleer.text),
             tax: double.tryParse(taxControlleer.text),
+            unitid: selectedUnit?.unitid,
+            unitname: selectedUnit?.unitname,
+            factor: selectedUnit?.factor,
           );
-          bloc.add(AddClientToInvoiceEvent(salesDtlModel, allDtl));
+          bloc.add(AddClientToInvoiceEvent(salesDtlModel, widget.allDtl));
         } else {
           _showSnackBar("لا يمكن اضافة صنف سعره صفر", context);
         }

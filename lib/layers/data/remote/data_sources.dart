@@ -47,7 +47,7 @@ class MainFun {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${MyApp.tocken}'
+          'Authorization': 'Bearer ${MyApp.token}'
         },
       );
 
@@ -84,7 +84,7 @@ class MainFun {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${MyApp.tocken}'
+          'Authorization': 'Bearer ${MyApp.token}'
         },
       );
 
@@ -120,7 +120,7 @@ class MainFun {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${MyApp.tocken}'
+          'Authorization': 'Bearer ${MyApp.token}'
         },
         body: jsonEncode(postData),
       );
@@ -153,7 +153,7 @@ class MainFun {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${MyApp.tocken}',
+          'Authorization': 'Bearer ${MyApp.token}',
         },
         body: jsonEncode(postData),
       );
@@ -184,7 +184,7 @@ class MainFun {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${MyApp.tocken}'
+          'Authorization': 'Bearer ${MyApp.token}'
         },
         body: jsonEncode(postData),
       );

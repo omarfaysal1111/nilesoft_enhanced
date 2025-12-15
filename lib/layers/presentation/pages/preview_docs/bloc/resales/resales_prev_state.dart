@@ -16,3 +16,9 @@ class OnReInvoiceDeleted extends RePreviewState {
   final int id;
   OnReInvoiceDeleted({required this.id});
 }
+
+class ReShareDoc extends RePreviewState {
+  final List<SalesDtlModel>? dtl;
+
+  ReShareDoc({required this.dtl});
+}

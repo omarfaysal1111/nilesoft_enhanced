@@ -395,6 +395,10 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: invoiceState.dtl!.length,
         itemBuilder: (context, index) {
+          // Set serial number if not already set
+          if (invoiceState.dtl![index].serial == null) {
+            invoiceState.dtl![index].serial = index + 1;
+          }
           return InfoCard(
             title: invoiceState.dtl![index].itemName.toString(),
             price: invoiceState.dtl![index].price.toString(),
@@ -403,6 +407,7 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
             tax: invoiceState.dtl![index].tax.toString(),
             total: (invoiceState.dtl![index].price! * items[index].qty!)
                 .toString(),
+            serial: invoiceState.dtl![index].serial?.toString(),
             onDelete: () => _handleDeleteItem(index),
             onEdit: () => _handleEditItem(index),
           );
@@ -487,12 +492,14 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
       String mobileUuid = uuid.v1().toString();
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
+      String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
 
       SalesHeadModel salesHeadModel = SalesHeadModel(
         accid: invoiceState.selected!.id,
         dis1: invoiceState.dis,
         invoiceno: invoiceState.docNo,
         sent: 0,
+        invTime: formattedTime.toString(),
         disam: double.parse(disamController.text),
         disratio: double.tryParse(disratController.text) ?? 0,
         net: invoiceState.net,
@@ -505,6 +512,11 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
         descr: desc.text,
       );
 
+      // Set serial numbers before saving
+      for (int i = 0; i < invoiceState.dtl!.length; i++) {
+        invoiceState.dtl![i].serial = i + 1;
+      }
+      
       bloc.add(SaveButtonClicked(
         salesHeadModel: salesHeadModel,
         salesDtlModel: invoiceState.dtl!,
@@ -518,13 +530,14 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
       String mobileUuid = uuid.v1().toString();
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
-
+      String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
       SalesHeadModel salesHeadModel = SalesHeadModel(
         id: widget.editid,
         accid: invoiceState.selected!.id,
         dis1: invoiceState.dis,
         invoiceno: invoiceState.docNo,
         sent: 0,
+        invTime: formattedTime.toString(),
         disam: double.parse(disamController.text),
         disratio: double.tryParse(disratController.text) ?? 0,
         net: invoiceState.net,
@@ -537,6 +550,13 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
         descr: desc.text,
       );
 
+      // Set serial numbers before updating
+      if (invoiceState.dtl != null) {
+        for (int i = 0; i < invoiceState.dtl!.length; i++) {
+          invoiceState.dtl![i].serial = i + 1;
+        }
+      }
+      
       bloc.add(OnUpdateInvoice(
         headModel: salesHeadModel,
         dtlModel: invoiceState.dtl ?? [],

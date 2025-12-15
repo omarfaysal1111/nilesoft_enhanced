@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/invoice_info.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
@@ -7,6 +8,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/invoice/invoice_page.dart
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/invoice/preview_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 
 class SalesPreviewPage extends StatefulWidget {
   const SalesPreviewPage({super.key});
@@ -19,7 +21,7 @@ class _SalesPreviewPageState extends State<SalesPreviewPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int currentTabIndex = 0;
-
+  List<SalesDtlModel>? dtl = [];
   @override
   void initState() {
     super.initState();
@@ -103,6 +105,9 @@ class _SalesPreviewPageState extends State<SalesPreviewPage>
         if (state is OnInvoiceDeleted) {
           context.read<PreviewBloc>().add(OnPreviewInitial());
         }
+        if (state is ShareDoc) {
+          dtl = state.dtl;
+        }
       },
       builder: (BuildContext context, PreviewState state) {
         if (state is DocPreviewInitial) {
@@ -130,7 +135,24 @@ class _SalesPreviewPageState extends State<SalesPreviewPage>
                       customerName: item.clientName.toString(),
                       dateValue: item.docDate.toString(),
                       netValue: item.net ?? 0,
-                      docNumber: item.invoiceno.toString(),
+                      onShare: () {
+                        context
+                            .read<PreviewBloc>()
+                            .add(OnShareDoc(id: item.id.toString()));
+
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PrintingScreen(
+                                  printingSalesDtlModel: dtl!,
+                                  printingSalesHeadModel: item,
+                                  id: item.id.toString(),
+                                  numOfSerials: 0),
+                            ));
+                      },
+                      docNumber: (item.docno != null && item.docno!.isNotEmpty) 
+                          ? item.docno! 
+                          : item.invoiceno.toString(),
                       onViewPressed: () {
                         Navigator.push(
                           context,

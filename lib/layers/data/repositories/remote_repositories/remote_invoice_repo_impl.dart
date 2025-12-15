@@ -10,6 +10,7 @@ import 'package:nilesoft_erp/layers/domain/repository/remote/remote_invoice_repo
 
 class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
   static int problems = 0;
+  static List<String> messages = [];
   @override
   Future<void> sendInvoices(
       {required String headTableName,
@@ -47,11 +48,30 @@ class RemoteInvoiceRepoImpl implements RemoteInvoiceRepo {
       if (kDebugMode) {
         print(invoices[0].toMap());
       }
+      // Determine document type based on endpoint
+      String docType = endPoint.contains("rsalesinvoice")
+          ? "مردودات مبيعات"
+          : "فاتورة مبيعات";
+
+      if (res.myerrorList != null && res.myerrorList!.isNotEmpty) {
+        for (var i = 0; i < res.myerrorList!.length; i++) {
+          String errorMsg = res.myerrorList![i]['moreData'] ?? 'خطأ غير معروف';
+          messages.add(
+              "$docType (${salesHeadModel.invoiceno ?? 'غير معروف'}): $errorMsg");
+        }
+      }
       if (res.message == 0) {
+        // Update sent status and save docno from API response
         databaseHelper.db.rawUpdate(
-            "UPDATE $headTableName SET sent = 1 where id='${invoices[0].salesHeadModel!.id}'");
+            "UPDATE $headTableName SET sent = 1, docno = ? where id='${invoices[0].salesHeadModel!.id}'",
+            [res.docno.toString()]);
       } else {
         problems++;
+        // Add a generic error message if no specific errors were provided
+        if (res.myerrorList == null || res.myerrorList!.isEmpty) {
+          messages.add(
+              "$docType (${salesHeadModel.invoiceno ?? 'غير معروف'}): فشل في الإرسال");
+        }
       }
     }
   }

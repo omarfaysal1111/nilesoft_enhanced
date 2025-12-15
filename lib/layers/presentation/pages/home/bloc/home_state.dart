@@ -11,6 +11,8 @@ class HomeState extends Equatable {
   final bool isSendingSubmitted;
   final bool isSendingLoading;
   final bool isSendingSucc;
+  final List<String>? messages;
+  final String? errorMessage;
 
   const HomeState({
     required this.items,
@@ -19,8 +21,10 @@ class HomeState extends Equatable {
     required this.customers,
     required this.isUpdateSucc,
     required this.isSendingSubmitted,
+    this.messages,
     required this.isSendingLoading,
     required this.isSendingSucc,
+    this.errorMessage,
   });
 
   factory HomeState.initial() {
@@ -30,9 +34,11 @@ class HomeState extends Equatable {
       isUpdateLoading: false,
       customers: [],
       isUpdateSucc: false,
+      messages: [],
       isSendingSubmitted: false,
       isSendingLoading: false,
       isSendingSucc: false,
+      errorMessage: null,
     );
   }
 
@@ -43,19 +49,22 @@ class HomeState extends Equatable {
     bool? isUpdateSucc,
     bool? isSendingSubmitted,
     bool? isSendingLoading,
+    List<String>? messages,
     bool? isSendingSucc,
     List<CustomersModel>? customers,
+    String? errorMessage,
   }) {
     return HomeState(
-      items: items ?? this.items,
-      isUpdateSubmitted: isUpdateSubmitted ?? this.isUpdateSubmitted,
-      isUpdateLoading: isUpdateLoading ?? this.isUpdateLoading,
-      isUpdateSucc: isUpdateSucc ?? this.isUpdateSucc,
-      customers: customers ?? this.customers,
-      isSendingSubmitted: isSendingSubmitted ?? this.isSendingSubmitted,
-      isSendingLoading: isSendingLoading ?? this.isSendingLoading,
-      isSendingSucc: isSendingSucc ?? this.isSendingSucc,
-    );
+        items: items ?? this.items,
+        isUpdateSubmitted: isUpdateSubmitted ?? this.isUpdateSubmitted,
+        isUpdateLoading: isUpdateLoading ?? this.isUpdateLoading,
+        isUpdateSucc: isUpdateSucc ?? this.isUpdateSucc,
+        customers: customers ?? this.customers,
+        isSendingSubmitted: isSendingSubmitted ?? this.isSendingSubmitted,
+        isSendingLoading: isSendingLoading ?? this.isSendingLoading,
+        isSendingSucc: isSendingSucc ?? this.isSendingSucc,
+        messages: messages ?? [],
+        errorMessage: errorMessage);
   }
 
   @override
@@ -63,10 +72,12 @@ class HomeState extends Equatable {
         items,
         isUpdateSubmitted,
         isUpdateLoading,
+        messages,
         isUpdateSucc,
         isSendingSubmitted,
         isSendingLoading,
         customers,
         isSendingSucc,
+        errorMessage,
       ];
 }

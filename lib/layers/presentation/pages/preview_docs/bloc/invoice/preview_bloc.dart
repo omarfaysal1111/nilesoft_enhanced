@@ -11,6 +11,7 @@ class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
     on<OnPreviewSent>(_onPreviewSentInitial);
     on<OnPreviewUnsent>(_onPreviewUnsentInitial);
     on<OnInvoiceDelete>(_onDeleteInvoice);
+    on<OnShareDoc>(_onShare);
   }
   Future<void> _onDeleteInvoice(
       OnInvoiceDelete event, Emitter<PreviewState> emit) async {
@@ -45,5 +46,13 @@ class PreviewBloc extends Bloc<PreviewEvent, PreviewState> {
     List<SalesHeadModel> invoicesHead = await invoiceRepoImpl.getUnsentInvoices(
         tableName: DatabaseConstants.salesInvoiceHeadTable);
     emit(DocPreviewLoaded(salesModel: invoicesHead));
+  }
+
+  Future<void> _onShare(OnShareDoc event, Emitter<PreviewState> emit) async {
+    InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    List<SalesDtlModel>? dtl = await invoiceRepoImpl.getSingleInvoiceDtl(
+        tableName: DatabaseConstants.salesInvoiceDtlTable, id: event.id);
+
+    emit(ShareDoc(dtl: dtl));
   }
 }

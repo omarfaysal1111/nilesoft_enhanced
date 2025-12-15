@@ -7,6 +7,7 @@ class InfoCard extends StatelessWidget {
   final String quantity; // Quantity value
   final String tax; // Tax value
   final String total; // Total value
+  final String? serial; // Serial number (optional)
   final VoidCallback onDelete; // Action for delete icon
   final VoidCallback onEdit; // Action for edit icon
 
@@ -18,6 +19,7 @@ class InfoCard extends StatelessWidget {
     required this.quantity,
     required this.tax,
     required this.total,
+    this.serial,
     required this.onDelete,
     required this.onEdit,
   });
@@ -70,14 +72,29 @@ class InfoCard extends StatelessWidget {
                 ),
                 SizedBox(
                   width: MediaQuery.sizeOf(context).width * .3,
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontFamily: 'Almarai',
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.end,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (serial != null)
+                        Text(
+                          serial!,
+                          style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'Almarai',
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.end,
+                        ),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontFamily: 'Almarai',
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.end,
+                      ),
+                    ],
                   ),
                 ),
               ],

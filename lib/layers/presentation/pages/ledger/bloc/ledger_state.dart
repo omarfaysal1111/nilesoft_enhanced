@@ -37,3 +37,13 @@ class LedgerPageChanged extends LedgerState {
 
   LedgerPageChanged({required this.ledger});
 }
+
+class LedgerError extends LedgerState {
+  final String errorMessage;
+
+  LedgerError({required this.errorMessage});
+}
+
+class LedgerPaginationLoading extends LedgerState {}
+
+class LedgerPaginationComplete extends LedgerState {}

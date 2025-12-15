@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/invoice_info.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
@@ -7,6 +8,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/resales/resales_prev_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 
 class ReSalesPreviewPage extends StatefulWidget {
   const ReSalesPreviewPage({super.key});
@@ -19,6 +21,7 @@ class _ReSalesPreviewPageState extends State<ReSalesPreviewPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int sent = 1;
+  List<SalesDtlModel>? dtl = [];
 
   @override
   void initState() {
@@ -136,7 +139,23 @@ class _ReSalesPreviewPageState extends State<ReSalesPreviewPage>
                   customerName: state.salesModel[index].clientName.toString(),
                   dateValue: state.salesModel[index].docDate.toString(),
                   netValue: state.salesModel[index].net ?? 0,
-                  docNumber: state.salesModel[index].invoiceno.toString(),
+                  docNumber: (state.salesModel[index].docno != null && state.salesModel[index].docno!.isNotEmpty)
+                      ? state.salesModel[index].docno!
+                      : state.salesModel[index].invoiceno.toString(),
+                  onShare: () {
+                    context.read<RePreviewBloc>().add(ReOnShareDoc(
+                        id: state.salesModel[index].id.toString()));
+
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PrintingScreen(
+                              printingSalesDtlModel: dtl!,
+                              printingSalesHeadModel: state.salesModel[index],
+                              id: state.salesModel[index].id.toString(),
+                              numOfSerials: 0),
+                        ));
+                  },
                   onViewPressed: () {
                     Navigator.push(
                       context,

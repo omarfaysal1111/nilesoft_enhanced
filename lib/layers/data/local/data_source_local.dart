@@ -20,10 +20,11 @@ class DatabaseHelper {
   }
   Future<void> initDB() async {
     String path = await getDatabasesPath();
-    db = await openDatabase(join(path, 'NileSoftv9.db'),
-        onCreate: (database, version) async {
-      await database.execute(
-        """
+    db = await openDatabase(
+      join(path, 'NileSoftv10.db'),
+      onCreate: (database, version) async {
+        await database.execute(
+          """
             CREATE TABLE salesInvoiceHead (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               accid TEXT ALLOW NULL,
@@ -32,6 +33,7 @@ class DatabaseHelper {
               invoiceno TEXT ALLOW NULL,
               total REAL ALLOW NULL,
               tax REAL ALLOW NULL,
+              invtime TEXT ALLOW NULL,
               disam REAL ALLOW NULLL,
               disratio REAL ALLOW NULL,
               dis1 REAL ALLOW NULL, 
@@ -39,11 +41,12 @@ class DatabaseHelper {
               invtype TEXT ALLOW NULL,
               docdate TEXT ALLOW NULL,
               net REAL ALLOW NULL,
-              sent INTEGER ALLOW NULL
+              sent INTEGER ALLOW NULL,
+              docno TEXT ALLOW NULL
             )
           """,
-      );
-      await database.execute("""
+        );
+        await database.execute("""
             CREATE TABLE salesInvoiceDtl (
               innerid INTEGER PRIMARY KEY AUTOINCREMENT, 
               id TEXT ALLOW NULL,
@@ -55,12 +58,16 @@ class DatabaseHelper {
               tax REAL ALLOW NULL,
               disam REAL ALLOW NULL,
               disratio REAL ALLOW NULL,
-              sent INTEGER ALLOW NULL
+              sent INTEGER ALLOW NULL,
+              unitid TEXT ALLOW NULL,
+              unitname TEXT ALLOW NULL,
+              factor REAL ALLOW NULL,
+              serial INTEGER ALLOW NULL
             )
           """);
 
-      await database.execute(
-        """
+        await database.execute(
+          """
             CREATE TABLE ResalesInvoiceHead (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               accid TEXT ALLOW NULL,
@@ -68,6 +75,7 @@ class DatabaseHelper {
               descr TEXT ALLOW NULL,
               invoiceno TEXT ALLOW NULL,
               total REAL ALLOW NULL,
+              invtime TEXT ALLOW NULL,
                mobile_uuid TEXT ALLOW NULL,
               tax REAL ALLOW NULL,
               disam REAL ALLOW NULLL,
@@ -76,36 +84,36 @@ class DatabaseHelper {
               invtype TEXT ALLOW NULL,
               docdate TEXT ALLOW NULL,
                net REAL ALLOW NULL,
-
-              sent INTEGER ALLOW NULL
+              sent INTEGER ALLOW NULL,
+              docno TEXT ALLOW NULL
             )
           """,
-      );
-      await database.execute(
-        """
+        );
+        await database.execute(
+          """
             CREATE TABLE areas (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               name TEXT ALLOW NULL
             )
           """,
-      );
-      await database.execute(
-        """
+        );
+        await database.execute(
+          """
             CREATE TABLE cities (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               name TEXT ALLOW NULL
             )
           """,
-      );
-      await database.execute(
-        """
+        );
+        await database.execute(
+          """
             CREATE TABLE govs (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               name TEXT ALLOW NULL
             )
           """,
-      );
-      await database.execute("""
+        );
+        await database.execute("""
             CREATE TABLE ResalesInvoiceDtl (
               innerid INTEGER PRIMARY KEY AUTOINCREMENT, 
               id TEXT ALLOW NULL,
@@ -117,12 +125,16 @@ class DatabaseHelper {
               tax REAL ALLOW NULL,
               disam REAL ALLOW NULL,
               disratio REAL ALLOW NULL,
-              sent INTEGER ALLOW NULL
+              sent INTEGER ALLOW NULL,
+              unitid TEXT ALLOW NULL,
+              unitname TEXT ALLOW NULL,
+              factor REAL ALLOW NULL,
+              serial INTEGER ALLOW NULL
             )
           """);
 
-      await database.execute(
-        """
+        await database.execute(
+          """
             CREATE TABLE purInvoiceHead (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               accid TEXT ALLOW NULL,
@@ -138,9 +150,9 @@ class DatabaseHelper {
               sent INTEGER ALLOW NULL
             )
           """,
-      );
+        );
 
-      await database.execute("""
+        await database.execute("""
             CREATE TABLE purInvoiceDtl (
               id TEXT ALLOW NULL,
               itemId TEXT ALLOW NULL,
@@ -155,7 +167,7 @@ class DatabaseHelper {
             )
           """);
 
-      await database.execute("""
+        await database.execute("""
            CREATE TABLE orderHead (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               clientId INTEGER ALLOW NULL,
@@ -165,7 +177,7 @@ class DatabaseHelper {
 
            )
         """);
-      await database.execute("""
+        await database.execute("""
            CREATE TABLE orderDtl (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               itemId INTEGER ALLOW NULL,
@@ -177,7 +189,7 @@ class DatabaseHelper {
               sent INTEGER ALLOW NULL
            )
         """);
-      await database.execute("""
+        await database.execute("""
            CREATE TABLE cashIn (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               docdate TEXT NOT NULL,
@@ -190,7 +202,7 @@ class DatabaseHelper {
               sent INTEGER ALLOW NULL
            )
         """);
-      await database.execute("""
+        await database.execute("""
            CREATE TABLE cashInDtl (
               id INTEGER PRIMARY KEY AUTOINCREMENT, 
               accountid TEXT ALLOW NULL,
@@ -206,24 +218,27 @@ class DatabaseHelper {
            )
         """);
 
-      await database.execute("""
+        await database.execute("""
 CREATE TABLE Customers (
   id INT ALLOW NULL,
   name TEXT ALLOW NULL,
   acctype TEXT ALLOW NULL
 )
 """);
-      await database.execute("""
+        await database.execute("""
 CREATE TABLE items (
   itemid TEXT ALLOW NULL,
   name TEXT ALLOW NULL,
   price REAL ALLOW NULL,
   qty REAL ALLOW NULL,
   barcode TEXT ALLOW NULL,
-  hasSerial REAL ALLOW NULL
+  hasSerial REAL ALLOW NULL,
+  unitid TEXT ALLOW NULL,
+  unitname TEXT ALLOW NULL,
+  factor REAL ALLOW NULL
 )
 """);
-      await database.execute("""
+        await database.execute("""
 CREATE TABLE itemsserials (
   itemid TEXT ALLOW NULL,
   name TEXT ALLOW NULL,
@@ -231,23 +246,103 @@ CREATE TABLE itemsserials (
 )
 """);
 
-      await database.execute("""
+        await database.execute("""
 CREATE TABLE serials (
   invid TEXT ALLOW NULL,
   serialNumber TEXT ALLOW NULL
 )
 """);
-      await database.execute("""
+        await database.execute("""
 CREATE TABLE settings (
   mobileUserId TEXT ALLOW NULL,
   cashaccId TEXT ALLOW NULL,
   coinPrice TEXT ALLOW NULL,
   invid TEXT ALLOW NULL,
   visaId TEXT ALLOW NULL,
-  invoiceserial ALLOW NULL
+  invoiceserial ALLOW NULL,
+  multiunit INTEGER ALLOW NULL
 )
 """);
-    }, version: 1);
+        await database.execute("""
+CREATE TABLE mobileItemUnits (
+  itemid TEXT ALLOW NULL,
+  unitid TEXT ALLOW NULL,
+  unitname TEXT ALLOW NULL,
+  factor REAL ALLOW NULL
+)
+""");
+      },
+      version: 5,
+      onUpgrade: (database, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          // Add new columns to items table
+          await database.execute("""
+          ALTER TABLE items ADD COLUMN unitid TEXT
+        """);
+          await database.execute("""
+          ALTER TABLE items ADD COLUMN unitname TEXT
+        """);
+          await database.execute("""
+          ALTER TABLE items ADD COLUMN factor REAL
+        """);
+        }
+        if (oldVersion < 3) {
+          // Create mobileItemUnits table
+          await database.execute("""
+CREATE TABLE mobileItemUnits (
+  itemid TEXT ALLOW NULL,
+  unitid TEXT ALLOW NULL,
+  unitname TEXT ALLOW NULL,
+  factor REAL ALLOW NULL
+)
+        """);
+          // Add multiunit column to settings table
+          await database.execute("""
+          ALTER TABLE settings ADD COLUMN multiunit INTEGER
+        """);
+          // Add unit columns to salesInvoiceDtl table
+          await database.execute("""
+          ALTER TABLE salesInvoiceDtl ADD COLUMN unitid TEXT
+        """);
+          await database.execute("""
+          ALTER TABLE salesInvoiceDtl ADD COLUMN unitname TEXT
+        """);
+          await database.execute("""
+          ALTER TABLE salesInvoiceDtl ADD COLUMN factor REAL
+        """);
+          // Add unit columns to ResalesInvoiceDtl table
+          await database.execute("""
+          ALTER TABLE ResalesInvoiceDtl ADD COLUMN unitid TEXT
+        """);
+          await database.execute("""
+          ALTER TABLE ResalesInvoiceDtl ADD COLUMN unitname TEXT
+        """);
+          await database.execute("""
+          ALTER TABLE ResalesInvoiceDtl ADD COLUMN factor REAL
+        """);
+        }
+        if (oldVersion < 4) {
+          // Add docno column to salesInvoiceHead table
+          await database.execute("""
+          ALTER TABLE salesInvoiceHead ADD COLUMN docno TEXT
+        """);
+          // Add docno column to ResalesInvoiceHead table
+          await database.execute("""
+          ALTER TABLE ResalesInvoiceHead ADD COLUMN docno TEXT
+        """);
+        }
+        if (oldVersion < 5) {
+          // Add serial column to salesInvoiceDtl table
+          await database.execute("""
+          ALTER TABLE salesInvoiceDtl ADD COLUMN serial INTEGER
+        """);
+          // Add serial column to ResalesInvoiceDtl table
+          await database.execute("""
+          ALTER TABLE ResalesInvoiceDtl ADD COLUMN serial INTEGER
+        """);
+        }
+      },
+    );
   }
 
   Future<void> deleteSettings() async {

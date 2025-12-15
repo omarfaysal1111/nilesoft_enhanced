@@ -7,6 +7,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/Cashin/cashin_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/cashin/cashin_prev_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/cashin/cashin_prev_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/preview_docs/bloc/cashin/cashin_prev_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_cashin.dart';
 
 class CashinPreviewPage extends StatefulWidget {
   const CashinPreviewPage({super.key});
@@ -126,6 +127,16 @@ class _CashinPreviewPageState extends State<CashinPreviewPage>
                 child: DocInfoCard(
                   customerName: item.clint.toString(),
                   dateValue: item.docDate.toString(),
+                  onShare: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ShareCashin(
+                              printingCashinHeadModel: item,
+                              id: item.id.toString(),
+                              numOfSerials: 0),
+                        ));
+                  },
                   netValue: item.total ?? 0,
                   docNumber: item.docNo.toString(),
                   onViewPressed: () {

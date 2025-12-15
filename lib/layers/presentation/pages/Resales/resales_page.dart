@@ -310,6 +310,10 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: resalesState.dtl.length,
         itemBuilder: (context, index) {
+          // Set serial number if not already set
+          if (resalesState.dtl[index].serial == null) {
+            resalesState.dtl[index].serial = index + 1;
+          }
           return InfoCard(
             title: resalesState.dtl[index].itemName.toString(),
             price: resalesState.dtl[index].price.toString(),
@@ -322,6 +326,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
             total: ((resalesState.dtl[index].qty ?? 0) *
                     (resalesState.dtl[index].price ?? 0))
                 .toString(),
+            serial: resalesState.dtl[index].serial?.toString(),
             onDelete: () => _handleDeleteItem(index),
             onEdit: () => _handleEditItem(index),
           );
@@ -406,12 +411,13 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
       String mobileUuid = uuid.v1().toString();
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
-
+      String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
       SalesHeadModel salesHeadModel = SalesHeadModel(
         accid: resalesState.selected!.id,
         dis1: resalesState.dis,
         invoiceno: resalesState.docNo,
         sent: 0,
+        invTime: formattedTime.toString(),
         disam: double.parse(disamController.text),
         disratio: double.tryParse(disratController.text) ?? 0,
         net: resalesState.net,
@@ -424,6 +430,11 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         descr: desc.text,
       );
 
+      // Set serial numbers before saving
+      for (int i = 0; i < resalesState.dtl.length; i++) {
+        resalesState.dtl[i].serial = i + 1;
+      }
+      
       bloc.add(ReSaveButtonClicked(
         salesHeadModel: salesHeadModel,
         salesDtlModel: resalesState.dtl,
@@ -435,6 +446,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
     if (_validateResale()) {
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
+      String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
       var uuid = const Uuid();
       String mobileUuid = uuid.v1().toString();
       SalesHeadModel salesHeadModel = SalesHeadModel(
@@ -445,6 +457,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         id: widget.editid,
         net: resalesState.net,
         docDate: formattedDate,
+        invTime: formattedTime.toString(),
         invType: resalesState.selectedValue,
         tax: resalesState.tax,
         disam: double.tryParse(disamController.text) ?? 0,
@@ -455,6 +468,11 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         descr: desc.text,
       );
 
+      // Set serial numbers before updating
+      for (int i = 0; i < resalesState.dtl.length; i++) {
+        resalesState.dtl[i].serial = i + 1;
+      }
+      
       bloc.add(OnUpdateResale(
         headModel: salesHeadModel,
         dtlModel: resalesState.dtl,

@@ -30,10 +30,22 @@ class LedgerBloc extends Bloc<LedgerEvent, LedgerState> {
       CustomerSelectedEvent event, Emitter<LedgerState> emit) async {}
   Future<void> _onLedgerSubmitted(
       OnLedgerSubmit event, Emitter<LedgerState> emit) async {
-    RemoteLedgerRepoImpl ledgerRepoImpl = RemoteLedgerRepoImpl();
-    LedgerFirstRes ledgerFirst =
-        await ledgerRepoImpl.getLedger(param: event.ledgerParameters);
-    emit(LedgerSubmitted(ledgerFirstRes: ledgerFirst));
+    try {
+      RemoteLedgerRepoImpl ledgerRepoImpl = RemoteLedgerRepoImpl();
+      LedgerFirstRes ledgerFirst =
+          await ledgerRepoImpl.getLedger(param: event.ledgerParameters);
+      emit(LedgerSubmitted(ledgerFirstRes: ledgerFirst));
+    } catch (e) {
+      String errorMsg = "حدث خطأ أثناء جلب البيانات";
+      if (e.toString().contains("401")) {
+        errorMsg = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
+      } else if (e.toString().contains("Error posting data") || e.toString().contains("Error fetching data")) {
+        errorMsg = "فشل الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت";
+      } else {
+        errorMsg = e.toString().replaceAll("Exception: ", "");
+      }
+      emit(LedgerError(errorMessage: errorMsg));
+    }
   }
 
   void _onCustomerSelected(
@@ -44,10 +56,22 @@ class LedgerBloc extends Bloc<LedgerEvent, LedgerState> {
 
   Future<void> _onLedgerPage(
       OnLedgerPageChanged event, Emitter<LedgerState> emit) async {
-    RemoteLedgerRepoImpl ledgerRepoImpl = RemoteLedgerRepoImpl();
-    List<LedgerModel> page =
-        await ledgerRepoImpl.getPage(param: event.ledgerParameters);
-    emit(LedgerPageChanged(ledger: page));
+    try {
+      RemoteLedgerRepoImpl ledgerRepoImpl = RemoteLedgerRepoImpl();
+      List<LedgerModel> page =
+          await ledgerRepoImpl.getPage(param: event.ledgerParameters);
+      emit(LedgerPageChanged(ledger: page));
+    } catch (e) {
+      String errorMsg = "حدث خطأ أثناء جلب البيانات";
+      if (e.toString().contains("401")) {
+        errorMsg = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
+      } else if (e.toString().contains("Error posting data") || e.toString().contains("Error fetching data")) {
+        errorMsg = "فشل الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت";
+      } else {
+        errorMsg = e.toString().replaceAll("Exception: ", "");
+      }
+      emit(LedgerError(errorMessage: errorMsg));
+    }
   }
 
   void _onFromDateChanged(OnFromDateChanged event, Emitter<LedgerState> emit) {

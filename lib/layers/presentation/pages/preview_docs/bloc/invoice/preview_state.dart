@@ -18,6 +18,12 @@ class DocPreviewSentLoaded extends PreviewState {
   DocPreviewSentLoaded({required this.salesModel});
 }
 
+class ShareDoc extends PreviewState {
+  final List<SalesDtlModel>? dtl;
+
+  ShareDoc({required this.dtl});
+}
+
 class DocPreviewUnsentLoaded extends PreviewState {
   final List<SalesHeadModel> salesModel;
 

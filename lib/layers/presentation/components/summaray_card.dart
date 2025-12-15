@@ -94,6 +94,7 @@ class SummaryCard extends StatelessWidget {
                   child: CustomTextField(
                       controller: disratController,
                       hintText: "نسبة",
+                      //readonly: true,
                       hintStyle: const TextStyle(fontSize: 8),
                       onChanged: ratChanged)),
               SizedBox(
@@ -102,6 +103,7 @@ class SummaryCard extends StatelessWidget {
                   child: CustomTextField(
                     controller: disamController,
                     hintText: "قيمة",
+                    //readonly: true,
                     hintStyle: const TextStyle(fontSize: 8),
                     onChanged: amChanged,
                   )),
