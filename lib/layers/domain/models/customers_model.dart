@@ -5,16 +5,26 @@ class CustomersModel implements BaseModel {
   String? id;
   String? name;
   String? type;
+  double? discountRatio;
 
-  CustomersModel(this.id, this.name, this.type);
+  CustomersModel(this.id, this.name, this.type, {this.discountRatio});
   CustomersModel.fromMap(Map<String, dynamic> res) {
     id = res['id'].toString();
     name = res['name'];
     type = res["acctype"];
+    // API and database both use "discountratio" (no underscore)
+    discountRatio = res["discountratio"] != null
+        ? double.tryParse(res["discountratio"].toString())
+        : null;
   }
   @override
   Map<String, Object?> toMap() {
-    return {"id": id, "name": name, "acctype": type};
+    return {
+      "id": id,
+      "name": name,
+      "acctype": type,
+      "discountratio": discountRatio,
+    };
   }
 
   @override

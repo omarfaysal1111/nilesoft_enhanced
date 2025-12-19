@@ -21,6 +21,8 @@ class CashinModelSend {
       "branchid": 0,
       "shiftid": 0,
       "mobile_uuid": cashinModelHead!.mobileuuid,
+      "longitude": cashinModelHead!.longitude,
+      "latitude": cashinModelHead!.latitude,
       "dtl": cashInDtl
     };
   }
@@ -42,6 +44,8 @@ class CashinModel implements BaseModel {
   int? sent;
   int? branchid;
   int? shiftid;
+  double? longitude;
+  double? latitude;
 
   CashinModel({
     this.id,
@@ -53,6 +57,8 @@ class CashinModel implements BaseModel {
     this.clint,
     this.mobileuuid,
     this.descr,
+    this.longitude,
+    this.latitude,
   });
   CashinModel.fromMap(Map<String, dynamic> res) {
     id = res['id'];
@@ -64,6 +70,8 @@ class CashinModel implements BaseModel {
     docNo = res["docno"];
     descr = res["descr"];
     accId = res["accid"];
+    longitude = res["longitude"] != null ? double.tryParse(res["longitude"].toString()) : null;
+    latitude = res["latitude"] != null ? double.tryParse(res["latitude"].toString()) : null;
   }
   @override
   Map<String, Object?> toMap() {
@@ -76,7 +84,9 @@ class CashinModel implements BaseModel {
       "docno": docNo,
       "client": clint,
       "accid": accId,
-      "mobile_uuid": mobileuuid
+      "mobile_uuid": mobileuuid,
+      "longitude": longitude,
+      "latitude": latitude
     };
   }
 }

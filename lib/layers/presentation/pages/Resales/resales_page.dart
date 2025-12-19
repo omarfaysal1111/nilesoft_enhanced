@@ -16,6 +16,8 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_stat
 import 'package:intl/intl.dart' as intl;
 import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
 
 // Global controllers
 final disamController = TextEditingController();
@@ -100,6 +102,7 @@ class ResalesPageContent extends StatefulWidget {
 }
 
 class _ResalesPageContentState extends State<ResalesPageContent> {
+  bool _isSaving = false;
   late MyResalesState resalesState;
 
   @override
@@ -175,6 +178,11 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
             if (state is ResalesInitial) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is ResalesError) {
+              // Don't show "Failed to fetch clients" or "Failed to fetch customers" error - it will retry automatically
+              if (state.message.contains("Failed to fetch clients") ||
+                  state.message.contains("Failed to fetch customers")) {
+                return const Center(child: CircularProgressIndicator());
+              }
               return Text(
                 state.message,
                 style: const TextStyle(color: Colors.red),
@@ -183,6 +191,15 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
               resalesState.docNo = state.docNo.toString();
               resalesState.customers = state.customers;
               resalesState.headid = state.id!;
+
+              // Apply discount ratio if customer is selected
+              if (state.selectedCustomer != null) {
+                resalesState.selected = state.selectedCustomer;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _applyCustomerDiscount(state.selectedCustomer!, bloc);
+                });
+              }
+
               return _buildSearchableDropdown(width, bloc);
             }
             return Column(
@@ -201,8 +218,20 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
       selectedCustomer: resalesState.selected,
       onCustomerSelected: (value) {
         if (value != null) {
-          resalesState.selected = value;
-          bloc.add(ReCustomerSelectedEvent(selectedCustomer: value));
+          // Find the customer from the list to ensure we have the latest data including discountRatio
+          CustomersModel? customerWithDiscount =
+              resalesState.customers?.firstWhere(
+            (c) => c.id == value.id,
+            orElse: () => value,
+          );
+
+          resalesState.selected = customerWithDiscount ?? value;
+          bloc.add(ReCustomerSelectedEvent(
+              selectedCustomer: customerWithDiscount ?? value));
+          // Always apply customer discount (even if 0, to clear previous customer's discount)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _applyCustomerDiscount(customerWithDiscount ?? value, bloc);
+          });
         }
       },
       width: width,
@@ -264,13 +293,39 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         SizedBox(
           width: width * 0.4,
           child: widget.sent == 0
-              ? CustomButton(
-                  color: Colors.black87,
-                  text: resalesState.isEditting
-                      ? "تحديث الفاتورة"
-                      : "حفظ الفاتورة",
-                  onPressed: () => _handleSaveOrUpdate(bloc),
-                )
+              ? _isSaving
+                  ? ElevatedButton(
+                      onPressed: null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 24),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                    )
+                  : CustomButton(
+                      color: Colors.black87,
+                      text: resalesState.isEditting
+                          ? "تحديث الفاتورة"
+                          : "حفظ الفاتورة",
+                      onPressed: () async {
+                        if (_isSaving) {
+                        } else {
+                          await _handleSaveOrUpdate(bloc);
+                        }
+                      },
+                    )
               : const SizedBox(),
         ),
         SizedBox(
@@ -397,21 +452,78 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
   }
 
   // Event handlers
-  void _handleSaveOrUpdate(ResalesBloc bloc) {
+  Future<void> _handleSaveOrUpdate(ResalesBloc bloc) async {
     if (resalesState.isEditting) {
-      _handleUpdateResale(bloc);
+      await _handleUpdateResale(bloc);
     } else {
-      _handleSaveResale(bloc);
+      await _handleSaveResale(bloc);
     }
   }
 
-  void _handleSaveResale(ResalesBloc bloc) {
+  Future<void> _handleSaveResale(ResalesBloc bloc) async {
     if (_validateResale()) {
+      setState(() {
+        _isSaving = true;
+      });
       var uuid = const Uuid();
       String mobileUuid = uuid.v1().toString();
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
       String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
+
+      // Get current location
+      double? longitude;
+      double? latitude;
+      try {
+        // Check if location services are enabled
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          longitude = null;
+          latitude = null;
+        } else {
+          // Check location permission
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+            if (permission == LocationPermission.denied) {
+              longitude = null;
+              latitude = null;
+            } else {
+              final position = await Geolocator.getCurrentPosition(
+                desiredAccuracy: LocationAccuracy.best,
+                timeLimit: const Duration(seconds: 10),
+              ).timeout(
+                const Duration(seconds: 10),
+                onTimeout: () {
+                  throw TimeoutException('Location timeout');
+                },
+              );
+              longitude = position.longitude;
+              latitude = position.latitude;
+            }
+          } else if (permission == LocationPermission.deniedForever) {
+            longitude = null;
+            latitude = null;
+          } else {
+            final position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.best,
+              timeLimit: const Duration(seconds: 10),
+            ).timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw TimeoutException('Location timeout');
+              },
+            );
+            longitude = position.longitude;
+            latitude = position.latitude;
+          }
+        }
+      } catch (e) {
+        // If location is not available, continue without it
+        longitude = null;
+        latitude = null;
+      }
+
       SalesHeadModel salesHeadModel = SalesHeadModel(
         accid: resalesState.selected!.id,
         dis1: resalesState.dis,
@@ -428,13 +540,15 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         total: resalesState.total,
         clientName: resalesState.selected!.name,
         descr: desc.text,
+        longitude: longitude,
+        latitude: latitude,
       );
 
       // Set serial numbers before saving
       for (int i = 0; i < resalesState.dtl.length; i++) {
         resalesState.dtl[i].serial = i + 1;
       }
-      
+
       bloc.add(ReSaveButtonClicked(
         salesHeadModel: salesHeadModel,
         salesDtlModel: resalesState.dtl,
@@ -442,13 +556,70 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
     }
   }
 
-  void _handleUpdateResale(ResalesBloc bloc) {
+  Future<void> _handleUpdateResale(ResalesBloc bloc) async {
     if (_validateResale()) {
+      setState(() {
+        _isSaving = true;
+      });
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
       String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
       var uuid = const Uuid();
       String mobileUuid = uuid.v1().toString();
+
+      // Get current location
+      double? longitude;
+      double? latitude;
+      try {
+        // Check if location services are enabled
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          longitude = null;
+          latitude = null;
+        } else {
+          // Check location permission
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+            if (permission == LocationPermission.denied) {
+              longitude = null;
+              latitude = null;
+            } else {
+              final position = await Geolocator.getCurrentPosition(
+                desiredAccuracy: LocationAccuracy.best,
+                timeLimit: const Duration(seconds: 10),
+              ).timeout(
+                const Duration(seconds: 10),
+                onTimeout: () {
+                  throw TimeoutException('Location timeout');
+                },
+              );
+              longitude = position.longitude;
+              latitude = position.latitude;
+            }
+          } else if (permission == LocationPermission.deniedForever) {
+            longitude = null;
+            latitude = null;
+          } else {
+            final position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.best,
+              timeLimit: const Duration(seconds: 10),
+            ).timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw TimeoutException('Location timeout');
+              },
+            );
+            longitude = position.longitude;
+            latitude = position.latitude;
+          }
+        }
+      } catch (e) {
+        // If location is not available, continue without it
+        longitude = null;
+        latitude = null;
+      }
+
       SalesHeadModel salesHeadModel = SalesHeadModel(
         accid: resalesState.selected!.id,
         dis1: resalesState.dis,
@@ -466,13 +637,15 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         total: resalesState.total,
         clientName: resalesState.selected!.name,
         descr: desc.text,
+        longitude: longitude,
+        latitude: latitude,
       );
 
       // Set serial numbers before updating
       for (int i = 0; i < resalesState.dtl.length; i++) {
         resalesState.dtl[i].serial = i + 1;
       }
-      
+
       bloc.add(OnUpdateResale(
         headModel: salesHeadModel,
         dtlModel: resalesState.dtl,
@@ -566,8 +739,8 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
   }
 
   // Bloc listeners
-  void _handleCustomerDropdownListener(
-      BuildContext context, ResalesState state) {
+  Future<void> _handleCustomerDropdownListener(
+      BuildContext context, ResalesState state) async {
     if (state is ResalesInitial) {
       resalesState.reset();
     }
@@ -577,7 +750,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
     }
 
     if (state is ReSaveSuccess) {
-      _handleSaveSuccess(context, state);
+      await _handleSaveSuccess(context, state);
     }
 
     if (state is ResaleUpdateSucc) {
@@ -606,12 +779,31 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
     resalesState.net = resalesState.total - resalesState.dis + resalesState.tax;
   }
 
-  void _handleSaveSuccess(BuildContext context, ReSaveSuccess state) {
+  Future<void> _handleSaveSuccess(
+      BuildContext context, ReSaveSuccess state) async {
+    setState(() {
+      _isSaving = false;
+    });
     _showSnackBar("تم حفظ الفاتورة");
 
     var uuid = const Uuid();
     String mobileUuid = uuid.v1().toString();
     String formattedDate = intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    // Get current location
+    double? longitude;
+    double? latitude;
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      longitude = position.longitude;
+      latitude = position.latitude;
+    } catch (e) {
+      // If location is not available, continue without it
+      longitude = null;
+      latitude = null;
+    }
 
     SalesHeadModel salesHeadModel = SalesHeadModel(
       accid: resalesState.selected!.id,
@@ -627,6 +819,8 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
       total: resalesState.total,
       clientName: resalesState.selected!.name,
       descr: desc.text,
+      longitude: longitude,
+      latitude: latitude,
     );
 
     Navigator.push(
@@ -643,6 +837,9 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
   }
 
   void _handleUpdateSuccess(BuildContext context) {
+    setState(() {
+      _isSaving = false;
+    });
     resalesState.reset();
     _showSnackBar("تم تعديل الفاتورة");
     Navigator.pop(context);
@@ -667,33 +864,88 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
   void _handleAddNewResalesState(AddNewResalesState state) {
     resalesState.dtl = state.chosenItems;
 
+    // Calculate totals (this sets resalesState.dis to item-level discounts only)
     resalesState.calculateTotals();
 
-    // Update discount amount based on rate
-    double discountRate = double.tryParse(disratController.text) ?? 0;
-    double discountAmount = (discountRate / 100) * resalesState.total;
-    disamController.text = discountAmount.toStringAsFixed(2);
+    // Calculate subtotal (total before any discounts) for customer discount
+    double subtotal = 0;
+    for (var item in resalesState.dtl) {
+      subtotal += (item.qty ?? 0) * (item.price ?? 0);
+    }
 
-    if (disamController.text == "0") {
-      disratController.text = "0";
+    // If customer has discount_ratio, apply it automatically (summary level only)
+    if (resalesState.selected != null &&
+        resalesState.selected!.discountRatio != null &&
+        resalesState.selected!.discountRatio! > 0) {
+      double discountRate = resalesState.selected!.discountRatio!;
+      // Calculate customer discount on subtotal (ignoring item-level discounts)
+      double customerDiscountAmount = (discountRate / 100) * subtotal;
+
+      disratController.text = discountRate.toStringAsFixed(2);
+      disamController.text = customerDiscountAmount.toStringAsFixed(2);
+
+      // Don't modify resalesState.dis - it should only contain item-level discounts
+      // Apply customer discount only in net calculation
+      resalesState.net = resalesState.total -
+          resalesState.dis -
+          customerDiscountAmount +
+          resalesState.tax;
+
+      // Emit discount changed event to update UI
+      final bloc = context.read<ResalesBloc>();
+      bloc.add(OnDisratChanged(
+        resalesState.total,
+        resalesState.dis,
+        resalesState.net,
+        value: discountRate,
+      ));
+    } else {
+      // Update discount amount based on current rate
+      double discountRate = double.tryParse(disratController.text) ?? 0;
+      double discountAmount = (discountRate / 100) * subtotal;
+      disamController.text = discountAmount.toStringAsFixed(2);
+
+      if (disamController.text == "0") {
+        disratController.text = "0";
+      }
     }
   }
 
   void _handleSummaryCardListener(BuildContext context, ResalesState state) {
     if (state is DisamChanged) {
+      // Calculate subtotal for customer discount
+      double subtotal = 0;
+      for (var item in resalesState.dtl) {
+        subtotal += (item.qty ?? 0) * (item.price ?? 0);
+      }
+
+      // Customer discount amount (from summary card)
+      double customerDiscount = state.amValue;
+
+      // Net = total - item-level discounts (resalesState.dis) - customer discount + tax
       resalesState.net = resalesState.total -
-          state.amValue +
-          resalesState.tax -
-          resalesState.dis;
+          resalesState.dis -
+          customerDiscount +
+          resalesState.tax;
       disratController.text = state.ratValue.toStringAsFixed(2);
       disamController.text = state.amValue.toStringAsFixed(2);
     }
 
     if (state is DisratChanged) {
+      // Calculate subtotal for customer discount
+      double subtotal = 0;
+      for (var item in resalesState.dtl) {
+        subtotal += (item.qty ?? 0) * (item.price ?? 0);
+      }
+
+      // Customer discount amount (from summary card)
+      double customerDiscount = state.amValue;
+
+      // Net = total - item-level discounts (resalesState.dis) - customer discount + tax
       resalesState.net = resalesState.total -
-          state.amValue +
-          resalesState.tax -
-          resalesState.dis;
+          resalesState.dis -
+          customerDiscount +
+          resalesState.tax;
       disratController.text = state.ratValue.toStringAsFixed(2);
       disamController.text = state.amValue.toStringAsFixed(2);
     }
@@ -708,5 +960,43 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
         ),
       );
     });
+  }
+
+  void _applyCustomerDiscount(CustomersModel customer, ResalesBloc bloc) {
+    if (customer.discountRatio != null && customer.discountRatio! > 0) {
+      disratController.text = customer.discountRatio!.toStringAsFixed(2);
+
+      resalesState.calculateTotals();
+
+      double subtotal = 0;
+      for (var item in resalesState.dtl) {
+        subtotal += (item.qty ?? 0) * (item.price ?? 0);
+      }
+
+      double customerDiscountAmount =
+          (customer.discountRatio! / 100) * subtotal;
+
+      disamController.text = customerDiscountAmount.toStringAsFixed(2);
+
+      // Don't modify resalesState.dis - it should only contain item-level discounts
+      // Apply customer discount only in net calculation
+      resalesState.net = resalesState.total -
+          resalesState.dis -
+          customerDiscountAmount +
+          resalesState.tax;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        bloc.add(OnDisratChanged(
+          resalesState.total,
+          resalesState.dis,
+          resalesState.net,
+          value: customer.discountRatio!,
+        ));
+      });
+    } else {
+      disratController.text = "0";
+      disamController.text = "0";
+      resalesState.calculateTotals();
+    }
   }
 }

@@ -46,7 +46,9 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
   void _onDisratChanged(OnDisratChanged event, Emitter<ResalesState> emit) {
     double disamVal = 0;
     double net = 0;
-    disamVal = (event.value / 100) * (event.total - event.previousDis);
+    // Calculate discount on the total (subtotal), not on (total - previousDis)
+    // Customer discount should be applied on the full subtotal
+    disamVal = (event.value / 100) * event.total;
     net = event.net;
     emit(DisamChanged(net, amValue: disamVal, ratValue: event.value));
   }
@@ -111,13 +113,31 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
   Future<void> _onFetchClients(
       ReFetchClientsEvent event, Emitter<ResalesState> emit) async {
     emit(ResalesLoading());
-    try {
-      ItemsRepoImpl itemsRepo = ItemsRepoImpl();
-      List<ItemsModel> clients =
-          await itemsRepo.getItems(tableName: DatabaseConstants.itemsTable);
-      emit(ResalesLoaded(clients: clients));
-    } catch (error) {
-      emit(ResalesError("Failed to fetch clients"));
+    
+    // Retry logic with exponential backoff
+    int maxRetries = 10;
+    int retryCount = 0;
+    Duration delay = const Duration(milliseconds: 500);
+    
+    while (retryCount < maxRetries) {
+      try {
+        ItemsRepoImpl itemsRepo = ItemsRepoImpl();
+        List<ItemsModel> clients =
+            await itemsRepo.getItems(tableName: DatabaseConstants.itemsTable);
+        emit(ResalesLoaded(clients: clients));
+        return; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          // After max retries, re-emit the event to continue retrying
+          await Future.delayed(delay);
+          add(ReFetchClientsEvent());
+          return;
+        }
+        // Wait before retrying with exponential backoff
+        await Future.delayed(delay);
+        delay = Duration(milliseconds: (delay.inMilliseconds * 1.5).round());
+      }
     }
   }
 
@@ -169,27 +189,45 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     DatabaseHelper dbHelper = DatabaseHelper();
     DatabaseConstants.startDB(dbHelper);
     emit(ResalesPageLoading());
-    try {
-      CustomersRepoImpl customersRepo = CustomersRepoImpl();
-      List<CustomersModel> customers = await customersRepo.getCustomers(
-          tableName: DatabaseConstants.customersTable);
-      String s2 =
-          "SELECT MAX(id) as latestId FROM ${DatabaseConstants.reSaleInvoiceHeadTable}";
-      List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
-      int id = 1;
-      if (queryResult2[0]["latestId"].toString() == "null" ||
-          queryResult2[0]["latestId"].toString() == "" ||
-          // ignore: unnecessary_null_comparison
-          queryResult2[0]["latestId"].toString() == null) {
-        id = 1;
-      } else {
-        id = int.parse(queryResult2[0]["latestId"].toString().trim());
-        id = id + 1;
+    
+    // Retry logic with exponential backoff
+    int maxRetries = 10;
+    int retryCount = 0;
+    Duration delay = const Duration(milliseconds: 500);
+    
+    while (retryCount < maxRetries) {
+      try {
+        CustomersRepoImpl customersRepo = CustomersRepoImpl();
+        List<CustomersModel> customers = await customersRepo.getCustomers(
+            tableName: DatabaseConstants.customersTable);
+        String s2 =
+            "SELECT MAX(id) as latestId FROM ${DatabaseConstants.reSaleInvoiceHeadTable}";
+        List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+        int id = 1;
+        if (queryResult2[0]["latestId"].toString() == "null" ||
+            queryResult2[0]["latestId"].toString() == "" ||
+            // ignore: unnecessary_null_comparison
+            queryResult2[0]["latestId"].toString() == null) {
+          id = 1;
+        } else {
+          id = int.parse(queryResult2[0]["latestId"].toString().trim());
+          id = id + 1;
+        }
+        emit(ResalesPageLoaded(
+            customers: customers, docNo: await generateDocNumber(), id: id));
+        return; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          // After max retries, re-emit the event to continue retrying
+          await Future.delayed(delay);
+          add(ReFetchCustomersEvent());
+          return;
+        }
+        // Wait before retrying with exponential backoff
+        await Future.delayed(delay);
+        delay = Duration(milliseconds: (delay.inMilliseconds * 1.5).round());
       }
-      emit(ResalesPageLoaded(
-          customers: customers, docNo: await generateDocNumber(), id: id));
-    } catch (error) {
-      emit(ResalesError("Failed to fetch customers"));
     }
   }
 

@@ -36,6 +36,8 @@ class SalesModel implements BaseModel {
       "docdate": salesHeadModel!.docDate,
       "net": salesHeadModel!.net,
       "invtime": salesHeadModel!.invTime,
+      "longitude": salesHeadModel!.longitude,
+      "latitude": salesHeadModel!.latitude,
       // "sent": salesHeadModel!.sent,
       // "visaid": salesHeadModel!.visaId,
       "dtl": salesdtlModel
@@ -71,6 +73,8 @@ class SalesHeadModel implements BaseModel {
   // String? visaId;
   int? sent;
   String? docno;
+  double? longitude;
+  double? latitude;
 
   SalesHeadModel(
       {this.accid,
@@ -95,7 +99,9 @@ class SalesHeadModel implements BaseModel {
       this.net,
       this.total,
       this.invoiceno,
-      this.docno
+      this.docno,
+      this.longitude,
+      this.latitude
       // this.visaId,
       // this.cashaccid
       });
@@ -116,7 +122,9 @@ class SalesHeadModel implements BaseModel {
         tax = res["tax"],
         net = res["net"],
         invoiceno = res["invoiceno"],
-        docno = res["docno"]?.toString();
+        docno = res["docno"]?.toString(),
+        longitude = res["longitude"] != null ? double.tryParse(res["longitude"].toString()) : null,
+        latitude = res["latitude"] != null ? double.tryParse(res["latitude"].toString()) : null;
 
   @override
   Map<String, Object?> toMap() {
@@ -143,6 +151,8 @@ class SalesHeadModel implements BaseModel {
       "mobile_uuid": mobile_uuid,
       "net": net,
       "docno": docno,
+      "longitude": longitude,
+      "latitude": latitude,
       // "visaid": visaId,
       // "sent": sent
     };

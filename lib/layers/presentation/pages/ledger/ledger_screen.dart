@@ -69,10 +69,55 @@ class LedgerScreen extends StatelessWidget {
                       toDate.isNotEmpty &&
                       isPaginationComplete &&
                       !isPaginationLoading;
+                  
+                  // Check if ledger is too large (more than 800 rows = 20 pages * 40 rows)
+                  final bool isLedgerTooLarge = ledgers.length > 800;
 
                   return IconButton(
                     onPressed: canShare
                         ? () async {
+                            // Show warning if ledger is too large
+                            if (isLedgerTooLarge) {
+                              final shouldContinue = await showDialog<bool>(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return Directionality(
+                                    textDirection: TextDirection.rtl,
+                                    child: AlertDialog(
+                                      title: const Text(
+                                        "تحذير",
+                                        style: TextStyle(fontFamily: 'Almarai'),
+                                      ),
+                                      content: Text(
+                                        "يحتوي التقرير على ${ledgers.length} سجل. سيتم عرض أول 800 سجل فقط في ملف PDF لتجنب الأخطاء.\n\nهل تريد المتابعة؟",
+                                        style: const TextStyle(fontFamily: 'Almarai'),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: const Text(
+                                            "إلغاء",
+                                            style: TextStyle(fontFamily: 'Almarai'),
+                                          ),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: const Text(
+                                            "متابعة",
+                                            style: TextStyle(fontFamily: 'Almarai'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                              
+                              if (shouldContinue != true) {
+                                return;
+                              }
+                            }
+                            
                             try {
                               await generateAndShareLedgerPdf(
                                 ledgers: ledgers,

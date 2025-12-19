@@ -383,6 +383,10 @@ class _AddnewPopupState extends State<AddnewPopup> {
     } else if (state is InvoiceLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is InvoiceError) {
+      // Don't show "Failed to fetch clients" error - it will retry automatically
+      if (state.message.contains("Failed to fetch clients")) {
+        return const Center(child: CircularProgressIndicator());
+      }
       return Text(
         state.message,
         style: const TextStyle(color: Colors.red),

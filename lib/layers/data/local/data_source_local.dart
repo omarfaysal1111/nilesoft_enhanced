@@ -42,7 +42,9 @@ class DatabaseHelper {
               docdate TEXT ALLOW NULL,
               net REAL ALLOW NULL,
               sent INTEGER ALLOW NULL,
-              docno TEXT ALLOW NULL
+              docno TEXT ALLOW NULL,
+              longitude REAL ALLOW NULL,
+              latitude REAL ALLOW NULL
             )
           """,
         );
@@ -85,7 +87,9 @@ class DatabaseHelper {
               docdate TEXT ALLOW NULL,
                net REAL ALLOW NULL,
               sent INTEGER ALLOW NULL,
-              docno TEXT ALLOW NULL
+              docno TEXT ALLOW NULL,
+              longitude REAL ALLOW NULL,
+              latitude REAL ALLOW NULL
             )
           """,
         );
@@ -199,7 +203,9 @@ class DatabaseHelper {
               accid TEXT ALLOW NULL,
               docno TEXT ALLOW NULL,
               total REAL NOT NULL,
-              sent INTEGER ALLOW NULL
+              sent INTEGER ALLOW NULL,
+              longitude REAL ALLOW NULL,
+              latitude REAL ALLOW NULL
            )
         """);
         await database.execute("""
@@ -222,7 +228,8 @@ class DatabaseHelper {
 CREATE TABLE Customers (
   id INT ALLOW NULL,
   name TEXT ALLOW NULL,
-  acctype TEXT ALLOW NULL
+  acctype TEXT ALLOW NULL,
+  discountratio REAL ALLOW NULL
 )
 """);
         await database.execute("""
@@ -272,7 +279,7 @@ CREATE TABLE mobileItemUnits (
 )
 """);
       },
-      version: 5,
+      version: 9,
       onUpgrade: (database, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           // Add new columns to items table
@@ -340,6 +347,125 @@ CREATE TABLE mobileItemUnits (
           await database.execute("""
           ALTER TABLE ResalesInvoiceDtl ADD COLUMN serial INTEGER
         """);
+        }
+        if (oldVersion < 6) {
+          // Add discount_ratio column to Customers table
+          await database.execute("""
+          ALTER TABLE Customers ADD COLUMN discount_ratio REAL
+        """);
+        }
+        if (oldVersion < 7) {
+          // Add longitude and latitude columns to salesInvoiceHead table
+          await database.execute("""
+          ALTER TABLE salesInvoiceHead ADD COLUMN longitude REAL
+        """);
+          await database.execute("""
+          ALTER TABLE salesInvoiceHead ADD COLUMN latitude REAL
+        """);
+          // Add longitude and latitude columns to ResalesInvoiceHead table
+          await database.execute("""
+          ALTER TABLE ResalesInvoiceHead ADD COLUMN longitude REAL
+        """);
+          await database.execute("""
+          ALTER TABLE ResalesInvoiceHead ADD COLUMN latitude REAL
+        """);
+          // Add longitude and latitude columns to cashIn table
+          await database.execute("""
+          ALTER TABLE cashIn ADD COLUMN longitude REAL
+        """);
+          await database.execute("""
+          ALTER TABLE cashIn ADD COLUMN latitude REAL
+        """);
+        }
+        if (oldVersion < 8) {
+          // Add longitude and latitude columns if they don't exist (for databases that were already at version 7)
+          try {
+            await database.execute("""
+            ALTER TABLE salesInvoiceHead ADD COLUMN longitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE salesInvoiceHead ADD COLUMN latitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE ResalesInvoiceHead ADD COLUMN longitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE ResalesInvoiceHead ADD COLUMN latitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE cashIn ADD COLUMN longitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE cashIn ADD COLUMN latitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+        }
+        if (oldVersion < 9) {
+          // Ensure longitude and latitude columns exist (for databases that were already at version 8)
+          try {
+            await database.execute("""
+            ALTER TABLE salesInvoiceHead ADD COLUMN longitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE salesInvoiceHead ADD COLUMN latitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE ResalesInvoiceHead ADD COLUMN longitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE ResalesInvoiceHead ADD COLUMN latitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE cashIn ADD COLUMN longitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+          try {
+            await database.execute("""
+            ALTER TABLE cashIn ADD COLUMN latitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
         }
       },
     );

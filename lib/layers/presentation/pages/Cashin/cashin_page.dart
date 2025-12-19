@@ -12,6 +12,8 @@ import 'package:nilesoft_erp/layers/presentation/pages/Cashin/bloc/cashin_state.
 import 'package:intl/intl.dart' as intl;
 import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_cashin.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
 
 CustomersModel? _customersModel;
 final TextEditingController desc = TextEditingController();
@@ -31,6 +33,7 @@ class CashinPage extends StatefulWidget {
 }
 
 class _CashinPageState extends State<CashinPage> {
+  bool _isSaving = false;
   @override
   void initState() {
     // TODO: implement initState
@@ -104,6 +107,9 @@ class _CashinPageState extends State<CashinPage> {
                             state.cashinModel.clint, "1");
                       }
                       if (state is CashInSavedSuccessfuly) {
+                        setState(() {
+                          _isSaving = false;
+                        });
                         SchedulerBinding.instance.addPostFrameCallback((_) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -115,6 +121,9 @@ class _CashinPageState extends State<CashinPage> {
                         // Navigator.pop(context);
                       }
                       if (state is CashInUpdateSucc) {
+                        setState(() {
+                          _isSaving = false;
+                        });
                         SchedulerBinding.instance.addPostFrameCallback((_) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -184,18 +193,100 @@ class _CashinPageState extends State<CashinPage> {
                   readonly: mysent == 1 ? true : false,
                 ),
                 const SizedBox(height: 40),
-                CustomButton(
-                  text: "انهاء سند القبض النقدي",
-                  onPressed: mysent == 1
-                      ? () {
+                mysent == 1
+                    ? CustomButton(
+                        text: "انهاء سند القبض النقدي",
+                        onPressed: () {
                           //  Navigator.pop(context);
-                        }
-                      : () {
-                          if (mysent != 1) {
+                        },
+                      )
+                    : _isSaving
+                        ? ElevatedButton(
+                            onPressed: null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xff39B3BD),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 24),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                          )
+                        : CustomButton(
+                            text: "انهاء سند القبض النقدي",
+                            onPressed: () async {
+                              if (_isSaving) {
+                                return;
+                              }
+                              setState(() {
+                                _isSaving = true;
+                              });
                             String formattedDate = intl.DateFormat('yyyy-MM-dd')
                                 .format(DateTime.now());
                             var uuid = const Uuid();
                             String mobileUuid = uuid.v1().toString();
+
+                            // Get current location
+                            double? longitude;
+                            double? latitude;
+                            try {
+                              // Check if location services are enabled
+                              bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+                              if (!serviceEnabled) {
+                                longitude = null;
+                                latitude = null;
+                              } else {
+                                // Check location permission
+                                LocationPermission permission = await Geolocator.checkPermission();
+                                if (permission == LocationPermission.denied) {
+                                  permission = await Geolocator.requestPermission();
+                                  if (permission == LocationPermission.denied) {
+                                    longitude = null;
+                                    latitude = null;
+                                  } else {
+                                    final position = await Geolocator.getCurrentPosition(
+                                      desiredAccuracy: LocationAccuracy.best,
+                                      timeLimit: const Duration(seconds: 10),
+                                    ).timeout(
+                                      const Duration(seconds: 10),
+                                      onTimeout: () {
+                                        throw TimeoutException('Location timeout');
+                                      },
+                                    );
+                                    longitude = position.longitude;
+                                    latitude = position.latitude;
+                                  }
+                                } else if (permission == LocationPermission.deniedForever) {
+                                  longitude = null;
+                                  latitude = null;
+                                } else {
+                                  final position = await Geolocator.getCurrentPosition(
+                                    desiredAccuracy: LocationAccuracy.best,
+                                    timeLimit: const Duration(seconds: 10),
+                                  ).timeout(
+                                    const Duration(seconds: 10),
+                                    onTimeout: () {
+                                      throw TimeoutException('Location timeout');
+                                    },
+                                  );
+                                  longitude = position.longitude;
+                                  latitude = position.latitude;
+                                }
+                              }
+                            } catch (e) {
+                              // If location is not available, continue without it
+                              longitude = null;
+                              latitude = null;
+                            }
 
                             if (!isEditting) {
                               bloc.add(SaveCashinPressed(
@@ -208,6 +299,8 @@ class _CashinPageState extends State<CashinPage> {
                                   sent: 0,
                                   clint: _customersModel!.name.toString(),
                                   total: double.parse(amount.text),
+                                  longitude: longitude,
+                                  latitude: latitude,
                                 ),
                               ));
                             } else {
@@ -222,9 +315,12 @@ class _CashinPageState extends State<CashinPage> {
                                   mobileuuid: mobileUuid,
                                   clint: selected!.name.toString(),
                                   total: double.parse(amount.text),
+                                  longitude: longitude,
+                                  latitude: latitude,
                                 ),
                               ));
                             }
+                            // Note: _isSaving will be reset in the success/error handlers
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -239,6 +335,8 @@ class _CashinPageState extends State<CashinPage> {
                                           mobileuuid: mobileUuid,
                                           clint: selected!.name.toString(),
                                           total: double.parse(amount.text),
+                                          longitude: longitude,
+                                          latitude: latitude,
                                         ),
                                         id: selected!.id.toString(),
                                         numOfSerials: 0))).then(
@@ -256,10 +354,8 @@ class _CashinPageState extends State<CashinPage> {
                                 });
                               },
                             );
-                          } else {
-                            //  Navigator.pop(context);
-                          }
-                        },
+                          } 
+                        
                 ),
               ],
             ),

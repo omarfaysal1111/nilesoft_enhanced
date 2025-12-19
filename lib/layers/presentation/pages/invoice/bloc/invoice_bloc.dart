@@ -53,7 +53,9 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   void _onDisratChanged(OnDisratChanged event, Emitter<InvoiceState> emit) {
     double disamVal = 0;
     double net = 0;
-    disamVal = (event.value / 100) * (event.total - event.previousDis);
+    // Calculate discount on the total (subtotal), not on (total - previousDis)
+    // Customer discount should be applied on the full subtotal
+    disamVal = (event.value / 100) * event.total;
     net = event.net;
     emit(DisamChanged(net, amValue: disamVal, ratValue: event.value));
   }
@@ -102,14 +104,33 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   Future<void> _onFetchClients(
       FetchClientsEvent event, Emitter<InvoiceState> emit) async {
     emit(InvoiceLoading());
-    try {
-      ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();
-      List<ItemsModel> items = await customersRepoImpl.getItems(
-          tableName: DatabaseConstants.itemsTable);
+    
+    // Retry logic with exponential backoff
+    int maxRetries = 10;
+    int retryCount = 0;
+    Duration delay = const Duration(milliseconds: 500);
+    
+    while (retryCount < maxRetries) {
+      try {
+        ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();
+        List<ItemsModel> items = await customersRepoImpl.getItems(
+            tableName: DatabaseConstants.itemsTable);
 
-      emit(InvoiceLoaded(clients: items));
-    } catch (error) {
-      emit(InvoiceError("Failed to fetch clients"));
+        emit(InvoiceLoaded(clients: items));
+        return; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          // After max retries, still emit error but don't show it to user
+          // Just retry again by re-emitting the event
+          await Future.delayed(delay);
+          add(FetchClientsEvent());
+          return;
+        }
+        // Wait before retrying with exponential backoff
+        await Future.delayed(delay);
+        delay = Duration(milliseconds: (delay.inMilliseconds * 1.5).round());
+      }
     }
   }
 
@@ -162,27 +183,45 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
     DatabaseHelper dbHelper = DatabaseHelper();
     DatabaseConstants.startDB(dbHelper);
     emit(InvoicePageLoading());
-    try {
-      CustomersRepoImpl customersRepoImpl = CustomersRepoImpl();
-      List<CustomersModel> customers = await customersRepoImpl.getCustomers(
-          tableName: DatabaseConstants.customersTable);
-      String s2 =
-          "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
-      List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
-      int id = 1;
-      if (queryResult2[0]["latestId"].toString() == "null" ||
-          queryResult2[0]["latestId"].toString() == "" ||
-          // ignore: unnecessary_null_comparison
-          queryResult2[0]["latestId"].toString() == null) {
-        id = 1;
-      } else {
-        id = int.parse(queryResult2[0]["latestId"].toString().trim());
-        id = id + 1;
+    
+    // Retry logic with exponential backoff
+    int maxRetries = 10;
+    int retryCount = 0;
+    Duration delay = const Duration(milliseconds: 500);
+    
+    while (retryCount < maxRetries) {
+      try {
+        CustomersRepoImpl customersRepoImpl = CustomersRepoImpl();
+        List<CustomersModel> customers = await customersRepoImpl.getCustomers(
+            tableName: DatabaseConstants.customersTable);
+        String s2 =
+            "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
+        List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+        int id = 1;
+        if (queryResult2[0]["latestId"].toString() == "null" ||
+            queryResult2[0]["latestId"].toString() == "" ||
+            // ignore: unnecessary_null_comparison
+            queryResult2[0]["latestId"].toString() == null) {
+          id = 1;
+        } else {
+          id = int.parse(queryResult2[0]["latestId"].toString().trim());
+          id = id + 1;
+        }
+        emit(InvoicePageLoaded(
+            customers: customers, docNo: await generateDocNumber(), id: id));
+        return; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          // After max retries, re-emit the event to continue retrying
+          await Future.delayed(delay);
+          add(FetchCustomersEvent());
+          return;
+        }
+        // Wait before retrying with exponential backoff
+        await Future.delayed(delay);
+        delay = Duration(milliseconds: (delay.inMilliseconds * 1.5).round());
       }
-      emit(InvoicePageLoaded(
-          customers: customers, docNo: await generateDocNumber(), id: id));
-    } catch (error) {
-      emit(InvoiceError("Failed to fetch clients"));
     }
   }
 

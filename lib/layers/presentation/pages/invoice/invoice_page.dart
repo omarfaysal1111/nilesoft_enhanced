@@ -19,6 +19,8 @@ import 'package:nilesoft_erp/layers/presentation/pages/serials/bloc/serials_bloc
 import 'package:nilesoft_erp/layers/presentation/pages/serials/serials_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
+import 'dart:async';
 
 // Global controllers
 final disamController = TextEditingController();
@@ -178,6 +180,7 @@ class InvoicePageContent extends StatefulWidget {
 }
 
 class _InvoicePageContentState extends State<InvoicePageContent> {
+  bool _isSaving = false;
   late MyInvoiceState invoiceState;
 
   @override
@@ -265,6 +268,10 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
             if (state is InvoiceInitial) {
               return const Center(child: CircularProgressIndicator());
             } else if (state is InvoiceError) {
+              // Don't show "Failed to fetch clients" error - it will retry automatically
+              if (state.message.contains("Failed to fetch clients")) {
+                return const Center(child: CircularProgressIndicator());
+              }
               return Text(
                 state.message,
                 style: const TextStyle(color: Colors.red),
@@ -273,6 +280,15 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
               invoiceState.docNo = state.docNo.toString();
               invoiceState.customers = state.customers;
               invoiceState.headid = state.id!;
+
+              // Apply discount ratio if customer is selected
+              if (state.selectedCustomer != null) {
+                invoiceState.selected = state.selectedCustomer;
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _applyCustomerDiscount(state.selectedCustomer!, bloc);
+                });
+              }
+
               return _buildSearchableDropdown(width, bloc);
             }
             return Column(
@@ -291,8 +307,20 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
       selectedCustomer: invoiceState.selected,
       onCustomerSelected: (value) {
         if (value != null) {
-          invoiceState.selected = value;
-          bloc.add(CustomerSelectedEvent(selectedCustomer: value));
+          // Find the customer from the list to ensure we have the latest data including discountRatio
+          CustomersModel? customerWithDiscount =
+              invoiceState.customers?.firstWhere(
+            (c) => c.id == value.id,
+            orElse: () => value,
+          );
+
+          invoiceState.selected = customerWithDiscount ?? value;
+          bloc.add(CustomerSelectedEvent(
+              selectedCustomer: customerWithDiscount ?? value));
+          // Always apply customer discount (even if 0, to clear previous customer's discount)
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _applyCustomerDiscount(customerWithDiscount ?? value, bloc);
+          });
         }
       },
       width: width,
@@ -350,11 +378,39 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
         widget.sent != 1
             ? SizedBox(
                 width: width * 0.4,
-                child: CustomButton(
-                  color: Colors.black87,
-                  text: widget.isEditing ? "تحديث الفاتورة" : "حفظ الفاتورة",
-                  onPressed: () => _handleSaveOrUpdate(bloc),
-                ),
+                child: _isSaving
+                    ? ElevatedButton(
+                        onPressed: null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black87,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 24),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        child: const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      )
+                    : CustomButton(
+                        color: Colors.black87,
+                        text: widget.isEditing
+                            ? "تحديث الفاتورة"
+                            : "حفظ الفاتورة",
+                         onPressed: () async {
+                           if (_isSaving) {
+                             return;
+                           }
+                           await _handleSaveOrUpdate(bloc);
+                         },
+                      ),
               )
             : SizedBox(),
         widget.sent != 1
@@ -478,21 +534,77 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
   }
 
   // Event handlers for adding mode
-  void _handleSaveOrUpdate(InvoiceBloc bloc) {
+  Future<void> _handleSaveOrUpdate(InvoiceBloc bloc) async {
     if (widget.isEditing) {
-      _handleUpdateInvoice(bloc);
+      await _handleUpdateInvoice(bloc);
     } else {
-      _handleSaveInvoice(bloc);
+      await _handleSaveInvoice(bloc);
     }
   }
 
-  void _handleSaveInvoice(InvoiceBloc bloc) {
+  Future<void> _handleSaveInvoice(InvoiceBloc bloc) async {
     if (_validateInvoice()) {
+      setState(() {
+        _isSaving = true;
+      });
       var uuid = const Uuid();
       String mobileUuid = uuid.v1().toString();
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
       String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
+
+      // Get current location
+      double? longitude;
+      double? latitude;
+      try {
+        // Check if location services are enabled
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          longitude = null;
+          latitude = null;
+        } else {
+          // Check location permission
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+            if (permission == LocationPermission.denied) {
+              longitude = null;
+              latitude = null;
+            } else {
+              final position = await Geolocator.getCurrentPosition(
+                desiredAccuracy: LocationAccuracy.best,
+                timeLimit: const Duration(seconds: 10),
+              ).timeout(
+                const Duration(seconds: 10),
+                onTimeout: () {
+                  throw TimeoutException('Location timeout');
+                },
+              );
+              longitude = position.longitude;
+              latitude = position.latitude;
+            }
+          } else if (permission == LocationPermission.deniedForever) {
+            longitude = null;
+            latitude = null;
+          } else {
+            final position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.best,
+              timeLimit: const Duration(seconds: 10),
+            ).timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw TimeoutException('Location timeout');
+              },
+            );
+            longitude = position.longitude;
+            latitude = position.latitude;
+          }
+        }
+      } catch (e) {
+        // If location is not available, continue without it
+        longitude = null;
+        latitude = null;
+      }
 
       SalesHeadModel salesHeadModel = SalesHeadModel(
         accid: invoiceState.selected!.id,
@@ -510,27 +622,87 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
         total: invoiceState.total,
         clientName: invoiceState.selected!.name,
         descr: desc.text,
+        longitude: longitude,
+        latitude: latitude,
       );
 
       // Set serial numbers before saving
       for (int i = 0; i < invoiceState.dtl!.length; i++) {
         invoiceState.dtl![i].serial = i + 1;
       }
-      
+
       bloc.add(SaveButtonClicked(
         salesHeadModel: salesHeadModel,
         salesDtlModel: invoiceState.dtl!,
       ));
+    } else {
+      setState(() {
+        _isSaving = false;
+      });
     }
   }
 
-  void _handleUpdateInvoice(InvoiceBloc bloc) {
+  Future<void> _handleUpdateInvoice(InvoiceBloc bloc) async {
     if (_validateInvoice()) {
       var uuid = const Uuid();
       String mobileUuid = uuid.v1().toString();
       String formattedDate =
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
       String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
+
+      // Get current location
+      double? longitude;
+      double? latitude;
+      try {
+        // Check if location services are enabled
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          longitude = null;
+          latitude = null;
+        } else {
+          // Check location permission
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+            if (permission == LocationPermission.denied) {
+              longitude = null;
+              latitude = null;
+            } else {
+              final position = await Geolocator.getCurrentPosition(
+                desiredAccuracy: LocationAccuracy.best,
+                timeLimit: const Duration(seconds: 10),
+              ).timeout(
+                const Duration(seconds: 10),
+                onTimeout: () {
+                  throw TimeoutException('Location timeout');
+                },
+              );
+              longitude = position.longitude;
+              latitude = position.latitude;
+            }
+          } else if (permission == LocationPermission.deniedForever) {
+            longitude = null;
+            latitude = null;
+          } else {
+            final position = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.best,
+              timeLimit: const Duration(seconds: 10),
+            ).timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                throw TimeoutException('Location timeout');
+              },
+            );
+            longitude = position.longitude;
+            latitude = position.latitude;
+          }
+        }
+      } catch (e) {
+        // If location is not available, continue without it
+        longitude = null;
+        latitude = null;
+      }
+
       SalesHeadModel salesHeadModel = SalesHeadModel(
         id: widget.editid,
         accid: invoiceState.selected!.id,
@@ -548,6 +720,8 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
         total: invoiceState.total,
         clientName: invoiceState.selected!.name,
         descr: desc.text,
+        longitude: longitude,
+        latitude: latitude,
       );
 
       // Set serial numbers before updating
@@ -556,11 +730,15 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
           invoiceState.dtl![i].serial = i + 1;
         }
       }
-      
+
       bloc.add(OnUpdateInvoice(
         headModel: salesHeadModel,
         dtlModel: invoiceState.dtl ?? [],
       ));
+    } else {
+      setState(() {
+        _isSaving = false;
+      });
     }
   }
 
@@ -695,11 +873,16 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
     invoiceState.customers = state.customers;
     disamController.text = state.salesHeadModel.disam.toString();
     disratController.text = state.salesHeadModel.disratio.toString();
-    invoiceState.selected = CustomersModel(
-      state.salesHeadModel.accid,
-      state.salesHeadModel.clientName,
-      state.salesHeadModel.invType,
+    // Find the customer from the list to get discount_ratio
+    CustomersModel? customer = state.customers.firstWhere(
+      (c) => c.id == state.salesHeadModel.accid,
+      orElse: () => CustomersModel(
+        state.salesHeadModel.accid,
+        state.salesHeadModel.clientName,
+        state.salesHeadModel.invType,
+      ),
     );
+    invoiceState.selected = customer;
 
     final myDtl = state.salesDtlModel;
     for (var i = 0; i < myDtl.length; i++) {
@@ -714,6 +897,9 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
   }
 
   void _handleSaveSuccess(BuildContext context, SaveSuccess state) {
+    setState(() {
+      _isSaving = false;
+    });
     _showSnackBar("تم حفظ الفاتورة");
 
     var uuid = const Uuid();
@@ -751,6 +937,9 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
   }
 
   void _handleUpdateSuccess(BuildContext context) {
+    setState(() {
+      _isSaving = false;
+    });
     invoiceState.reset();
     _showSnackBar("تم تعديل الفاتورة");
     Navigator.pop(context);
@@ -779,31 +968,94 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
   void _handleAddNewInvoiceState(AddNewInvoiceState state) {
     invoiceState.dtl = state.chosenItems;
 
+    // Calculate totals (this sets invoiceState.dis to item-level discounts only)
     invoiceState.calculateTotals();
 
-    // Update discount amount based on rate
-    double discountRate = double.tryParse(disratController.text) ?? 0;
-    double discountAmount = (discountRate / 100) * invoiceState.total;
-    disamController.text = discountAmount.toStringAsFixed(2);
+    // Calculate subtotal (total before any discounts) for customer discount
+    double subtotal = 0;
+    if (invoiceState.dtl != null) {
+      for (var item in invoiceState.dtl!) {
+        subtotal += (item.qty ?? 0) * (item.price ?? 0);
+      }
+    }
 
-    if (disamController.text == "0") {
-      disratController.text = "0";
+    // If customer has discount_ratio, apply it automatically (summary level only)
+    if (invoiceState.selected != null &&
+        invoiceState.selected!.discountRatio != null &&
+        invoiceState.selected!.discountRatio! > 0) {
+      double discountRate = invoiceState.selected!.discountRatio!;
+      // Calculate customer discount on subtotal (ignoring item-level discounts)
+      double customerDiscountAmount = (discountRate / 100) * subtotal;
+
+      disratController.text = discountRate.toStringAsFixed(2);
+      disamController.text = customerDiscountAmount.toStringAsFixed(2);
+
+      // Don't modify invoiceState.dis - it should only contain item-level discounts
+      // Apply customer discount only in net calculation
+      invoiceState.net = invoiceState.total -
+          invoiceState.dis -
+          customerDiscountAmount +
+          invoiceState.tax;
+
+      // Emit discount changed event to update UI
+      final bloc = context.read<InvoiceBloc>();
+      bloc.add(OnDisratChanged(
+        invoiceState.total,
+        invoiceState.dis,
+        invoiceState.net,
+        value: discountRate,
+      ));
+    } else {
+      // Update discount amount based on current rate
+      double discountRate = double.tryParse(disratController.text) ?? 0;
+      double discountAmount = (discountRate / 100) * subtotal;
+      disamController.text = discountAmount.toStringAsFixed(2);
+
+      if (disamController.text == "0") {
+        disratController.text = "0";
+      }
     }
   }
 
   void _handleSummaryCardListener(BuildContext context, InvoiceState state) {
     if (state is DisamChanged) {
-      invoiceState.net = (invoiceState.total + invoiceState.tax) -
+      // Calculate subtotal for customer discount
+      double subtotal = 0;
+      if (invoiceState.dtl != null) {
+        for (var item in invoiceState.dtl!) {
+          subtotal += (item.qty ?? 0) * (item.price ?? 0);
+        }
+      }
+
+      // Customer discount amount (from summary card)
+      double customerDiscount = state.amValue;
+
+      // Net = total - item-level discounts (invoiceState.dis) - customer discount + tax
+      invoiceState.net = invoiceState.total -
           invoiceState.dis -
-          state.amValue;
+          customerDiscount +
+          invoiceState.tax;
       disratController.text = state.ratValue.toStringAsFixed(2);
       disamController.text = state.amValue.toStringAsFixed(2);
     }
 
     if (state is DisratChanged) {
-      invoiceState.net = (invoiceState.total + invoiceState.tax) -
+      // Calculate subtotal for customer discount
+      double subtotal = 0;
+      if (invoiceState.dtl != null) {
+        for (var item in invoiceState.dtl!) {
+          subtotal += (item.qty ?? 0) * (item.price ?? 0);
+        }
+      }
+
+      // Customer discount amount (from summary card)
+      double customerDiscount = state.amValue;
+
+      // Net = total - item-level discounts (invoiceState.dis) - customer discount + tax
+      invoiceState.net = invoiceState.total -
           invoiceState.dis -
-          state.amValue;
+          customerDiscount +
+          invoiceState.tax;
       disratController.text = state.ratValue.toStringAsFixed(2);
       disamController.text = state.amValue.toStringAsFixed(2);
     }
@@ -818,5 +1070,43 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
         ),
       );
     });
+  }
+
+  void _applyCustomerDiscount(CustomersModel customer, InvoiceBloc bloc) {
+    if (customer.discountRatio != null && customer.discountRatio! > 0) {
+      disratController.text = customer.discountRatio!.toStringAsFixed(2);
+
+      invoiceState.calculateTotals();
+
+      double subtotal = 0;
+      if (invoiceState.dtl != null) {
+        for (var item in invoiceState.dtl!) {
+          subtotal += (item.qty ?? 0) * (item.price ?? 0);
+        }
+      }
+
+      double customerDiscountAmount =
+          (customer.discountRatio! / 100) * subtotal;
+
+      disamController.text = customerDiscountAmount.toStringAsFixed(2);
+
+      invoiceState.net = invoiceState.total -
+          invoiceState.dis -
+          customerDiscountAmount +
+          invoiceState.tax;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        bloc.add(OnDisratChanged(
+          invoiceState.total,
+          invoiceState.dis,
+          invoiceState.net,
+          value: customer.discountRatio!,
+        ));
+      });
+    } else {
+      disratController.text = "0";
+      disamController.text = "0";
+      invoiceState.calculateTotals();
+    }
   }
 }

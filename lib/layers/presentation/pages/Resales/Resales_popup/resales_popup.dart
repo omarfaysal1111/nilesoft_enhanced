@@ -42,7 +42,7 @@ class AddnewPopup extends StatefulWidget {
   final int id;
   final int headid;
   final List<SalesDtlModel> allDtl;
-  
+
   @override
   State<AddnewPopup> createState() => _AddnewPopupState();
 }
@@ -146,7 +146,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
       }
       return;
     }
-    
+
     // Store itemid in a local variable to avoid null check issues
     final itemId = selectedItem?.itemid;
     if (itemId == null) {
@@ -158,21 +158,21 @@ class _AddnewPopupState extends State<AddnewPopup> {
       }
       return;
     }
-    
+
     SettingsRepoImpl settingsRepo = SettingsRepoImpl();
     List<SettingsModel> settings = await settingsRepo.getSettings(
         tableName: DatabaseConstants.settingsTable);
-    
+
     bool multiUnitEnabled = false;
     if (settings.isNotEmpty) {
       multiUnitEnabled = settings[0].multiunit == true;
     }
 
     MobileItemUnitsRepoImpl unitsRepo = MobileItemUnitsRepoImpl();
-    List<MobileItemUnitsModel> loadedUnits = await unitsRepo.getMobileItemUnitsByItemId(
-        itemId: itemId,
-        tableName: DatabaseConstants.mobileItemUnitsTable);
-    
+    List<MobileItemUnitsModel> loadedUnits =
+        await unitsRepo.getMobileItemUnitsByItemId(
+            itemId: itemId, tableName: DatabaseConstants.mobileItemUnitsTable);
+
     // Always add the basic unit from the items table if it exists
     if (selectedItem!.unitid != null || selectedItem!.unitname != null) {
       // Create a unit from the item's unit information (basic unit)
@@ -180,19 +180,21 @@ class _AddnewPopupState extends State<AddnewPopup> {
         itemid: selectedItem!.itemid,
         unitid: selectedItem!.unitid,
         unitname: selectedItem!.unitname,
-        factor: selectedItem!.factor ?? 1.0, // Default factor to 1.0 if not provided
+        factor: selectedItem!.factor ??
+            1.0, // Default factor to 1.0 if not provided
       );
-      
+
       // Check if this unit already exists in loadedUnits (to avoid duplicates)
-      bool unitExists = loadedUnits.any((unit) => 
-        unit.unitid == itemUnit.unitid && unit.unitid != null);
-      
+      bool unitExists = loadedUnits
+          .any((unit) => unit.unitid == itemUnit.unitid && unit.unitid != null);
+
       // If not found, add the basic unit from items table
       if (!unitExists) {
-        loadedUnits.insert(0, itemUnit); // Insert at the beginning as the basic unit
+        loadedUnits.insert(
+            0, itemUnit); // Insert at the beginning as the basic unit
       }
     }
-    
+
     if (mounted) {
       setState(() {
         isMultiUnitEnabled = multiUnitEnabled;
@@ -207,7 +209,10 @@ class _AddnewPopupState extends State<AddnewPopup> {
   }
 
   void _updatePriceWithFactor() {
-    if (selectedUnit != null && selectedUnit!.factor != null && selectedItem != null && selectedItem!.price != null) {
+    if (selectedUnit != null &&
+        selectedUnit!.factor != null &&
+        selectedItem != null &&
+        selectedItem!.price != null) {
       // Always use the base item price and apply the new factor
       // This ensures we recalculate correctly even in edit mode
       double basePrice = selectedItem!.price!;
@@ -312,7 +317,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
       // Defer all state changes to after build completes
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        
+
         idx = state.index;
         myItems = state.items;
         // Populate controllers
@@ -326,7 +331,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
         selectedItem = myItems.firstWhere(
           (item) => item.name == state.salesDtlModel.itemName,
         );
-        
+
         // Load units and set selected unit if available
         _loadSettingsAndUnits().then((_) {
           if (mounted) {
@@ -334,7 +339,9 @@ class _AddnewPopupState extends State<AddnewPopup> {
               setState(() {
                 selectedUnit = itemUnits.firstWhere(
                   (unit) => unit.unitid == state.salesDtlModel.unitid,
-                  orElse: () => itemUnits.isNotEmpty ? itemUnits[0] : MobileItemUnitsModel(),
+                  orElse: () => itemUnits.isNotEmpty
+                      ? itemUnits[0]
+                      : MobileItemUnitsModel(),
                 );
               });
               // Update price with the selected unit's factor
@@ -420,6 +427,10 @@ class _AddnewPopupState extends State<AddnewPopup> {
     } else if (state is ResalesLoading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state is ResalesError) {
+      // Don't show "Failed to fetch clients" error - it will retry automatically
+      if (state.message.contains("Failed to fetch clients")) {
+        return const Center(child: CircularProgressIndicator());
+      }
       return Text(
         state.message,
         style: const TextStyle(color: Colors.red),
@@ -484,6 +495,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
                   _handleDiscountChange(bloc, val);
                 },
                 hintText: "الخصم",
+                readonly: true,
                 controller: disControlleer,
               ),
             ),
@@ -494,6 +506,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
                   _handleDiscountRatioChange(bloc, value);
                 },
                 hintText: "الخصم٪",
+                readonly: true,
                 controller: disRatioControlleer,
               ),
             ),
