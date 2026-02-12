@@ -164,7 +164,7 @@ class ShareCashin extends StatelessWidget {
             Expanded(
               child: CustomButton(
                 onPressed: captureAndSharePdf,
-                text: "ارسال السند",
+                text: "مشاركة السند",
               ),
             ),
             const SizedBox(width: 12),

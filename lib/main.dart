@@ -4,11 +4,16 @@ import 'package:nilesoft_erp/layers/presentation/pages/login/bloc/login_bloc.dar
 import 'package:nilesoft_erp/layers/presentation/pages/login/login_page.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/home_page.dart';
+import 'package:nilesoft_erp/services/location_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Request location and camera permissions at app start
+  await LocationService.requestLocationPermission();
+  await LocationService.requestCameraPermission();
 
   final prefs = await SharedPreferences.getInstance();
   final savedToken = prefs.getString("user_token");

@@ -16,7 +16,6 @@ import 'package:nilesoft_erp/layers/presentation/components/dropdown/units_dropd
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart';
 
 import '../bloc/resales_bloc.dart';
 

@@ -29,16 +29,17 @@ Future<void> generateAndShareLedgerPdf({
   // Number of rows per page - increased to reduce total pages
   // Landscape A4 can fit approximately 35-40 rows with compact styling
   const int rowsPerPage = 40;
-  
+
   // Maximum pages limit to prevent PDF library errors
   const int maxPages = 20;
-  
+
   // Store original length to check if truncated
+  // ignore: unused_local_variable
   final originalLedgerCount = ledgers.length;
-  
+
   // Split ledgers into chunks
   int totalPages = (ledgers.length / rowsPerPage).ceil();
-  
+
   // Limit total pages to prevent PDF library errors
   bool isTruncated = false;
   if (totalPages > maxPages) {
@@ -47,18 +48,20 @@ Future<void> generateAndShareLedgerPdf({
     ledgers = ledgers.take(rowsPerPage * maxPages).toList();
     isTruncated = true;
   }
-  
+
   // Build header row - more compact
   pw.TableRow buildHeaderRow() {
     return pw.TableRow(
+      // ignore: prefer_const_constructors
       decoration: pw.BoxDecoration(color: PdfColors.grey300),
       children: headers
           .map((h) => pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 3),
+                padding:
+                    const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 3),
                 child: pw.Text(h,
                     textAlign: pw.TextAlign.center,
                     style: pw.TextStyle(
-                        font: arabicFont, 
+                        font: arabicFont,
                         fontWeight: pw.FontWeight.bold,
                         fontSize: 8)),
               ))
@@ -69,14 +72,15 @@ Future<void> generateAndShareLedgerPdf({
   // Build table rows for a specific range
   List<pw.TableRow> buildTableRows(int startIndex, int endIndex) {
     final rows = <pw.TableRow>[buildHeaderRow()];
-    
+
     for (int i = startIndex; i < endIndex && i < ledgers.length; i++) {
       final item = ledgers[i];
       rows.add(
         pw.TableRow(
           children: [
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
               child: pw.Text(
                 item.docdate ?? '',
                 textAlign: pw.TextAlign.center,
@@ -84,7 +88,8 @@ Future<void> generateAndShareLedgerPdf({
               ),
             ),
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
               child: pw.Text(
                 item.descr ?? '',
                 textAlign: pw.TextAlign.center,
@@ -94,7 +99,8 @@ Future<void> generateAndShareLedgerPdf({
               ),
             ),
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
               child: pw.Text(
                 item.doctype ?? '',
                 textAlign: pw.TextAlign.center,
@@ -102,7 +108,8 @@ Future<void> generateAndShareLedgerPdf({
               ),
             ),
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
               child: pw.Text(
                 item.docno ?? '',
                 textAlign: pw.TextAlign.center,
@@ -110,7 +117,8 @@ Future<void> generateAndShareLedgerPdf({
               ),
             ),
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
               child: pw.Text(
                 format.format(item.debit ?? 0),
                 textAlign: pw.TextAlign.center,
@@ -118,7 +126,8 @@ Future<void> generateAndShareLedgerPdf({
               ),
             ),
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
               child: pw.Text(
                 format.format(item.cridet ?? 0),
                 textAlign: pw.TextAlign.center,
@@ -126,7 +135,8 @@ Future<void> generateAndShareLedgerPdf({
               ),
             ),
             pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding:
+                  const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2),
               child: pw.Text(
                 format.format(item.balance ?? 0),
                 textAlign: pw.TextAlign.center,
@@ -137,7 +147,7 @@ Future<void> generateAndShareLedgerPdf({
         ),
       );
     }
-    
+
     return rows;
   }
 
@@ -152,10 +162,16 @@ Future<void> generateAndShareLedgerPdf({
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text('تقرير كشف حساب العميل',
-                  style: pw.TextStyle(fontSize: 14, font: arabicFont, fontWeight: pw.FontWeight.bold)),
+                  style: pw.TextStyle(
+                      fontSize: 14,
+                      font: arabicFont,
+                      fontWeight: pw.FontWeight.bold)),
               if (totalPages > 1)
                 pw.Text('صفحة $currentPage من $totalPages',
-                    style: pw.TextStyle(font: arabicFont, fontSize: 8, color: PdfColors.grey700)),
+                    style: pw.TextStyle(
+                        font: arabicFont,
+                        fontSize: 8,
+                        color: PdfColors.grey700)),
             ],
           ),
           pw.SizedBox(height: 2),
@@ -165,7 +181,8 @@ Future<void> generateAndShareLedgerPdf({
               style: pw.TextStyle(font: arabicFont, fontSize: 9)),
           if (isTruncated)
             pw.Text('⚠️ تم عرض أول ${ledgers.length} سجل فقط',
-                style: pw.TextStyle(font: arabicFont, fontSize: 8, color: PdfColors.red700)),
+                style: pw.TextStyle(
+                    font: arabicFont, fontSize: 8, color: PdfColors.red700)),
           pw.SizedBox(height: 3),
         ],
       ),
@@ -175,7 +192,7 @@ Future<void> generateAndShareLedgerPdf({
   // Build footer section (only on last page)
   pw.Widget buildPageFooter(bool isLastPage) {
     if (!isLastPage) return pw.SizedBox.shrink();
-    
+
     return pw.Directionality(
       textDirection: pw.TextDirection.rtl,
       child: pw.Column(
@@ -185,13 +202,25 @@ Future<void> generateAndShareLedgerPdf({
           pw.Divider(),
           pw.SizedBox(height: 5),
           pw.Text('الرصيد الافتتاحي: ${format.format(double.parse(openbal))}',
-              style: pw.TextStyle(font: arabicFont, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(
+                  font: arabicFont,
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold)),
           pw.Text('إجمالي المدين: ${format.format(double.parse(debit))}',
-              style: pw.TextStyle(font: arabicFont, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(
+                  font: arabicFont,
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold)),
           pw.Text('إجمالي الدائن: ${format.format(double.parse(credit))}',
-              style: pw.TextStyle(font: arabicFont, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(
+                  font: arabicFont,
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold)),
           pw.Text('الرصيد الحالي: ${format.format(double.parse(currentbal))}',
-              style: pw.TextStyle(font: arabicFont, fontSize: 10, fontWeight: pw.FontWeight.bold)),
+              style: pw.TextStyle(
+                  font: arabicFont,
+                  fontSize: 10,
+                  fontWeight: pw.FontWeight.bold)),
         ],
       ),
     );
@@ -213,10 +242,12 @@ Future<void> generateAndShareLedgerPdf({
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                buildPageHeader(pageIndex + 1, totalPages, isTruncated && pageIndex == 0),
+                buildPageHeader(
+                    pageIndex + 1, totalPages, isTruncated && pageIndex == 0),
                 pw.Expanded(
                   child: pw.Table(
-                    border: pw.TableBorder.all(color: PdfColors.grey, width: 0.5),
+                    border:
+                        pw.TableBorder.all(color: PdfColors.grey, width: 0.5),
                     columnWidths: {
                       0: const pw.FlexColumnWidth(1.1),
                       1: const pw.FlexColumnWidth(2.2),

@@ -21,7 +21,7 @@ class DatabaseHelper {
   Future<void> initDB() async {
     String path = await getDatabasesPath();
     db = await openDatabase(
-      join(path, 'NileSoftv10.db'),
+      join(path, 'NileSoftv11.db'),
       onCreate: (database, version) async {
         await database.execute(
           """

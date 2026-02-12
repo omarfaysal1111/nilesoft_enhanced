@@ -30,6 +30,7 @@ class UnitsDropdown extends StatelessWidget {
         orElse: () => units!.isNotEmpty ? units!.first : MobileItemUnitsModel(),
       );
       // If found unit is empty, set to null
+      // ignore: unnecessary_null_comparison
       if (validSelectedUnit != null && validSelectedUnit.unitid == null) {
         validSelectedUnit = units!.isNotEmpty ? units!.first : null;
       }
@@ -63,5 +64,3 @@ class UnitsDropdown extends StatelessWidget {
     );
   }
 }
-
-

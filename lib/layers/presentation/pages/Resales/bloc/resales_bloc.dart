@@ -70,6 +70,7 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
       OnUpdateResale event, Emitter<ResalesState> emit) async {
     emit(UpdatingResale());
     InvoiceRepoImpl invoiceRepoImpl = InvoiceRepoImpl();
+    // ignore: unused_local_variable
     int id = await invoiceRepoImpl.updateSalesHead(
         head: event.headModel,
         tableName: DatabaseConstants.reSaleInvoiceHeadTable);
@@ -113,12 +114,12 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
   Future<void> _onFetchClients(
       ReFetchClientsEvent event, Emitter<ResalesState> emit) async {
     emit(ResalesLoading());
-    
+
     // Retry logic with exponential backoff
     int maxRetries = 10;
     int retryCount = 0;
     Duration delay = const Duration(milliseconds: 500);
-    
+
     while (retryCount < maxRetries) {
       try {
         ItemsRepoImpl itemsRepo = ItemsRepoImpl();
@@ -189,12 +190,12 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     DatabaseHelper dbHelper = DatabaseHelper();
     DatabaseConstants.startDB(dbHelper);
     emit(ResalesPageLoading());
-    
+
     // Retry logic with exponential backoff
     int maxRetries = 10;
     int retryCount = 0;
     Duration delay = const Duration(milliseconds: 500);
-    
+
     while (retryCount < maxRetries) {
       try {
         CustomersRepoImpl customersRepo = CustomersRepoImpl();
@@ -202,7 +203,8 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
             tableName: DatabaseConstants.customersTable);
         String s2 =
             "SELECT MAX(id) as latestId FROM ${DatabaseConstants.reSaleInvoiceHeadTable}";
-        List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+        List<Map<String, Object?>> queryResult2 =
+            await dbHelper.db.rawQuery(s2);
         int id = 1;
         if (queryResult2[0]["latestId"].toString() == "null" ||
             queryResult2[0]["latestId"].toString() == "" ||

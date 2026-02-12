@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/local_areas_repo_impl.dart';
@@ -20,7 +22,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   HomeBloc() : super(HomeState.initial()) {
     on<UpdatingSumbittedEvent>((event, emit) async {
       try {
-        emit(state.copyWith(isUpdateSubmitted: true, isUpdateSucc: false, errorMessage: null));
+        emit(state.copyWith(
+            isUpdateSubmitted: true, isUpdateSucc: false, errorMessage: null));
 
         // emit(state.copyWith(isUpdateSubmitted: true));
         RemoteItemRepoImpl itemsRepo = RemoteItemRepoImpl();
@@ -47,28 +50,34 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         localsAreasRepoImpl.addAllAreas(areas: areas, tableName: 'areas');
         localsAreasRepoImpl.addAllAreas(areas: cities, tableName: 'cities');
         localsAreasRepoImpl.addAllAreas(areas: govs, tableName: 'govs');
-        
+
         // Fetch and store mobile item units
-        RemoteMobileItemUnitsRepoImpl mobileItemUnitsRepo = RemoteMobileItemUnitsRepoImpl();
-        MobileItemUnitsRepoImpl mobileItemUnitsLocal = MobileItemUnitsRepoImpl();
+        RemoteMobileItemUnitsRepoImpl mobileItemUnitsRepo =
+            RemoteMobileItemUnitsRepoImpl();
+        MobileItemUnitsRepoImpl mobileItemUnitsLocal =
+            MobileItemUnitsRepoImpl();
         var mobileItemUnits = await mobileItemUnitsRepo.getAllMobileItemUnits();
         await mobileItemUnitsLocal.deleteAllMobileItemUnits(
             tableName: DatabaseConstants.mobileItemUnitsTable);
         await mobileItemUnitsLocal.addAllMobileItemUnits(
-            items: mobileItemUnits, tableName: DatabaseConstants.mobileItemUnitsTable);
+            items: mobileItemUnits,
+            tableName: DatabaseConstants.mobileItemUnitsTable);
 
-        emit(state.copyWith(isUpdateSubmitted: false, isUpdateSucc: true, errorMessage: null));
-      } catch (e) {
-        String errorMsg = "حدث خطأ أثناء تحديث البيانات";
-        if (e.toString().contains("401")) {
-          errorMsg = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
-        } else if (e.toString().contains("Error fetching data")) {
-          errorMsg = "فشل الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت";
-        } else {
-          errorMsg = e.toString().replaceAll("Exception: ", "");
-        }
         emit(state.copyWith(
-          isUpdateSubmitted: false, 
+            isUpdateSubmitted: false, isUpdateSucc: true, errorMessage: null));
+      } catch (e) {
+        final result = await InternetAddress.lookup('google.com');
+
+        String errorMsg = "حدث خطأ أثناء تحديث البيانات";
+ if (e.toString().contains("401")) {
+   errorMsg = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
+ } else if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+   errorMsg = "فشل الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت";
+} else {
+errorMsg = e.toString();
+}
+        emit(state.copyWith(
+          isUpdateSubmitted: false,
           isUpdateSucc: false,
           errorMessage: errorMsg,
         ));
@@ -76,11 +85,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     });
     on<SenddingSumbittedEvent>((event, emit) async {
       try {
-        emit(state.copyWith(isSendingSubmitted: true, isSendingSucc: false, errorMessage: null));
+        emit(state.copyWith(
+            isSendingSubmitted: true,
+            isSendingSucc: false,
+            errorMessage: null));
         // Clear previous messages and reset problems counter at the start
         RemoteInvoiceRepoImpl.messages.clear();
         RemoteInvoiceRepoImpl.problems = 0;
-        
+
         //Send Sales Invoices
         RemoteInvoiceRepoImpl remoteInvoiceRepoImpl = RemoteInvoiceRepoImpl();
         await remoteInvoiceRepoImpl.sendInvoices(
@@ -96,24 +108,25 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         await remoteCashinRepoImpl.sendInvoices(
             endPoint: "cashin/addnew",
             headTableName: DatabaseConstants.cashinHeadTable);
-        
+
         // Emit final state with messages (whether success or errors)
         emit(state.copyWith(
             isSendingSubmitted: false,
             isSendingSucc: RemoteInvoiceRepoImpl.problems == 0,
-            messages: RemoteInvoiceRepoImpl.messages.isNotEmpty 
-                ? List<String>.from(RemoteInvoiceRepoImpl.messages) 
+            messages: RemoteInvoiceRepoImpl.messages.isNotEmpty
+                ? List<String>.from(RemoteInvoiceRepoImpl.messages)
                 : [],
             errorMessage: null));
       } catch (e) {
+       final result = await InternetAddress.lookup('google.com');
         String errorMsg = "حدث خطأ أثناء إرسال البيانات";
-        if (e.toString().contains("401")) {
-          errorMsg = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
-        } else if (e.toString().contains("Error")) {
-          errorMsg = "فشل الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت";
-        } else {
-          errorMsg = e.toString().replaceAll("Exception: ", "");
-        }
+         if (e.toString().contains("401")) {
+           errorMsg = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
+         } else if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+         errorMsg = "فشل الاتصال بالخادم. يرجى التحقق من الاتصال بالإنترنت";
+         } else {
+        errorMsg = e.toString();
+         }
         emit(state.copyWith(
           isSendingSubmitted: false,
           isSendingSucc: false,

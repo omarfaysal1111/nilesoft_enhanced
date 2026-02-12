@@ -58,6 +58,7 @@ class PrintingScreen extends StatelessWidget {
                       "تاريخ الفاتورة: ${intl.DateFormat('yyyy-MM-dd').format(DateTime.now())}",
                       style: pw.TextStyle(font: arabicFont)),
                   pw.SizedBox(height: 16),
+                  // ignore: deprecated_member_use
                   pw.Table.fromTextArray(
                     headers: ['الصنف', 'الكمية', 'السعر', 'الخصم', 'الاجمالي'],
                     data: printingSalesDtlModel.map((item) {
@@ -139,6 +140,7 @@ class PrintingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
     return WillPopScope(
         onWillPop: () async => false,
         child: Scaffold(
@@ -148,7 +150,7 @@ class PrintingScreen extends StatelessWidget {
             children: [
               CustomButton(
                 onPressed: () async => await generateAndSharePdf(context),
-                text: ("ارسال الفاتورة"),
+                text: ("مشاركة الفاتورة"),
               ),
               CustomButton(
                 onPressed: () async {

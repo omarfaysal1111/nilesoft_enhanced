@@ -38,6 +38,7 @@ class LedgerScreen extends StatelessWidget {
     double height = MediaQuery.sizeOf(context).height;
 
     return PopScope(
+      // ignore: deprecated_member_use
       onPopInvoked: (didPop) {
         fromDate = "";
         toDate = "";
@@ -69,7 +70,7 @@ class LedgerScreen extends StatelessWidget {
                       toDate.isNotEmpty &&
                       isPaginationComplete &&
                       !isPaginationLoading;
-                  
+
                   // Check if ledger is too large (more than 800 rows = 20 pages * 40 rows)
                   final bool isLedgerTooLarge = ledgers.length > 800;
 
@@ -90,21 +91,26 @@ class LedgerScreen extends StatelessWidget {
                                       ),
                                       content: Text(
                                         "يحتوي التقرير على ${ledgers.length} سجل. سيتم عرض أول 800 سجل فقط في ملف PDF لتجنب الأخطاء.\n\nهل تريد المتابعة؟",
-                                        style: const TextStyle(fontFamily: 'Almarai'),
+                                        style: const TextStyle(
+                                            fontFamily: 'Almarai'),
                                       ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
                                           child: const Text(
                                             "إلغاء",
-                                            style: TextStyle(fontFamily: 'Almarai'),
+                                            style: TextStyle(
+                                                fontFamily: 'Almarai'),
                                           ),
                                         ),
                                         TextButton(
-                                          onPressed: () => Navigator.of(context).pop(true),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
                                           child: const Text(
                                             "متابعة",
-                                            style: TextStyle(fontFamily: 'Almarai'),
+                                            style: TextStyle(
+                                                fontFamily: 'Almarai'),
                                           ),
                                         ),
                                       ],
@@ -112,12 +118,12 @@ class LedgerScreen extends StatelessWidget {
                                   );
                                 },
                               );
-                              
+
                               if (shouldContinue != true) {
                                 return;
                               }
                             }
-                            
+
                             try {
                               await generateAndShareLedgerPdf(
                                 ledgers: ledgers,
@@ -225,7 +231,7 @@ class LedgerScreen extends StatelessWidget {
                 ),
               );
             }
-            
+
             if (state is LedgerPageChanged) {
               recievedLen += state.ledger.length;
               ledgers += state.ledger;
@@ -269,7 +275,7 @@ class LedgerScreen extends StatelessWidget {
               credit = state.ledgerFirstRes.totalCridet.toString();
               currentbal = state.ledgerFirstRes.currentBalance.toString();
               numberOfRows = state.ledgerFirstRes.noofrows ?? 0;
-              
+
               // Reset pagination flags
               isPaginationComplete = false;
               isPaginationLoading = false;
@@ -341,7 +347,8 @@ class LedgerScreen extends StatelessWidget {
                               DatePickerField(
                                 label: toDate.isEmpty ? "اختر التاريخ" : toDate,
                                 onDateSelected: (val) {
-                                  bloc.add(OnToDateChanged(date: val.toString()));
+                                  bloc.add(
+                                      OnToDateChanged(date: val.toString()));
                                 },
                               ),
                             ],
@@ -365,9 +372,12 @@ class LedgerScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
                               DatePickerField(
-                                label: fromDate.isEmpty ? "اختر التاريخ" : fromDate,
+                                label: fromDate.isEmpty
+                                    ? "اختر التاريخ"
+                                    : fromDate,
                                 onDateSelected: (val) {
-                                  bloc.add(OnFromDateChanged(date: val.toString()));
+                                  bloc.add(
+                                      OnFromDateChanged(date: val.toString()));
                                 },
                               ),
                             ],

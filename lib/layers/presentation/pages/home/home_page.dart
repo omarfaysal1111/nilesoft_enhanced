@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_invoice_repo_impl.dart';
-import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_item_repo_impl.dart';
-import 'package:nilesoft_erp/layers/domain/repository/remote/remote_invoice_repo.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/components/sqr_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/AddCustomer/add_customer.dart';
@@ -306,6 +303,7 @@ class HomePage extends StatelessWidget {
                             context: context,
                             barrierDismissible:
                                 false, // Prevent dismissing by tapping outside
+                            // ignore: deprecated_member_use
                             builder: (dialogContext) => WillPopScope(
                               onWillPop: () async =>
                                   false, // Prevent dismissing with back button
@@ -367,6 +365,7 @@ class HomePage extends StatelessWidget {
                           context: context,
                           barrierDismissible:
                               false, // Prevent dismissing by tapping outside
+                          // ignore: deprecated_member_use
                           builder: (dialogContext) => WillPopScope(
                             onWillPop: () async =>
                                 false, // Prevent dismissing with back button

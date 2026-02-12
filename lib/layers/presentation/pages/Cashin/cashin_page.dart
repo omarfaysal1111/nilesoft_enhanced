@@ -13,7 +13,7 @@ import 'package:intl/intl.dart' as intl;
 import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_cashin.dart';
 import 'package:uuid/uuid.dart';
 import 'package:geolocator/geolocator.dart';
-import 'dart:async';
+import 'package:nilesoft_erp/services/location_service.dart';
 
 CustomersModel? _customersModel;
 final TextEditingController desc = TextEditingController();
@@ -36,7 +36,6 @@ class _CashinPageState extends State<CashinPage> {
   bool _isSaving = false;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     clear();
   }
@@ -230,133 +229,133 @@ class _CashinPageState extends State<CashinPage> {
                               setState(() {
                                 _isSaving = true;
                               });
-                            String formattedDate = intl.DateFormat('yyyy-MM-dd')
-                                .format(DateTime.now());
-                            var uuid = const Uuid();
-                            String mobileUuid = uuid.v1().toString();
+                              String formattedDate =
+                                  intl.DateFormat('yyyy-MM-dd')
+                                      .format(DateTime.now());
+                              var uuid = const Uuid();
+                              String mobileUuid = uuid.v1().toString();
 
-                            // Get current location
-                            double? longitude;
-                            double? latitude;
-                            try {
-                              // Check if location services are enabled
-                              bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-                              if (!serviceEnabled) {
-                                longitude = null;
-                                latitude = null;
-                              } else {
-                                // Check location permission
-                                LocationPermission permission = await Geolocator.checkPermission();
-                                if (permission == LocationPermission.denied) {
-                                  permission = await Geolocator.requestPermission();
-                                  if (permission == LocationPermission.denied) {
-                                    longitude = null;
-                                    latitude = null;
-                                  } else {
-                                    final position = await Geolocator.getCurrentPosition(
-                                      desiredAccuracy: LocationAccuracy.best,
-                                      timeLimit: const Duration(seconds: 10),
-                                    ).timeout(
-                                      const Duration(seconds: 10),
-                                      onTimeout: () {
-                                        throw TimeoutException('Location timeout');
-                                      },
-                                    );
-                                    longitude = position.longitude;
-                                    latitude = position.latitude;
+                              // Get current location using LocationService
+                              Position? position =
+                                  await LocationService.getCurrentLocation();
+                              double? longitude = position?.longitude;
+                              double? latitude = position?.latitude;
+
+                              // If location is null, show dialog and prevent saving
+                              if (longitude == null || latitude == null) {
+                                setState(() {
+                                  _isSaving = false;
+                                });
+                                // ignore: use_build_context_synchronously
+                                bool shouldRetry = await LocationService
+                                    // ignore: use_build_context_synchronously
+                                    .showLocationPermissionDialog(context);
+                                if (shouldRetry) {
+                                  // Retry getting location
+                                  position = await LocationService
+                                      .getCurrentLocation();
+                                  longitude = position?.longitude;
+                                  latitude = position?.latitude;
+
+                                  // If still null, don't save
+                                  if (longitude == null || latitude == null) {
+                                    if (mounted) {
+                                      // ignore: use_build_context_synchronously
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'لا يمكن حفظ سند القبض بدون الموقع. يرجى منح إذن الموقع.'),
+                                          duration: Duration(seconds: 3),
+                                        ),
+                                      );
+                                    }
+                                    return;
                                   }
-                                } else if (permission == LocationPermission.deniedForever) {
-                                  longitude = null;
-                                  latitude = null;
                                 } else {
-                                  final position = await Geolocator.getCurrentPosition(
-                                    desiredAccuracy: LocationAccuracy.best,
-                                    timeLimit: const Duration(seconds: 10),
-                                  ).timeout(
-                                    const Duration(seconds: 10),
-                                    onTimeout: () {
-                                      throw TimeoutException('Location timeout');
-                                    },
-                                  );
-                                  longitude = position.longitude;
-                                  latitude = position.latitude;
+                                  // User cancelled or didn't grant permission
+                                  if (mounted) {
+                                    // ignore: use_build_context_synchronously
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'لا يمكن حفظ سند القبض بدون الموقع. يرجى منح إذن الموقع.'),
+                                        duration: Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                  return;
                                 }
                               }
-                            } catch (e) {
-                              // If location is not available, continue without it
-                              longitude = null;
-                              latitude = null;
-                            }
 
-                            if (!isEditting) {
-                              bloc.add(SaveCashinPressed(
-                                cashinModel: CashinModel(
-                                  accId: _customersModel!.id.toString(),
-                                  descr: desc.text,
-                                  docDate: formattedDate,
-                                  mobileuuid: mobileUuid,
-                                  docNo: docNo,
-                                  sent: 0,
-                                  clint: _customersModel!.name.toString(),
-                                  total: double.parse(amount.text),
-                                  longitude: longitude,
-                                  latitude: latitude,
-                                ),
-                              ));
-                            } else {
-                              bloc.add(OnCashinUpdate(
-                                cashinModel: CashinModel(
-                                  accId: selected!.id.toString(),
-                                  descr: desc.text,
-                                  id: id,
-                                  docDate: formattedDate,
-                                  sent: mysent,
-                                  docNo: docNo,
-                                  mobileuuid: mobileUuid,
-                                  clint: selected!.name.toString(),
-                                  total: double.parse(amount.text),
-                                  longitude: longitude,
-                                  latitude: latitude,
-                                ),
-                              ));
-                            }
-                            // Note: _isSaving will be reset in the success/error handlers
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => ShareCashin(
-                                        printingCashinHeadModel: CashinModel(
-                                          accId: selected!.id.toString(),
-                                          descr: desc.text,
-                                          id: id,
-                                          docDate: formattedDate,
-                                          sent: mysent,
-                                          docNo: docNo,
-                                          mobileuuid: mobileUuid,
-                                          clint: selected!.name.toString(),
-                                          total: double.parse(amount.text),
-                                          longitude: longitude,
-                                          latitude: latitude,
-                                        ),
-                                        id: selected!.id.toString(),
-                                        numOfSerials: 0))).then(
-                              (value) {
-                                setState(() {
-                                  desc.clear();
-                                  amount.clear();
-                                  docNo = "";
-                                  isEditting = false;
-                                  customers = [];
-                                  selected = null;
-                                  _customersModel = null;
-                                  id = 0;
-                                  mysent = 0;
-                                });
-                              },
-                            );
-                          } 
-                        
-                ),
+                              if (!isEditting) {
+                                bloc.add(SaveCashinPressed(
+                                  cashinModel: CashinModel(
+                                    accId: _customersModel!.id.toString(),
+                                    descr: desc.text,
+                                    docDate: formattedDate,
+                                    mobileuuid: mobileUuid,
+                                    docNo: docNo,
+                                    sent: 0,
+                                    clint: _customersModel!.name.toString(),
+                                    total: double.parse(amount.text),
+                                    longitude: longitude,
+                                    latitude: latitude,
+                                  ),
+                                ));
+                              } else {
+                                bloc.add(OnCashinUpdate(
+                                  cashinModel: CashinModel(
+                                    accId: selected!.id.toString(),
+                                    descr: desc.text,
+                                    id: id,
+                                    docDate: formattedDate,
+                                    sent: mysent,
+                                    docNo: docNo,
+                                    mobileuuid: mobileUuid,
+                                    clint: selected!.name.toString(),
+                                    total: double.parse(amount.text),
+                                    longitude: longitude,
+                                    latitude: latitude,
+                                  ),
+                                ));
+                              }
+                              // Note: _isSaving will be reset in the success/error handlers
+                              Navigator.push(
+                                  // ignore: use_build_context_synchronously
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => ShareCashin(
+                                          printingCashinHeadModel: CashinModel(
+                                            accId: selected!.id.toString(),
+                                            descr: desc.text,
+                                            id: id,
+                                            docDate: formattedDate,
+                                            sent: mysent,
+                                            docNo: docNo,
+                                            mobileuuid: mobileUuid,
+                                            clint: selected!.name.toString(),
+                                            total: double.parse(amount.text),
+                                            longitude: longitude,
+                                            latitude: latitude,
+                                          ),
+                                          id: selected!.id.toString(),
+                                          numOfSerials: 0))).then(
+                                (value) {
+                                  setState(() {
+                                    desc.clear();
+                                    amount.clear();
+                                    docNo = "";
+                                    isEditting = false;
+                                    customers = [];
+                                    selected = null;
+                                    _customersModel = null;
+                                    id = 0;
+                                    mysent = 0;
+                                  });
+                                },
+                              );
+                            }),
               ],
             ),
           ),

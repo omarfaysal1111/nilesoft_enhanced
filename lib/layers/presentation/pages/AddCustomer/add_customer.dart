@@ -26,6 +26,7 @@ class AddCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double w = MediaQuery.sizeOf(context).width;
+    // ignore: unused_local_variable
     double h = MediaQuery.sizeOf(context).height;
     final bloc = context.read<AddCustomerBloc>();
 
@@ -101,6 +102,7 @@ class AddCustomer extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
+                            // ignore: deprecated_member_use
                             color: Colors.black.withOpacity(0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
@@ -317,7 +319,8 @@ class AddCustomer extends StatelessWidget {
                                 } else {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text("من فضلك اكمل جميع البيانات"),
+                                      content:
+                                          Text("من فضلك اكمل جميع البيانات"),
                                       duration: Duration(seconds: 2),
                                     ),
                                   );

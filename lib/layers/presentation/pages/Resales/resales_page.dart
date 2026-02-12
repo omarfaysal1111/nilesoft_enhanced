@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,6 +19,7 @@ import 'package:intl/intl.dart' as intl;
 import 'package:nilesoft_erp/layers/presentation/pages/share_document/share_screen.dart';
 import 'package:uuid/uuid.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:nilesoft_erp/services/location_service.dart';
 import 'dart:async';
 
 // Global controllers
@@ -118,6 +121,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
     final height = MediaQuery.of(context).size.height;
 
     return PopScope(
+      // ignore: deprecated_member_use
       onPopInvoked: (didPop) => resalesState.reset(),
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -471,57 +475,50 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
           intl.DateFormat('yyyy-MM-dd').format(DateTime.now());
       String formattedTime = intl.DateFormat('hh:mm').format(DateTime.now());
 
-      // Get current location
-      double? longitude;
-      double? latitude;
-      try {
-        // Check if location services are enabled
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (!serviceEnabled) {
-          longitude = null;
-          latitude = null;
-        } else {
-          // Check location permission
-          LocationPermission permission = await Geolocator.checkPermission();
-          if (permission == LocationPermission.denied) {
-            permission = await Geolocator.requestPermission();
-            if (permission == LocationPermission.denied) {
-              longitude = null;
-              latitude = null;
-            } else {
-              final position = await Geolocator.getCurrentPosition(
-                desiredAccuracy: LocationAccuracy.best,
-                timeLimit: const Duration(seconds: 10),
-              ).timeout(
-                const Duration(seconds: 10),
-                onTimeout: () {
-                  throw TimeoutException('Location timeout');
-                },
+      // Get current location using LocationService
+      Position? position = await LocationService.getCurrentLocation();
+      double? longitude = position?.longitude;
+      double? latitude = position?.latitude;
+
+      // If location is null, show dialog and prevent saving
+      if (longitude == null || latitude == null) {
+        setState(() {
+          _isSaving = false;
+        });
+        bool shouldRetry =
+            await LocationService.showLocationPermissionDialog(context);
+        if (shouldRetry) {
+          // Retry getting location
+          position = await LocationService.getCurrentLocation();
+          longitude = position?.longitude;
+          latitude = position?.latitude;
+
+          // If still null, don't save
+          if (longitude == null || latitude == null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'لا يمكن حفظ فاتورة المردودات بدون الموقع. يرجى منح إذن الموقع.'),
+                  duration: Duration(seconds: 3),
+                ),
               );
-              longitude = position.longitude;
-              latitude = position.latitude;
             }
-          } else if (permission == LocationPermission.deniedForever) {
-            longitude = null;
-            latitude = null;
-          } else {
-            final position = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.best,
-              timeLimit: const Duration(seconds: 10),
-            ).timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                throw TimeoutException('Location timeout');
-              },
-            );
-            longitude = position.longitude;
-            latitude = position.latitude;
+            return;
           }
+        } else {
+          // User cancelled or didn't grant permission
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'لا يمكن حفظ فاتورة المردودات بدون الموقع. يرجى منح إذن الموقع.'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
         }
-      } catch (e) {
-        // If location is not available, continue without it
-        longitude = null;
-        latitude = null;
       }
 
       SalesHeadModel salesHeadModel = SalesHeadModel(
@@ -567,57 +564,50 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
       var uuid = const Uuid();
       String mobileUuid = uuid.v1().toString();
 
-      // Get current location
-      double? longitude;
-      double? latitude;
-      try {
-        // Check if location services are enabled
-        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (!serviceEnabled) {
-          longitude = null;
-          latitude = null;
-        } else {
-          // Check location permission
-          LocationPermission permission = await Geolocator.checkPermission();
-          if (permission == LocationPermission.denied) {
-            permission = await Geolocator.requestPermission();
-            if (permission == LocationPermission.denied) {
-              longitude = null;
-              latitude = null;
-            } else {
-              final position = await Geolocator.getCurrentPosition(
-                desiredAccuracy: LocationAccuracy.best,
-                timeLimit: const Duration(seconds: 10),
-              ).timeout(
-                const Duration(seconds: 10),
-                onTimeout: () {
-                  throw TimeoutException('Location timeout');
-                },
+      // Get current location using LocationService
+      Position? position = await LocationService.getCurrentLocation();
+      double? longitude = position?.longitude;
+      double? latitude = position?.latitude;
+
+      // If location is null, show dialog and prevent updating
+      if (longitude == null || latitude == null) {
+        setState(() {
+          _isSaving = false;
+        });
+        bool shouldRetry =
+            await LocationService.showLocationPermissionDialog(context);
+        if (shouldRetry) {
+          // Retry getting location
+          position = await LocationService.getCurrentLocation();
+          longitude = position?.longitude;
+          latitude = position?.latitude;
+
+          // If still null, don't update
+          if (longitude == null || latitude == null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'لا يمكن تحديث فاتورة المردودات بدون الموقع. يرجى منح إذن الموقع.'),
+                  duration: Duration(seconds: 3),
+                ),
               );
-              longitude = position.longitude;
-              latitude = position.latitude;
             }
-          } else if (permission == LocationPermission.deniedForever) {
-            longitude = null;
-            latitude = null;
-          } else {
-            final position = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.best,
-              timeLimit: const Duration(seconds: 10),
-            ).timeout(
-              const Duration(seconds: 10),
-              onTimeout: () {
-                throw TimeoutException('Location timeout');
-              },
-            );
-            longitude = position.longitude;
-            latitude = position.latitude;
+            return;
           }
+        } else {
+          // User cancelled or didn't grant permission
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'لا يمكن تحديث فاتورة المردودات بدون الموقع. يرجى منح إذن الموقع.'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
         }
-      } catch (e) {
-        // If location is not available, continue without it
-        longitude = null;
-        latitude = null;
       }
 
       SalesHeadModel salesHeadModel = SalesHeadModel(
@@ -914,6 +904,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
   void _handleSummaryCardListener(BuildContext context, ResalesState state) {
     if (state is DisamChanged) {
       // Calculate subtotal for customer discount
+      // ignore: unused_local_variable
       double subtotal = 0;
       for (var item in resalesState.dtl) {
         subtotal += (item.qty ?? 0) * (item.price ?? 0);
@@ -933,6 +924,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
 
     if (state is DisratChanged) {
       // Calculate subtotal for customer discount
+      // ignore: unused_local_variable
       double subtotal = 0;
       for (var item in resalesState.dtl) {
         subtotal += (item.qty ?? 0) * (item.price ?? 0);
