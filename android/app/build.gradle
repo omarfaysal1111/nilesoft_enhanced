@@ -12,7 +12,7 @@ android {
     defaultConfig {
         applicationId "com.example.nilesoft_erp"
         // Lowered from 30 to 21 to support more devices (Android 5.0+)
-        minSdk 21
+        minSdkVersion flutter.minSdkVersion
         targetSdk flutter.targetSdkVersion
         versionCode flutter.versionCode
         versionName flutter.versionName

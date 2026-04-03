@@ -37,9 +37,20 @@ class ItemsRepoImpl implements ItemsRepo {
   }
 
   @override
-  Future<List<ItemsModel>> getItems({required String tableName}) async {
+  Future<List<ItemsModel>> getItems({
+    required String tableName,
+    bool onlyWithPositiveQty = false,
+  }) async {
     DatabaseConstants.startDB(_databaseHelper);
-    return await _databaseHelper.getAllRecords(tableName, ItemsModel.fromMap);
+    if (!onlyWithPositiveQty) {
+      return await _databaseHelper.getAllRecords(tableName, ItemsModel.fromMap);
+    }
+    final List<Map<String, dynamic>> result = await _databaseHelper.db.query(
+      tableName,
+      where: 'qty > ?',
+      whereArgs: [0],
+    );
+    return result.map((map) => ItemsModel.fromMap(map)).toList();
   }
 
   @override

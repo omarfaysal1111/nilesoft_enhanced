@@ -8,6 +8,7 @@ class SettingsModel implements BaseModel {
   String? visaId;
   int? invoiceSerial;
   bool? multiunit;
+  int? inStock;
   SettingsModel(
       {this.cashaccId,
       this.coinPrice,
@@ -15,6 +16,7 @@ class SettingsModel implements BaseModel {
       this.invId,
       this.mobileUserId,
       this.visaId,
+      this.inStock,
       this.multiunit});
 
   SettingsModel.fromMap(Map<String, dynamic> res) {
@@ -24,6 +26,14 @@ class SettingsModel implements BaseModel {
     invId = res["invid"];
     visaId = res["visaId"];
     invoiceSerial = res["invoiceserial"];
+    final dynamic stockRaw = res["instock"] ?? res["showsalesinvenbal"];
+    if (stockRaw == null) {
+      inStock = null;
+    } else if (stockRaw is bool) {
+      inStock = stockRaw ? 1 : 0;
+    } else {
+      inStock = int.tryParse(stockRaw.toString());
+    }
     multiunit = res["multiunit"] == 1 || res["multiunit"] == true || res["multiunit"] == "true";
   }
 
@@ -35,6 +45,7 @@ class SettingsModel implements BaseModel {
       "coinPrice": coinPrice,
       "invid": invId,
       "visaId": visaId,
+      "instock": inStock,
       "invoiceserial": invoiceSerial,
       "multiunit": multiunit == true ? 1 : 0
     };

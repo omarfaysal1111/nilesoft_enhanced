@@ -267,7 +267,8 @@ CREATE TABLE settings (
   invid TEXT ALLOW NULL,
   visaId TEXT ALLOW NULL,
   invoiceserial ALLOW NULL,
-  multiunit INTEGER ALLOW NULL
+  multiunit INTEGER ALLOW NULL,
+  instock INTEGER ALLOW NULL
 )
 """);
         await database.execute("""
@@ -279,7 +280,7 @@ CREATE TABLE mobileItemUnits (
 )
 """);
       },
-      version: 9,
+      version: 10,
       onUpgrade: (database, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           // Add new columns to items table
@@ -462,6 +463,15 @@ CREATE TABLE mobileItemUnits (
           try {
             await database.execute("""
             ALTER TABLE cashIn ADD COLUMN latitude REAL
+          """);
+          } catch (e) {
+            // Column might already exist, ignore error
+          }
+        }
+        if (oldVersion < 10) {
+          try {
+            await database.execute("""
+            ALTER TABLE settings ADD COLUMN instock INTEGER
           """);
           } catch (e) {
             // Column might already exist, ignore error

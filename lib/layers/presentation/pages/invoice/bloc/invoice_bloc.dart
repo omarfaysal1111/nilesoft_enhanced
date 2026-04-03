@@ -7,12 +7,23 @@ import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/customers_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/invoice_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/items_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_state.dart';
 
 class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   List<SalesDtlModel> chosenItems = []; // Central storage of chosen clients
   String myDocNo = "";
+  /// Sales invoice only: when settings `instock` is 1, item pickers and QR use in-stock items only.
+  Future<bool> _restrictSalesToInStockItems() async {
+    final SettingsRepoImpl settingsRepo = SettingsRepoImpl();
+    final List<SettingsModel> settings = await settingsRepo.getSettings(
+        tableName: DatabaseConstants.settingsTable);
+    if (settings.isEmpty) return false;
+    return settings.first.inStock == 1;
+  }
+
   InvoiceBloc() : super(InvoiceInitial()) {
     on<SaveButtonClicked>(_onSaveClicked);
     on<FetchClientsEvent>(_onFetchClients);
@@ -70,6 +81,13 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     ItemsRepoImpl itemsRepoImpl = ItemsRepoImpl();
     ItemsModel itemsModel = await itemsRepoImpl.getItemByBarcode(
         barcode: event.qrCode, tableName: DatabaseConstants.itemsTable);
+    if (await _restrictSalesToInStockItems()) {
+      final double q = itemsModel.qty ?? 0;
+      if (q <= 0) {
+        emit(QRCodeFailure('لا يوجد رصيد كافٍ لهذا الصنف'));
+        return;
+      }
+    }
     emit(QRCodeSuccess(event.qrCode, itemsModel));
   }
 
@@ -77,7 +95,8 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
       EditPressed event, Emitter<InvoiceState> emit) async {
     ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();
     List<ItemsModel> items = await customersRepoImpl.getItems(
-        tableName: DatabaseConstants.itemsTable);
+        tableName: DatabaseConstants.itemsTable,
+        onlyWithPositiveQty: await _restrictSalesToInStockItems());
     emit(EditState(
         index: event.index, salesDtlModel: event.salesDtlModel, items: items));
   }
@@ -114,7 +133,8 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
       try {
         ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();
         List<ItemsModel> items = await customersRepoImpl.getItems(
-            tableName: DatabaseConstants.itemsTable);
+            tableName: DatabaseConstants.itemsTable,
+            onlyWithPositiveQty: await _restrictSalesToInStockItems());
 
         emit(InvoiceLoaded(clients: items));
         return; // Success, exit retry loop

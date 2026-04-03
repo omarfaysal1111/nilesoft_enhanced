@@ -109,7 +109,9 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             invId: userMap["invenid"],
             mobileUserId: userMap["mobileinvoiceid"].toString(),
             visaId: userMap["visaid"],
+            inStock: userMap["showsalesinvenbal"]==true?1:0 ,
             multiunit: multiunitValue,
+            
           );
 
           await settingsRepo.deleteSettings();

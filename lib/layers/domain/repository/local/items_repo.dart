@@ -1,7 +1,10 @@
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 
 abstract class ItemsRepo {
-  Future<List<ItemsModel>> getItems({required String tableName});
+  Future<List<ItemsModel>> getItems({
+    required String tableName,
+    bool onlyWithPositiveQty = false,
+  });
   Future<ItemsModel> getItemById({required int id, required String tableName});
   Future<void> createItem(
       {required ItemsModel item, required String tableName});
