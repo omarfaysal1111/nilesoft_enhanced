@@ -15,6 +15,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/resales_page.dart
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/home/customer_locations_screen.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/delete_data/bloc/delete_bloc.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/delete_data/bloc/delete_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/delete_data/delete_page.dart';
@@ -466,6 +467,23 @@ class HomePage extends StatelessWidget {
                         ),
                       );
                     },
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    width: 164,
+                    child: CustomButton(
+                      text: "مواقع العملاء",
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CustomerLocationsScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),

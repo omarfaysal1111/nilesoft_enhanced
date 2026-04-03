@@ -900,7 +900,7 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
 
     SalesHeadModel salesHeadModel = SalesHeadModel(
       accid: invoiceState.selected!.id,
-      dis1: invoiceState.dis,
+      dis1: invoiceState.dis * invoiceState.total,
       invoiceno: invoiceState.docNo,
       invType: invoiceState.selectedValue,
       sent: 0,
