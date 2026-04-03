@@ -58,7 +58,31 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     ItemsRepoImpl itemsRepoImpl = ItemsRepoImpl();
     ItemsModel itemsModel = await itemsRepoImpl.getItemByBarcode(
         barcode: event.qrCode, tableName: DatabaseConstants.itemsTable);
+    final latestPrice = await _getLatestSalesPriceForItem(itemsModel.itemid);
+    if (latestPrice != null) {
+      itemsModel.price = latestPrice;
+    }
     emit(QRCodeSuccess(event.qrCode, itemsModel));
+  }
+
+  Future<double?> _getLatestSalesPriceForItem(String? itemId) async {
+    if (itemId == null || itemId.trim().isEmpty) {
+      return null;
+    }
+
+    final dbHelper = DatabaseHelper();
+    await DatabaseConstants.startDB(dbHelper);
+    final result = await dbHelper.db.rawQuery(
+      "SELECT price FROM ${DatabaseConstants.salesInvoiceDtlTable} "
+      "WHERE itemId = ? AND price IS NOT NULL "
+      "ORDER BY innerid DESC LIMIT 1",
+      [itemId.trim()],
+    );
+
+    if (result.isEmpty || result.first["price"] == null) {
+      return null;
+    }
+    return double.tryParse(result.first["price"].toString());
   }
 
   Future<void> _onCheckBoxSelected(
@@ -261,10 +285,15 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     }
   }
 
-  void _onClientSelected(
-      ReClientSelectedEvent event, Emitter<ResalesState> emit) {
+  Future<void> _onClientSelected(
+      ReClientSelectedEvent event, Emitter<ResalesState> emit) async {
     final currentState = state;
     if (currentState is ResalesLoaded) {
+      final latestPrice =
+          await _getLatestSalesPriceForItem(event.selectedClient.itemid);
+      if (latestPrice != null) {
+        event.selectedClient.price = latestPrice;
+      }
       emit(ResalesLoaded(
         clients: currentState.clients,
         selectedClient: event.selectedClient,
