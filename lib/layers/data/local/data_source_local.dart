@@ -21,7 +21,7 @@ class DatabaseHelper {
   Future<void> initDB() async {
     String path = await getDatabasesPath();
     db = await openDatabase(
-      join(path, 'NileSoftv11.db'),
+      join(path, 'NileSoftv16.db'),
       onCreate: (database, version) async {
         await database.execute(
           """
@@ -229,7 +229,11 @@ CREATE TABLE Customers (
   id INT ALLOW NULL,
   name TEXT ALLOW NULL,
   acctype TEXT ALLOW NULL,
-  discountratio REAL ALLOW NULL
+  discountratio REAL ALLOW NULL,
+  dislistid TEXT ALLOW NULL,
+  pricelistid TEXT ALLOW NULL,
+  latitude REAL ALLOW NULL,
+  longitude REAL ALLOW NULL
 )
 """);
         await database.execute("""
@@ -242,7 +246,8 @@ CREATE TABLE items (
   hasSerial REAL ALLOW NULL,
   unitid TEXT ALLOW NULL,
   unitname TEXT ALLOW NULL,
-  factor REAL ALLOW NULL
+  factor REAL ALLOW NULL,
+  discountcatid REAL ALLOW NULL
 )
 """);
         await database.execute("""
@@ -268,7 +273,9 @@ CREATE TABLE settings (
   visaId TEXT ALLOW NULL,
   invoiceserial ALLOW NULL,
   multiunit INTEGER ALLOW NULL,
-  instock INTEGER ALLOW NULL
+  instock INTEGER ALLOW NULL,
+  salesinvoicegomladefault TEXT ALLOW NULL,
+  disableitemdiscount INTEGER ALLOW NULL
 )
 """);
         await database.execute("""
@@ -279,8 +286,28 @@ CREATE TABLE mobileItemUnits (
   factor REAL ALLOW NULL
 )
 """);
+        await database.execute("""
+CREATE TABLE priceList (
+  id INTEGER ALLOW NULL,
+  listid TEXT ALLOW NULL,
+  itemid TEXT ALLOW NULL,
+  consumerprice TEXT ALLOW NULL,
+  wholesaleprice REAL ALLOW NULL,
+  halfsaleprice TEXT ALLOW NULL
+)
+""");
+        await database.execute("""
+CREATE TABLE discountList (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listid TEXT ALLOW NULL,
+  discountcatid REAL ALLOW NULL,
+  consumerdisratio TEXT ALLOW NULL,
+  wholedisratio REAL ALLOW NULL,
+  halfdisratio TEXT ALLOW NULL
+)
+""");
       },
-      version: 10,
+      version: 13,
       onUpgrade: (database, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           // Add new columns to items table
@@ -476,6 +503,79 @@ CREATE TABLE mobileItemUnits (
           } catch (e) {
             // Column might already exist, ignore error
           }
+        }
+        if (oldVersion < 11) {
+          await database.execute("""
+CREATE TABLE IF NOT EXISTS priceList (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listid TEXT ALLOW NULL,
+  itemid TEXT ALLOW NULL,
+  consumerprice TEXT ALLOW NULL,
+  wholesaleprice REAL ALLOW NULL,
+  halfsaleprice TEXT ALLOW NULL
+)
+""");
+          await database.execute("""
+CREATE TABLE IF NOT EXISTS discountList (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listid TEXT ALLOW NULL,
+  discountcatid REAL ALLOW NULL,
+  consumerdisratio TEXT ALLOW NULL,
+  wholedisratio REAL ALLOW NULL,
+  halfdisratio TEXT ALLOW NULL
+)
+""");
+          try {
+            await database.execute(
+                "ALTER TABLE Customers ADD COLUMN dislistid TEXT");
+          } catch (e) {}
+          try {
+            await database.execute(
+                "ALTER TABLE Customers ADD COLUMN pricelistid TEXT");
+          } catch (e) {}
+          try {
+            await database.execute(
+                "ALTER TABLE Customers ADD COLUMN latitude REAL");
+          } catch (e) {}
+          try {
+            await database.execute(
+                "ALTER TABLE Customers ADD COLUMN longitude REAL");
+          } catch (e) {}
+          try {
+            await database.execute(
+                "ALTER TABLE items ADD COLUMN discountcatid REAL");
+          } catch (e) {}
+          try {
+            await database.execute(
+                "ALTER TABLE settings ADD COLUMN salesinvoicegomladefault TEXT");
+          } catch (e) {}
+          try {
+            await database.execute(
+                "ALTER TABLE settings ADD COLUMN disableitemdiscount INTEGER");
+          } catch (e) {}
+        }
+        // v12: ensure list tables exist (DB may already be at 11 without them)
+        if (oldVersion < 12) {
+          await database.execute("""
+CREATE TABLE IF NOT EXISTS priceList (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listid TEXT ALLOW NULL,
+  itemid TEXT ALLOW NULL,
+  consumerprice TEXT ALLOW NULL,
+  wholesaleprice REAL ALLOW NULL,
+  halfsaleprice TEXT ALLOW NULL
+)
+""");
+          await database.execute("""
+CREATE TABLE IF NOT EXISTS discountList (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  listid TEXT ALLOW NULL,
+  discountcatid REAL ALLOW NULL,
+  consumerdisratio TEXT ALLOW NULL,
+  wholedisratio REAL ALLOW NULL,
+  halfdisratio TEXT ALLOW NULL
+)
+""");
         }
       },
     );

@@ -53,8 +53,10 @@ class ReEditPressed extends ResalesEvent {
 
 class ReClientSelectedEvent extends ResalesEvent {
   final ItemsModel selectedClient;
+  /// Matches [salesInvoiceHead.accid]; preferred over bloc cache for popup timing.
+  final String? customerAccId;
 
-  ReClientSelectedEvent(this.selectedClient);
+  ReClientSelectedEvent(this.selectedClient, {this.customerAccId});
 }
 
 class ReSaveButtonClicked extends ResalesEvent {
@@ -69,8 +71,9 @@ class ReStartScanning extends ResalesEvent {}
 
 class ReQRCodeDetected extends ResalesEvent {
   final String qrCode;
+  final String? customerAccId;
 
-  ReQRCodeDetected(this.qrCode);
+  ReQRCodeDetected(this.qrCode, {this.customerAccId});
 }
 
 class OnSelectCheckBox extends ResalesEvent {

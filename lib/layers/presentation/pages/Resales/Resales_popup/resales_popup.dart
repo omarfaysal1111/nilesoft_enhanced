@@ -35,12 +35,15 @@ class AddnewPopup extends StatefulWidget {
       this.toEdit,
       required this.allDtl,
       required this.id,
-      required this.headid});
+      required this.headid,
+      this.customerAccId});
   final bool isEdit;
   final SalesDtlModel? toEdit;
   final int id;
   final int headid;
   final List<SalesDtlModel> allDtl;
+  /// Current resale customer id (same as invoice [accid]); used for last sale price.
+  final String? customerAccId;
 
   @override
   State<AddnewPopup> createState() => _AddnewPopupState();
@@ -246,7 +249,8 @@ class _AddnewPopupState extends State<AddnewPopup> {
                   onDetect: (BarcodeCapture barcodeCapture) {
                     final code = barcodeCapture.barcodes.first.rawValue;
                     if (code != null) {
-                      bloc.add(ReQRCodeDetected(code));
+                      bloc.add(ReQRCodeDetected(code,
+                          customerAccId: widget.customerAccId));
                       if (kDebugMode) {
                         print('QR Code detected: $code');
                       }
@@ -277,15 +281,20 @@ class _AddnewPopupState extends State<AddnewPopup> {
     );
   }
 
+  String _formatPriceField(double? price) =>
+      price != null ? price.toStringAsFixed(2) : "0";
+
   void _handleStateChange(ResalesState state, BuildContext context) {
     if (state is ResalesLoaded) {
-      priceControlleer.text = state.selectedClient?.price.toString() ?? "0";
+      final p = state.selectedClient?.price;
+      priceControlleer.text = _formatPriceField(p);
       disControlleer.text = "0";
       disRatioControlleer.text = "0";
       taxControlleer.text = "0";
       qtyControlleer.text = "0";
       selectedItem = state.selectedClient;
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _loadSettingsAndUnits();
       });
     }
@@ -297,13 +306,13 @@ class _AddnewPopupState extends State<AddnewPopup> {
 
     if (state is QRCodeSuccess) {
       selectedItem = state.item;
-      priceControlleer.text = state.item.price.toString();
+      priceControlleer.text = _formatPriceField(state.item.price);
       disControlleer.text = "0";
       disRatioControlleer.text = "0";
       taxControlleer.text = "0";
       qtyControlleer.text = "0";
-      // Load units when barcode is scanned
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _loadSettingsAndUnits();
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -372,10 +381,6 @@ class _AddnewPopupState extends State<AddnewPopup> {
       ResalesState state, ResalesBloc bloc, BuildContext context) {
     if (state is QRCodeSuccess) {
       selectedItem = state.item;
-      // Load units when barcode is scanned
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadSettingsAndUnits();
-      });
       return SearchableItemDropdown(
           items: myItems,
           selecteditem: state.item,
@@ -386,10 +391,8 @@ class _AddnewPopupState extends State<AddnewPopup> {
                 selectedUnit = null;
                 itemUnits = [];
               });
-              bloc.add(ReClientSelectedEvent(val));
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _loadSettingsAndUnits();
-              });
+              bloc.add(ReClientSelectedEvent(val,
+                  customerAccId: widget.customerAccId));
             }
           },
           width: double.infinity,
@@ -415,10 +418,8 @@ class _AddnewPopupState extends State<AddnewPopup> {
                 selectedUnit = null;
                 itemUnits = [];
               });
-              bloc.add(ReClientSelectedEvent(val));
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _loadSettingsAndUnits();
-              });
+              bloc.add(ReClientSelectedEvent(val,
+                  customerAccId: widget.customerAccId));
             }
           },
           width: double.infinity,
@@ -442,7 +443,8 @@ class _AddnewPopupState extends State<AddnewPopup> {
         onItemSelected: (val) {
           if (val != null) {
             selectedItem = val;
-            bloc.add(ReClientSelectedEvent(val));
+            bloc.add(ReClientSelectedEvent(val,
+                customerAccId: widget.customerAccId));
           }
         },
         width: double.infinity,
@@ -520,7 +522,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
             controller: taxControlleer,
           ),
         ),
-        if (itemUnits.isNotEmpty) ...[
+        if (itemUnits.isNotEmpty && isMultiUnitEnabled) ...[
           const SizedBox(height: 12),
           UnitsDropdown(
             units: itemUnits,

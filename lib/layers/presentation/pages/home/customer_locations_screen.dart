@@ -6,12 +6,14 @@ import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/presentation/components/dropdown/customers_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/services/location_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CustomerLocationsScreen extends StatefulWidget {
   const CustomerLocationsScreen({super.key});
 
   @override
-  State<CustomerLocationsScreen> createState() => _CustomerLocationsScreenState();
+  State<CustomerLocationsScreen> createState() =>
+      _CustomerLocationsScreenState();
 }
 
 class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
@@ -39,6 +41,19 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
     super.dispose();
   }
 
+  void _fillCoordsFromCustomer(CustomersModel? c) {
+    if (c?.latitude != null) {
+      _latController.text = c!.latitude!.toStringAsFixed(7);
+    } else {
+      _latController.clear();
+    }
+    if (c?.longitude != null) {
+      _lngController.text = c!.longitude!.toStringAsFixed(7);
+    } else {
+      _lngController.clear();
+    }
+  }
+
   Future<void> _loadCustomers() async {
     try {
       final customers = await _customersRepo.getCustomers(
@@ -57,7 +72,8 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("فشل تحميل العملاء، اضغط تحديث من الصفحة الرئيسية أولاً"),
+          content: Text(
+              "فشل تحميل العملاء، اضغط تحديث من الصفحة الرئيسية أولاً"),
         ),
       );
     }
@@ -92,6 +108,25 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
     _lngController.text = position.longitude.toStringAsFixed(7);
   }
 
+  Future<void> _openInGoogleMaps() async {
+    final lat = double.tryParse(_latController.text.trim());
+    final lng = double.tryParse(_lngController.text.trim());
+    if (lat == null || lng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("أدخل إحداثيات صحيحة أولاً")),
+      );
+      return;
+    }
+    final uri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("تعذر فتح خرائط Google")),
+      );
+    }
+  }
+
   Future<void> _submit() async {
     if (_selectedCustomer == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,6 +154,16 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
         latitude: lat,
         longitude: lng,
       );
+      _selectedCustomer!.latitude = lat;
+      _selectedCustomer!.longitude = lng;
+      try {
+        await _customersRepo.editCustomers(
+          customer: _selectedCustomer!,
+          tableName: DatabaseConstants.customersTable,
+        );
+      } catch (_) {
+        // Local DB update optional if schema mismatch; server already updated.
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("تم حفظ موقع العميل بنجاح")),
@@ -129,10 +174,11 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
         const SnackBar(content: Text("فشل إرسال الموقع إلى الخادم")),
       );
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isSubmitting = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -168,6 +214,7 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
                       onCustomerSelected: (value) {
                         setState(() {
                           _selectedCustomer = value;
+                          _fillCoordsFromCustomer(value);
                         });
                       },
                       width: MediaQuery.of(context).size.width,
@@ -176,6 +223,7 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _latController,
+                      readOnly: true,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                         signed: true,
@@ -189,6 +237,7 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _lngController,
+                      readOnly: true,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                         signed: true,
@@ -223,6 +272,20 @@ class _CustomerLocationsScreenState extends State<CustomerLocationsScreen> {
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: _openInGoogleMaps,
+                        child: const Text(
+                          "فتح في Google Maps",
+                          style: TextStyle(
+                            fontFamily: 'Almarai',
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

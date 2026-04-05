@@ -9,6 +9,11 @@ class SettingsModel implements BaseModel {
   int? invoiceSerial;
   bool? multiunit;
   int? inStock;
+  /// "1" consumer, "2" wholesale, "3" half — drives price/discount list column choice.
+  String? salesInvoiceGomlaDefault;
+  /// When 1, line-item discount fields are read-only in sales invoice add popup.
+  int? disableItemDiscount;
+
   SettingsModel(
       {this.cashaccId,
       this.coinPrice,
@@ -17,7 +22,9 @@ class SettingsModel implements BaseModel {
       this.mobileUserId,
       this.visaId,
       this.inStock,
-      this.multiunit});
+      this.multiunit,
+      this.salesInvoiceGomlaDefault,
+      this.disableItemDiscount});
 
   SettingsModel.fromMap(Map<String, dynamic> res) {
     mobileUserId = res["mobileUserId"];
@@ -34,7 +41,21 @@ class SettingsModel implements BaseModel {
     } else {
       inStock = int.tryParse(stockRaw.toString());
     }
-    multiunit = res["multiunit"] == 1 || res["multiunit"] == true || res["multiunit"] == "true";
+    multiunit = res["multiunit"] == 1 ||
+        res["multiunit"] == true ||
+        res["multiunit"] == "true";
+    salesInvoiceGomlaDefault =
+        res["salesinvoicegomladefault"]?.toString() ??
+            res["salesInvoiceGomlaDefault"]?.toString();
+    final dynamic disRaw =
+        res["disableitemdiscount"] ?? res["disableItemDiscount"];
+    if (disRaw == null) {
+      disableItemDiscount = null;
+    } else if (disRaw is bool) {
+      disableItemDiscount = disRaw ? 1 : 0;
+    } else {
+      disableItemDiscount = int.tryParse(disRaw.toString());
+    }
   }
 
   @override
@@ -47,7 +68,9 @@ class SettingsModel implements BaseModel {
       "visaId": visaId,
       "instock": inStock,
       "invoiceserial": invoiceSerial,
-      "multiunit": multiunit == true ? 1 : 0
+      "multiunit": multiunit == true ? 1 : 0,
+      "salesinvoicegomladefault": salesInvoiceGomlaDefault,
+      "disableitemdiscount": disableItemDiscount,
     };
   }
 }

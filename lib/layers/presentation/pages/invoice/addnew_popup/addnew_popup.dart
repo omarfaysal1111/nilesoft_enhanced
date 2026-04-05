@@ -8,8 +8,15 @@ import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/mobile_item_units_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/customers_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/discount_list_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/mobile_item_units_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/price_list_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/discount_list_model.dart';
+import 'package:nilesoft_erp/layers/domain/models/price_list_model.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/sales_invoice_stock_validation.dart';
 import 'package:nilesoft_erp/layers/presentation/components/custom_textfield.dart';
 import 'package:nilesoft_erp/layers/presentation/components/dropdown/items_dropdown.dart';
 import 'package:nilesoft_erp/layers/presentation/components/dropdown/units_dropdown.dart';
@@ -34,10 +41,12 @@ class AddnewPopup extends StatefulWidget {
       required this.isEdit,
       this.toEdit,
       required this.headId,
-      required this.allDtl});
+      required this.allDtl,
+      this.selectedCustomer});
   final bool isEdit;
   final SalesDtlModel? toEdit;
   final int headId;
+  final CustomersModel? selectedCustomer;
 
   @override
   State<AddnewPopup> createState() => _AddnewPopupState();
@@ -46,13 +55,23 @@ class AddnewPopup extends StatefulWidget {
 class _AddnewPopupState extends State<AddnewPopup> {
   List<MobileItemUnitsModel> itemUnits = [];
   MobileItemUnitsModel? selectedUnit;
+  double _priceListBase = 0;
   bool isMultiUnitEnabled = false;
-  bool _editStateHandled = false; // Track if EditState has been handled
+  bool isDiscountDisabled = false;
+  bool _editStateHandled = false;
+  final PriceListRepoImpl _priceListLocal = PriceListRepoImpl();
+  final DiscountListRepoImpl _discountListLocal = DiscountListRepoImpl();
 
   @override
   void initState() {
     super.initState();
-    // Load settings when popup opens
+    if (!widget.isEdit) {
+      priceControlleer.text = '0.00';
+      disControlleer.text = '0.00';
+      disRatioControlleer.text = '0.00';
+      taxControlleer.text = '0.00';
+      qtyControlleer.text = '1';
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSettings();
     });
@@ -66,6 +85,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
       setState(() {
         if (settings.isNotEmpty) {
           isMultiUnitEnabled = settings[0].multiunit == true;
+          isDiscountDisabled = settings[0].disableItemDiscount == 1;
         }
       });
     }
@@ -120,11 +140,12 @@ class _AddnewPopupState extends State<AddnewPopup> {
   }
 
   void _resetControllers() {
-    priceControlleer.clear();
-    disControlleer.clear();
-    disRatioControlleer.clear();
-    taxControlleer.clear();
-    qtyControlleer.clear();
+    _priceListBase = 0;
+    priceControlleer.text = '0.00';
+    disControlleer.text = '0.00';
+    disRatioControlleer.text = '0.00';
+    taxControlleer.text = '0.00';
+    qtyControlleer.text = widget.isEdit ? '' : '1';
     selectedItem = null;
     myItems = [];
     _editStateHandled = false; // Reset the flag when resetting
@@ -197,25 +218,187 @@ class _AddnewPopupState extends State<AddnewPopup> {
       setState(() {
         isMultiUnitEnabled = multiUnitEnabled;
         itemUnits = loadedUnits;
-        // Select first unit by default if available
         if (itemUnits.isNotEmpty && selectedUnit == null) {
           selectedUnit = itemUnits[0];
-          _updatePriceWithFactor();
         }
       });
     }
+    if (!widget.isEdit) {
+      await _updatePriceFromPriceList();
+    }
+    if (mounted) {
+      _updatePriceWithFactor();
+    }
+  }
+
+  Future<void> _loadUnitsThenMaybeDiscount() async {
+    await _loadSettingsAndUnits();
+    if (!mounted) return;
+    await _updateDiscountFromDiscountList();
+  }
+
+  /// Latest customer row from SQLite (includes pricelistid / dislistid after sync).
+  Future<CustomersModel?> _resolveCustomerForLists() async {
+    final CustomersModel? initial = widget.selectedCustomer;
+    if (initial?.id == null) return initial;
+    try {
+      final CustomersRepoImpl repo = CustomersRepoImpl();
+      return await repo.getCustomerById(
+        id: int.parse(initial!.id!),
+        tableName: DatabaseConstants.customersTable,
+      );
+    } catch (_) {
+      return initial;
+    }
+  }
+
+  Future<String?> _activeGomlaSetting() async {
+    final SettingsRepoImpl settingsRepo = SettingsRepoImpl();
+    final List<SettingsModel> settings = await settingsRepo.getSettings(
+        tableName: DatabaseConstants.settingsTable);
+    if (settings.isEmpty) return null;
+    return settings[0].salesInvoiceGomlaDefault;
+  }
+
+  /// Positive list IDs only; null or zero means the customer is not assigned to that list.
+  bool _hasCustomerListId(int? id) => id != null && id > 0;
+
+  /// Treats numeric **zero** as “column empty” so we don’t show 0 when consumer price is set.
+  String? _nonZeroPriceText(String? s) {
+    if (s == null) return null;
+    final t = s.trim();
+    if (t.isEmpty || t == 'null') return null;
+    final p = double.tryParse(t);
+    if (p != null && p == 0) return null;
+    return t;
+  }
+
+  String? _nonZeroPriceDouble(double? d) {
+    if (d == null || d == 0) return null;
+    return d.toString();
+  }
+
+  /// Gomla setting: "2" wholesale, "3" half; otherwise consumer (incl. "1" or unset).
+  String? _priceValueForGomla(PriceListModel r, String? gomla) {
+    String? primary;
+    if (gomla == "2") {
+      primary = _nonZeroPriceDouble(r.wholesaleprice) ??
+          _nonZeroPriceText(r.consumerprice) ??
+          _nonZeroPriceText(r.halfsaleprice);
+    } else if (gomla == "3") {
+      primary = _nonZeroPriceText(r.halfsaleprice) ??
+          _nonZeroPriceDouble(r.wholesaleprice) ??
+          _nonZeroPriceText(r.consumerprice);
+    } else {
+      primary = _nonZeroPriceText(r.consumerprice) ??
+          _nonZeroPriceDouble(r.wholesaleprice) ??
+          _nonZeroPriceText(r.halfsaleprice);
+    }
+    if (primary != null) return primary;
+    return _nonZeroPriceText(r.consumerprice) ??
+        _nonZeroPriceDouble(r.wholesaleprice) ??
+        _nonZeroPriceText(r.halfsaleprice);
+  }
+
+  /// Same gomla codes as price: wholesale / half / consumer columns on the discount list row.
+  String? _discountRatioForGomla(DiscountListModel r, String? gomla) {
+    if (gomla == "2") return r.wholedisratio?.toString();
+    if (gomla == "3") {
+      final h = r.halfdisratio?.trim();
+      if (h != null && h.isNotEmpty) return h;
+    }
+    final c = r.consumerdisratio?.trim();
+    if (c != null && c.isNotEmpty) return c;
+    if (r.wholedisratio != null) return r.wholedisratio.toString();
+    final h2 = r.halfdisratio?.trim();
+    if (h2 != null && h2.isNotEmpty) return h2;
+    return null;
+  }
+
+  /// Customer `pricelistid` → `priceList` row (`listid` + line `itemid`) → price column from
+  /// gomla setting (`salesinvoicegomladefault`: consumer / wholesale / half). Falls back to
+  /// the item master price when unassigned, missing row, or empty list price.
+  Future<void> _updatePriceFromPriceList() async {
+    if (selectedItem?.itemid == null) return;
+
+    final CustomersModel? cust = await _resolveCustomerForLists();
+    final int? plId = cust?.pricelistid;
+
+    double resolved = 0.0;
+    if (_hasCustomerListId(plId)) {
+      final priceRecord = await _priceListLocal.getPriceListItem(
+        listId: plId.toString(),
+        itemId: selectedItem!.itemid!.trim(),
+      );
+      
+      if (priceRecord != null) {
+        final gomla = await _activeGomlaSetting();
+        final String? raw = _priceValueForGomla(priceRecord, gomla);
+        if (raw != null && raw.trim().isNotEmpty) {
+          final p = double.tryParse(raw);
+          if (p != null) resolved = p;
+        }
+      }
+    }
+    if (resolved == 0.0 && selectedItem?.price != null) {
+      resolved = selectedItem!.price!;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _priceListBase = resolved;
+      priceControlleer.text = resolved.toStringAsFixed(2);
+    });
+  }
+
+  void _applyZeroDiscountFields() {
+    if (!mounted) return;
+    disControlleer.text = '0.00';
+    disRatioControlleer.text = '0.00';
+    final bloc = context.read<InvoiceBloc>();
+    _handleDiscountRatioChange(bloc, '0');
+  }
+
+  /// Customer `dislistid` → `discountList` row (`listid` + item `discountcatid`) → discount
+  /// ratio column from the same gomla setting as price. Missing list/category/row clears
+  /// list-driven discount (unless discounts are disabled globally).
+  Future<void> _updateDiscountFromDiscountList() async {
+    if (widget.isEdit) return;
+    final CustomersModel? cust = await _resolveCustomerForLists();
+    final double? catId = selectedItem?.discountcatid;
+    if (!_hasCustomerListId(cust?.dislistid) || catId == null) {
+      _applyZeroDiscountFields();
+      return;
+    }
+
+    final record = await _discountListLocal.getDiscountListItem(
+      listId: cust!.dislistid.toString(),
+      catId: catId,
+    );
+    if (!mounted) return;
+    if (record == null) {
+      _applyZeroDiscountFields();
+      return;
+    }
+
+    final gomla = await _activeGomlaSetting();
+    final String? ratioStr = _discountRatioForGomla(record, gomla);
+    if (ratioStr == null || ratioStr.trim().isEmpty) {
+      _applyZeroDiscountFields();
+      return;
+    }
+
+    final double ratio = double.tryParse(ratioStr) ?? 0.0;
+    disRatioControlleer.text = ratio.toStringAsFixed(2);
+    if (!mounted) return;
+    final bloc = context.read<InvoiceBloc>();
+    _handleDiscountRatioChange(bloc, disRatioControlleer.text);
   }
 
   void _updatePriceWithFactor() {
-    if (selectedUnit != null &&
-        selectedUnit!.factor != null &&
-        selectedItem != null &&
-        selectedItem!.price != null) {
-      // Always use the base item price and apply the new factor
-      double basePrice = selectedItem!.price!;
-      double adjustedPrice = basePrice * selectedUnit!.factor!;
-      priceControlleer.text = adjustedPrice.toStringAsFixed(2);
-    }
+    if (selectedUnit == null || selectedUnit!.factor == null) return;
+    final double adjusted = _priceListBase * selectedUnit!.factor!;
+    priceControlleer.text = adjusted.toStringAsFixed(2);
   }
 
   void _handleStateChange(InvoiceState state, BuildContext context) {
@@ -228,14 +411,14 @@ class _AddnewPopupState extends State<AddnewPopup> {
 
     if (state is QRCodeSuccess) {
       selectedItem = state.item;
-      priceControlleer.text = state.item.price.toString();
-      disControlleer.text = "0";
-      disRatioControlleer.text = "0";
-      taxControlleer.text = "0";
-      qtyControlleer.text = "0";
-      // Load units when barcode is scanned
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadSettingsAndUnits();
+      _priceListBase = 0;
+      taxControlleer.text = "0.00";
+      disControlleer.text = "0.00";
+      disRatioControlleer.text = "0.00";
+      priceControlleer.text = "0.00";
+      if (!widget.isEdit) qtyControlleer.text = "1";
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _loadUnitsThenMaybeDiscount();
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('QR Code Found: ${state.qrCode}')),
@@ -247,14 +430,15 @@ class _AddnewPopupState extends State<AddnewPopup> {
       );
     }
     if (state is InvoiceLoaded) {
-      priceControlleer.text = state.selectedClient?.price.toString() ?? "0";
-      disControlleer.text = "0";
-      disRatioControlleer.text = "0";
-      taxControlleer.text = "0";
-      qtyControlleer.text = "0";
       selectedItem = state.selectedClient;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadSettingsAndUnits();
+      _priceListBase = 0;
+      taxControlleer.text = "0.00";
+      disControlleer.text = "0.00";
+      disRatioControlleer.text = "0.00";
+      priceControlleer.text = "0.00";
+      if (!widget.isEdit) qtyControlleer.text = "1";
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _loadUnitsThenMaybeDiscount();
       });
     }
     if (state is EditState && !_editStateHandled) {
@@ -280,7 +464,13 @@ class _AddnewPopupState extends State<AddnewPopup> {
           (item) => item.name == state.salesDtlModel[state.index].itemName,
         );
 
-        // Load units and set selected unit if available
+        final SalesDtlModel editDtl = state.salesDtlModel[state.index];
+        final double linePrice = editDtl.price ?? 0.0;
+        final double? lineFactor = editDtl.factor;
+        _priceListBase = (lineFactor != null && lineFactor != 0)
+            ? linePrice / lineFactor
+            : linePrice;
+
         _loadSettingsAndUnits().then((_) {
           if (mounted) {
             if (state.salesDtlModel[state.index].unitid != null) {
@@ -322,9 +512,8 @@ class _AddnewPopupState extends State<AddnewPopup> {
       InvoiceState state, InvoiceBloc bloc, BuildContext context) {
     if (state is QRCodeSuccess) {
       selectedItem = state.item;
-      // Load units when barcode is scanned
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadSettingsAndUnits();
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _loadUnitsThenMaybeDiscount();
       });
       return SearchableItemDropdown(
           items: myItems,
@@ -333,12 +522,17 @@ class _AddnewPopupState extends State<AddnewPopup> {
             if (val != null) {
               selectedItem = val;
               setState(() {
+                _priceListBase = 0;
                 selectedUnit = null;
                 itemUnits = [];
+                priceControlleer.text = '0.00';
+                disControlleer.text = '0.00';
+                disRatioControlleer.text = '0.00';
+                taxControlleer.text = '0.00';
               });
               bloc.add(ClientSelectedEvent(val));
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _loadSettingsAndUnits();
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                await _loadUnitsThenMaybeDiscount();
               });
             }
           },
@@ -369,12 +563,17 @@ class _AddnewPopupState extends State<AddnewPopup> {
             if (val != null) {
               selectedItem = val;
               setState(() {
+                _priceListBase = 0;
                 selectedUnit = null;
                 itemUnits = [];
+                priceControlleer.text = '0.00';
+                disControlleer.text = '0.00';
+                disRatioControlleer.text = '0.00';
+                taxControlleer.text = '0.00';
               });
               bloc.add(ClientSelectedEvent(val));
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _loadSettingsAndUnits();
+              WidgetsBinding.instance.addPostFrameCallback((_) async {
+                await _loadUnitsThenMaybeDiscount();
               });
             }
           },
@@ -399,7 +598,17 @@ class _AddnewPopupState extends State<AddnewPopup> {
         onItemSelected: (val) {
           if (val != null) {
             selectedItem = val;
+            setState(() {
+              _priceListBase = 0;
+              priceControlleer.text = '0.00';
+              disControlleer.text = '0.00';
+              disRatioControlleer.text = '0.00';
+              taxControlleer.text = '0.00';
+            });
             bloc.add(ClientSelectedEvent(val));
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              await _loadUnitsThenMaybeDiscount();
+            });
           }
         },
         width: double.infinity,
@@ -515,7 +724,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
                 onChanged: (val) {
                   _handleDiscountChange(bloc, val);
                 },
-                                readonly: true,
+                readonly: isDiscountDisabled,
 
                 hintText: "الخصم",
                 keyboardType: TextInputType.number,
@@ -528,7 +737,7 @@ class _AddnewPopupState extends State<AddnewPopup> {
                 onChanged: (value) {
                   _handleDiscountRatioChange(bloc, value);
                 },
-                readonly: true,
+                readonly: isDiscountDisabled,
                 hintText: "الخصم٪",
                 keyboardType: TextInputType.number,
                 controller: disRatioControlleer,
@@ -555,9 +764,11 @@ class _AddnewPopupState extends State<AddnewPopup> {
               setState(() {
                 selectedUnit = unit;
               });
-              // Update price after setState completes
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 _updatePriceWithFactor();
+                if (!widget.isEdit) {
+                  _updateDiscountFromDiscountList();
+                }
               });
             },
             width: 270,
@@ -609,8 +820,8 @@ class _AddnewPopupState extends State<AddnewPopup> {
           width: width * (110 / 366),
           child: CustomButton(
             text: "موافق",
-            onPressed: () {
-              _handleConfirm(context, bloc);
+            onPressed: () async {
+              await _handleConfirm(context, bloc);
             },
             color: const Color(0xff39B3BD),
           ),
@@ -619,9 +830,14 @@ class _AddnewPopupState extends State<AddnewPopup> {
     );
   }
 
-  void _handleConfirm(BuildContext context, InvoiceBloc bloc) {
+  Future<void> _handleConfirm(BuildContext context, InvoiceBloc bloc) async {
     if (widget.isEdit) {
-      SalesDtlModel salesDtlModel = SalesDtlModel(
+      final double? qtyEdit = double.tryParse(qtyControlleer.text);
+      if (qtyEdit == null || qtyEdit <= 0) {
+        _showSnackBar("برجاء إدخال كمية صحيحة", context);
+        return;
+      }
+      final SalesDtlModel salesDtlModel = SalesDtlModel(
         innerid: widget.toEdit!.innerid,
         price: double.tryParse(priceControlleer.text),
         disam: double.tryParse(disControlleer.text),
@@ -629,37 +845,73 @@ class _AddnewPopupState extends State<AddnewPopup> {
         id: widget.headId.toString(),
         itemId: selectedItem?.itemid.toString(),
         itemName: selectedItem?.name.toString(),
-        qty: double.tryParse(qtyControlleer.text),
+        qty: qtyEdit,
         tax: double.tryParse(taxControlleer.text),
         unitid: selectedUnit?.unitid,
         unitname: selectedUnit?.unitname,
         factor: selectedUnit?.factor,
       );
 
-      bloc.add(EditInvoiceItemEvent([salesDtlModel], idx, widget.allDtl));
-    } else if (selectedItem != null) {
-      if (selectedItem!.price != null) {
-        if ((selectedItem?.price ?? 0) > 0) {
-          SalesDtlModel salesDtlModel = SalesDtlModel(
-            // innerid: toEdit!.innerid,
-            price: double.tryParse(priceControlleer.text),
-            disam: double.tryParse(disControlleer.text),
-            disratio: double.tryParse(disRatioControlleer.text),
-            id: widget.headId.toString(),
-            itemId: selectedItem?.itemid.toString(),
-            itemName: selectedItem?.name.toString(),
-            qty: double.tryParse(qtyControlleer.text),
-            tax: double.tryParse(taxControlleer.text),
-            unitid: selectedUnit?.unitid,
-            unitname: selectedUnit?.unitname,
-            factor: selectedUnit?.factor,
-          );
-          bloc.add(AddClientToInvoiceEvent(salesDtlModel, widget.allDtl));
-        } else {
-          _showSnackBar("لا يمكن اضافة صنف سعره صفر", context);
+      if (await salesInvoiceRestrictsToInStock()) {
+        final List<SalesDtlModel> projected =
+            List<SalesDtlModel>.from(widget.allDtl);
+        projected[idx] = salesDtlModel;
+        final String? err = await validateSalesInvoiceLinesAgainstStock(
+          lines: projected,
+          restrictToInStock: true,
+        );
+        if (err != null) {
+          if (!context.mounted) return;
+          _showSnackBar(err, context);
+          return;
         }
       }
+
+      if (!context.mounted) return;
+      bloc.add(EditInvoiceItemEvent([salesDtlModel], idx, widget.allDtl));
+      Navigator.pop(context);
+      return;
     }
+
+    if (selectedItem == null) {
+      return;
+    }
+    final double? qtyParsed = double.tryParse(qtyControlleer.text);
+    if (qtyParsed == null || qtyParsed <= 0) {
+      _showSnackBar("برجاء إدخال كمية صحيحة", context);
+      return;
+    }
+
+    final SalesDtlModel salesDtlModel = SalesDtlModel(
+      price: double.tryParse(priceControlleer.text),
+      disam: double.tryParse(disControlleer.text),
+      disratio: double.tryParse(disRatioControlleer.text),
+      id: widget.headId.toString(),
+      itemId: selectedItem?.itemid.toString(),
+      itemName: selectedItem?.name.toString(),
+      qty: qtyParsed,
+      tax: double.tryParse(taxControlleer.text),
+      unitid: selectedUnit?.unitid,
+      unitname: selectedUnit?.unitname,
+      factor: selectedUnit?.factor,
+    );
+
+    if (await salesInvoiceRestrictsToInStock()) {
+      final List<SalesDtlModel> projected =
+          List<SalesDtlModel>.from(widget.allDtl)..add(salesDtlModel);
+      final String? err = await validateSalesInvoiceLinesAgainstStock(
+        lines: projected,
+        restrictToInStock: true,
+      );
+      if (err != null) {
+        if (!context.mounted) return;
+        _showSnackBar(err, context);
+        return;
+      }
+    }
+
+    if (!context.mounted) return;
+    bloc.add(AddClientToInvoiceEvent(salesDtlModel, widget.allDtl));
     Navigator.pop(context);
   }
 

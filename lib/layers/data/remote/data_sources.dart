@@ -54,20 +54,35 @@ class MainFun {
       if (response.statusCode == 200) {
         String jsonString = response.body;
 
-        // Decode JSON response as Map
-        Map<String, dynamic> jsonResponse = jsonDecode(jsonString);
+        final dynamic decoded = jsonDecode(jsonString);
+        List<dynamic>? dataList;
 
-        // Check if the data field is a list
-        if (jsonResponse['data'] is List) {
-          List<dynamic> dataList = jsonResponse['data'];
-
-          // Map each item in the data list to the specified model using fromJson
-          return dataList
-              .map((data) => fromJson(data as Map<String, dynamic>))
-              .toList();
-        } else {
-          throw Exception("Data is not a list");
+        if (decoded is List) {
+          dataList = decoded;
+        } else if (decoded is Map<String, dynamic>) {
+          for (final String key in const [
+            'data',
+            'Data',
+            'result',
+            'Result',
+            'items',
+            'Items',
+          ]) {
+            final dynamic v = decoded[key];
+            if (v is List) {
+              dataList = v;
+              break;
+            }
+          }
         }
+
+        if (dataList == null) {
+          throw Exception("Response has no list (data/Data/items/… or root array)");
+        }
+
+        return dataList
+            .map((data) => fromJson(data as Map<String, dynamic>))
+            .toList();
       } else {
         throw Exception("Error fetching data: ${response.statusCode}");
       }

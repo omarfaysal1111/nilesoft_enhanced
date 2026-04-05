@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/local/sqflite_row_utils.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
@@ -217,16 +218,8 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
         String s2 =
             "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
         List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
-        int id = 1;
-        if (queryResult2[0]["latestId"].toString() == "null" ||
-            queryResult2[0]["latestId"].toString() == "" ||
-            // ignore: unnecessary_null_comparison
-            queryResult2[0]["latestId"].toString() == null) {
-          id = 1;
-        } else {
-          id = int.parse(queryResult2[0]["latestId"].toString().trim());
-          id = id + 1;
-        }
+        final int? latest = parseLatestIdFromMaxQuery(queryResult2);
+        final int id = latest != null ? latest + 1 : 1;
         emit(InvoicePageLoaded(
             customers: customers, docNo: await generateDocNumber(), id: id));
         return; // Success, exit retry loop
@@ -273,16 +266,8 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
       String s2 =
           "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
       List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
-      int id = 1;
-      if (queryResult2[0]["latestId"].toString() == "null" ||
-          queryResult2[0]["latestId"].toString() == "" ||
-          // ignore: unnecessary_null_comparison
-          queryResult2[0]["latestId"].toString() == null) {
-        id = 1;
-      } else {
-        id = int.parse(queryResult2[0]["latestId"].toString().trim());
-        id = id + 1;
-      }
+      final int? latest = parseLatestIdFromMaxQuery(queryResult2);
+      final int id = latest != null ? latest + 1 : 1;
       emit(InvoicePageLoaded(
           customers: currentState.customers,
           selectedCustomer: event.selectedCustomer,
@@ -319,13 +304,15 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
     String strId = "";
     String s1 = "select mobileUserId as m from settings";
     List<Map<String, Object?>> queryResult1 = await dbHelper.db.rawQuery(s1);
-    docNumber = "MOB${queryResult1[0]["m"]}";
+    final Object? mobileUser = firstSqfliteRowValue(queryResult1, 'm');
+    docNumber = "MOB${mobileUser ?? ""}";
     String s2 =
         "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
     List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
 
-    if (queryResult2[0]["latestId"].toString() != "null") {
-      nextId = int.parse(queryResult2[0]["latestId"].toString());
+    final int? latest = parseLatestIdFromMaxQuery(queryResult2);
+    if (latest != null) {
+      nextId = latest;
     }
 
     nextId = nextId + 1;

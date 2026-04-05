@@ -749,6 +749,19 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
   }
 
   void _handleAddItem(InvoiceBloc bloc) {
+    if (invoiceState.selected == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "برجاء اختيار العميل أولاً",
+            textAlign: TextAlign.right,
+            style: TextStyle(fontFamily: 'Almarai'),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     bloc.add(FetchClientsEvent());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       showDialog(
@@ -760,6 +773,7 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
               isEdit: false,
               allDtl: invoiceState.dtl!,
               headId: invoiceState.headid,
+              selectedCustomer: invoiceState.selected,
             ),
           );
         },
@@ -794,6 +808,7 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
               headId: invoiceState.headid,
               allDtl: invoiceState.dtl!,
               toEdit: invoiceState.dtl?[index],
+              selectedCustomer: invoiceState.selected,
             ),
           );
         },
@@ -863,8 +878,8 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
     invoiceState.headid = state.salesHeadModel.id ?? 0;
     invoiceState.isEditting = true;
     invoiceState.customers = state.customers;
-    disamController.text = state.salesHeadModel.disam.toString();
-    disratController.text = state.salesHeadModel.disratio.toString();
+    disamController.text = (state.salesHeadModel.disam ?? 0).toString();
+    disratController.text = (state.salesHeadModel.disratio ?? 0).toString();
     // Find the customer from the list to get discount_ratio
     CustomersModel? customer = state.customers.firstWhere(
       (c) => c.id == state.salesHeadModel.accid,
@@ -876,16 +891,14 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
     );
     invoiceState.selected = customer;
 
-    final myDtl = state.salesDtlModel;
-    for (var i = 0; i < myDtl.length; i++) {
-      invoiceState.dis +=
-          invoiceState.dtl![i].disam! * invoiceState.dtl![i].qty!;
-      invoiceState.tax += invoiceState.dtl![i].tax! * invoiceState.dtl![i].qty!;
-      invoiceState.total +=
-          invoiceState.dtl![i].price! * invoiceState.dtl![i].qty!;
-      invoiceState.net =
-          invoiceState.total - invoiceState.dis + invoiceState.tax;
-    }
+    // Same rules as line items + summary elsewhere: tax is % of line amount;
+    // net subtracts item-level discount, then header discount (disam), then adds tax.
+    invoiceState.calculateTotals();
+    final double customerDiscount = state.salesHeadModel.disam ?? 0;
+    invoiceState.net = invoiceState.total -
+        invoiceState.dis -
+        customerDiscount +
+        invoiceState.tax;
   }
 
   void _handleSaveSuccess(BuildContext context, SaveSuccess state) {

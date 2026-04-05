@@ -670,6 +670,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
               allDtl: resalesState.dtl,
               headid: resalesState.headid,
               isEdit: false,
+              customerAccId: resalesState.selected?.id,
             ),
           );
         },
@@ -704,6 +705,7 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
               headid: resalesState.headid,
               id: resalesState.headid,
               toEdit: resalesState.dtl[index],
+              customerAccId: resalesState.selected?.id,
             ),
           );
         },
@@ -750,10 +752,11 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
 
   void _handleEditModeInitialization(ResaleToEdit state) {
     resalesState.dtl = state.salesDtlModel;
+    resalesState.headid = state.salesHeadModel.id ?? 0;
     resalesState.customers = state.customers;
 
-    disamController.text = state.salesHeadModel.disam.toString();
-    disratController.text = state.salesHeadModel.disratio.toString();
+    disamController.text = (state.salesHeadModel.disam ?? 0).toString();
+    disratController.text = (state.salesHeadModel.disratio ?? 0).toString();
     resalesState.selected = CustomersModel(
       state.salesHeadModel.accid,
       state.salesHeadModel.clientName,
@@ -761,12 +764,12 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
     );
     resalesState.isEditting = true;
 
-    for (var item in state.salesDtlModel) {
-      resalesState.total += (item.qty ?? 0) * (item.price ?? 0);
-      resalesState.dis += (item.disam! * item.qty!);
-      resalesState.tax += item.tax! * item.qty! * item.price! / 100;
-    }
-    resalesState.net = resalesState.total - resalesState.dis + resalesState.tax;
+    resalesState.calculateTotals();
+    final double customerDiscount = state.salesHeadModel.disam ?? 0;
+    resalesState.net = resalesState.total -
+        resalesState.dis -
+        customerDiscount +
+        resalesState.tax;
   }
 
   Future<void> _handleSaveSuccess(

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/local/sqflite_row_utils.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart';
 import 'package:nilesoft_erp/layers/domain/models/cashin_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
@@ -20,21 +21,8 @@ class CashinBloc extends Bloc<CashinEvent, CashinState> {
   }
   Future<void> _onCutomersSelected(
       CustomerSelectedCashEvent event, Emitter<CashinState> emit) async {
-    DatabaseHelper dbHelper = DatabaseHelper();
-    DatabaseConstants.startDB(dbHelper);
-
     final currentState = state;
     if (currentState is CashinLoadedState) {
-      String s2 =
-          "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
-      List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
-      if (queryResult2[0]["latestId"].toString() == "null" ||
-          queryResult2[0]["latestId"].toString() == "" ||
-          // ignore: unnecessary_null_comparison
-          queryResult2[0]["latestId"].toString() == null) {
-      } else {
-        //id += int.parse(queryResult2[0]["latestId"].toString().trim());
-      }
       emit(CashinLoadedState(
           customers: currentState.customers,
           selectedCustomer: event.selectedCustomer,
@@ -85,13 +73,15 @@ class CashinBloc extends Bloc<CashinEvent, CashinState> {
     String strId = "";
     String s1 = "select mobileUserId as m from settings";
     List<Map<String, Object?>> queryResult1 = await dbHelper.db.rawQuery(s1);
-    docNumber = "MOB${queryResult1[0]["m"]}";
+    final Object? mobileUser = firstSqfliteRowValue(queryResult1, 'm');
+    docNumber = "MOB${mobileUser ?? ""}";
     String s2 =
         "SELECT MAX(id) as latestId FROM ${DatabaseConstants.cashinHeadTable}";
     List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
 
-    if (queryResult2[0]["latestId"].toString() != "null") {
-      nextId = int.parse(queryResult2[0]["latestId"].toString());
+    final int? latest = parseLatestIdFromMaxQuery(queryResult2);
+    if (latest != null) {
+      nextId = latest;
     }
 
     nextId = nextId + 1;

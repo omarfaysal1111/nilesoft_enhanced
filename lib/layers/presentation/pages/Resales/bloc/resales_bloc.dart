@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
+import 'package:nilesoft_erp/layers/data/local/sqflite_row_utils.dart';
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
@@ -13,6 +14,9 @@ import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_even
 class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
   List<SalesDtlModel> chosenItems = []; // Central storage of chosen items
   String myDocNo = "";
+  /// Customer account id for the current resale invoice (matches [salesInvoiceHead.accid]).
+  String? _resaleCustomerAccId;
+
   ResalesBloc() : super(ResalesInitial()) {
     // Registering event handlers
     on<ReSaveButtonClicked>(_onSaveClicked);
@@ -58,25 +62,44 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     ItemsRepoImpl itemsRepoImpl = ItemsRepoImpl();
     ItemsModel itemsModel = await itemsRepoImpl.getItemByBarcode(
         barcode: event.qrCode, tableName: DatabaseConstants.itemsTable);
-    final latestPrice = await _getLatestSalesPriceForItem(itemsModel.itemid);
+    final latestPrice = await _getLatestSalesPriceForCustomerItem(
+      customerAccId:
+          _normalizeAccId(event.customerAccId) ?? _resaleCustomerAccId,
+      itemId: itemsModel.itemid,
+    );
     if (latestPrice != null) {
       itemsModel.price = latestPrice;
     }
     emit(QRCodeSuccess(event.qrCode, itemsModel));
   }
 
-  Future<double?> _getLatestSalesPriceForItem(String? itemId) async {
-    if (itemId == null || itemId.trim().isEmpty) {
+  /// Latest unit price from [salesInvoiceDtlTable] for this customer and item
+  /// (joined to [salesInvoiceHeadTable] on invoice id). Newest sales invoice wins.
+  Future<double?> _getLatestSalesPriceForCustomerItem({
+    required String? customerAccId,
+    required String? itemId,
+  }) async {
+    final acc = customerAccId?.trim() ?? '';
+    final iid = itemId?.trim() ?? '';
+    if (acc.isEmpty || iid.isEmpty) {
       return null;
     }
 
     final dbHelper = DatabaseHelper();
     await DatabaseConstants.startDB(dbHelper);
     final result = await dbHelper.db.rawQuery(
-      "SELECT price FROM ${DatabaseConstants.salesInvoiceDtlTable} "
-      "WHERE itemId = ? AND price IS NOT NULL "
-      "ORDER BY innerid DESC LIMIT 1",
-      [itemId.trim()],
+      """
+      SELECT dtl.price
+      FROM ${DatabaseConstants.salesInvoiceDtlTable} dtl
+      INNER JOIN ${DatabaseConstants.salesInvoiceHeadTable} h
+        ON TRIM(CAST(h.id AS TEXT)) = TRIM(CAST(IFNULL(dtl.id, '') AS TEXT))
+      WHERE TRIM(IFNULL(dtl.itemId, '')) = ?
+        AND TRIM(IFNULL(h.accid, '')) = ?
+        AND dtl.price IS NOT NULL
+      ORDER BY h.id DESC, dtl.innerid DESC
+      LIMIT 1
+      """,
+      [iid, acc],
     );
 
     if (result.isEmpty || result.first["price"] == null) {
@@ -115,13 +138,15 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     String strId = "";
     String s1 = "select mobileUserId as m from settings";
     List<Map<String, Object?>> queryResult1 = await dbHelper.db.rawQuery(s1);
-    docNumber = "MOB${queryResult1[0]["m"]}";
+    final Object? mobileUser = firstSqfliteRowValue(queryResult1, 'm');
+    docNumber = "MOB${mobileUser ?? ""}";
     String s2 =
         "SELECT MAX(id) as latestId FROM ${DatabaseConstants.reSaleInvoiceHeadTable}";
     List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
 
-    if (queryResult2[0]["latestId"].toString() != "null") {
-      nextId = int.parse(queryResult2[0]["latestId"].toString());
+    final int? latest = parseLatestIdFromMaxQuery(queryResult2);
+    if (latest != null) {
+      nextId = latest;
     }
 
     nextId = nextId + 1;
@@ -199,10 +224,19 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
     CustomersRepoImpl customersRepo = CustomersRepoImpl();
     List<CustomersModel> customers = await customersRepo.getCustomers(
         tableName: DatabaseConstants.customersTable);
+    if (salesHeadModel != null) {
+      _resaleCustomerAccId = _normalizeAccId(salesHeadModel.accid);
+    }
+
     emit(ResaleToEdit(
         salesDtlModel: salesDtlModel!,
         salesHeadModel: salesHeadModel!,
         customers: customers));
+  }
+
+  static String? _normalizeAccId(String? raw) {
+    final t = raw?.trim() ?? '';
+    return t.isEmpty ? null : t;
   }
 
   void _onDeleteCard(ReOnDeleteCard event, Emitter<ResalesState> emit) {
@@ -229,16 +263,8 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
             "SELECT MAX(id) as latestId FROM ${DatabaseConstants.reSaleInvoiceHeadTable}";
         List<Map<String, Object?>> queryResult2 =
             await dbHelper.db.rawQuery(s2);
-        int id = 1;
-        if (queryResult2[0]["latestId"].toString() == "null" ||
-            queryResult2[0]["latestId"].toString() == "" ||
-            // ignore: unnecessary_null_comparison
-            queryResult2[0]["latestId"].toString() == null) {
-          id = 1;
-        } else {
-          id = int.parse(queryResult2[0]["latestId"].toString().trim());
-          id = id + 1;
-        }
+        final int? latest = parseLatestIdFromMaxQuery(queryResult2);
+        final int id = latest != null ? latest + 1 : 1;
         emit(ResalesPageLoaded(
             customers: customers, docNo: await generateDocNumber(), id: id));
         return; // Success, exit retry loop
@@ -259,6 +285,7 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
 
   Future<void> _onCustomerSelected(
       ReCustomerSelectedEvent event, Emitter<ResalesState> emit) async {
+    _resaleCustomerAccId = _normalizeAccId(event.selectedCustomer.id);
     DatabaseHelper dbHelper = DatabaseHelper();
     DatabaseConstants.startDB(dbHelper);
     final currentState = state;
@@ -266,16 +293,8 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
       String s2 =
           "SELECT MAX(id) as latestId FROM ${DatabaseConstants.reSaleInvoiceHeadTable}";
       List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
-      int id = 1;
-      if (queryResult2[0]["latestId"].toString() == "null" ||
-          queryResult2[0]["latestId"].toString() == "" ||
-          // ignore: unnecessary_null_comparison
-          queryResult2[0]["latestId"].toString() == null) {
-        id = 1;
-      } else {
-        id = int.parse(queryResult2[0]["latestId"].toString().trim());
-        id = id + 1;
-      }
+      final int? latest = parseLatestIdFromMaxQuery(queryResult2);
+      final int id = latest != null ? latest + 1 : 1;
       emit(ResalesPageLoaded(
         customers: currentState.customers,
         id: id,
@@ -289,8 +308,11 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
       ReClientSelectedEvent event, Emitter<ResalesState> emit) async {
     final currentState = state;
     if (currentState is ResalesLoaded) {
-      final latestPrice =
-          await _getLatestSalesPriceForItem(event.selectedClient.itemid);
+      final latestPrice = await _getLatestSalesPriceForCustomerItem(
+        customerAccId:
+            _normalizeAccId(event.customerAccId) ?? _resaleCustomerAccId,
+        itemId: event.selectedClient.itemid,
+      );
       if (latestPrice != null) {
         event.selectedClient.price = latestPrice;
       }
@@ -352,6 +374,7 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
 
   Future<void> _onInitializeData(
       ReInitializeDataEvent event, Emitter<ResalesState> emit) async {
+    _resaleCustomerAccId = null;
     emit(ResalesInitial());
     add(ReFetchClientsEvent());
     add(ReFetchCustomersEvent());

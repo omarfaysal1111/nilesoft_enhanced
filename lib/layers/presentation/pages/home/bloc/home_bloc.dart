@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/local_areas_repo_impl.dart';
@@ -15,6 +16,10 @@ import 'package:nilesoft_erp/layers/data/repositories/local_repositories/custome
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/items_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_mobile_item_units_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/mobile_item_units_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/price_list_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/discount_list_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_price_list_repo_impl.dart';
+import 'package:nilesoft_erp/layers/data/repositories/remote_repositories/remote_discount_list_repo_impl.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_event.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/home/bloc/home_state.dart';
 
@@ -62,6 +67,42 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         await mobileItemUnitsLocal.addAllMobileItemUnits(
             items: mobileItemUnits,
             tableName: DatabaseConstants.mobileItemUnitsTable);
+
+        try {
+          final remotePrice = RemotePriceListRepoImpl();
+          final localPrice = PriceListRepoImpl();
+          final prices = await remotePrice.getAllPriceList();
+          // Never wipe the table unless we have rows to insert (was: delete always → empty DB).
+          if (prices.isNotEmpty) {
+            await localPrice.deleteAllPriceList(
+                tableName: DatabaseConstants.priceListTable);
+            await localPrice.addAllPriceList(
+                items: prices, tableName: DatabaseConstants.priceListTable);
+          } else if (kDebugMode) {
+            debugPrint(
+                'Price list: API returned 0 rows; kept existing local priceList.');
+          }
+        } catch (e) {
+          debugPrint('Price list sync failed: $e');
+        }
+
+        try {
+          final remoteDis = RemoteDiscountListRepoImpl();
+          final localDis = DiscountListRepoImpl();
+          final discounts = await remoteDis.getAllDiscountList();
+          if (discounts.isNotEmpty) {
+            await localDis.deleteAllDiscountList(
+                tableName: DatabaseConstants.discountListTable);
+            await localDis.addAllDiscountList(
+                items: discounts,
+                tableName: DatabaseConstants.discountListTable);
+          } else if (kDebugMode) {
+            debugPrint(
+                'Discount list: API returned 0 rows; kept existing local discountList.');
+          }
+        } catch (e) {
+          debugPrint('Discount list sync failed: $e');
+        }
 
         emit(state.copyWith(
             isUpdateSubmitted: false, isUpdateSucc: true, errorMessage: null));

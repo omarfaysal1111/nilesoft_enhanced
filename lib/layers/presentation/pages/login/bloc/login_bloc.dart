@@ -82,36 +82,62 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString("user_token", token);
 
-          // حفظ باقي البيانات في SQLite
-          // Safely access multiunit from mysetting object
+          // حفظ باقي البيانات في SQLite — اقرأ من mysetting عند توفرها
           bool multiunitValue = false;
+          int? inStockFromSetting;
+          String? salesGomlaDefault;
+          int? disableLineDiscount;
           try {
-            if (userMap.containsKey("mysetting") && 
-                userMap["mysetting"] != null && 
+            if (userMap.containsKey("mysetting") &&
+                userMap["mysetting"] != null &&
                 userMap["mysetting"] is Map<String, dynamic>) {
               final mysetting = userMap["mysetting"] as Map<String, dynamic>;
               final multiunit = mysetting["multiunit"];
-              multiunitValue = multiunit == true || 
-                              multiunit == 1 || 
-                              multiunit == "true" ||
-                              multiunit == "1";
+              multiunitValue = multiunit == true ||
+                  multiunit == 1 ||
+                  multiunit == "true" ||
+                  multiunit == "1";
+              final dynamic stockM = mysetting["instock"] ??
+                  mysetting["showsalesinvenbal"];
+              if (stockM != null) {
+                if (stockM is bool) {
+                  inStockFromSetting = stockM ? 1 : 0;
+                } else {
+                  inStockFromSetting = int.tryParse(stockM.toString());
+                }
+              }
+              salesGomlaDefault =
+                  mysetting["salesinvoicegomladefault"]?.toString() ??
+                      mysetting["SalesInvoiceGomlaDefault"]?.toString();
+              final dynamic disD = mysetting["disableitemdiscount"] ??
+                  mysetting["disableItemDiscount"];
+              if (disD != null) {
+                if (disD is bool) {
+                  disableLineDiscount = disD ? 1 : 0;
+                } else {
+                  disableLineDiscount = int.tryParse(disD.toString());
+                }
+              }
             }
           } catch (e) {
-            // If mysetting doesn't exist or is not a Map, default to false
             if (kDebugMode) {
-              print("Error accessing mysetting.multiunit: $e");
+              print("Error reading mysetting: $e");
             }
           }
-          
+
+          final int resolvedInStock = inStockFromSetting ??
+              (userMap["showsalesinvenbal"] == true ? 1 : 0);
+
           SettingsModel setting = SettingsModel(
             cashaccId: userMap["cashid"],
             coinPrice: "1",
             invId: userMap["invenid"],
             mobileUserId: userMap["mobileinvoiceid"].toString(),
             visaId: userMap["visaid"],
-            inStock: userMap["showsalesinvenbal"]==true?1:0 ,
+            inStock: resolvedInStock,
             multiunit: multiunitValue,
-            
+            salesInvoiceGomlaDefault: salesGomlaDefault,
+            disableItemDiscount: disableLineDiscount,
           );
 
           await settingsRepo.deleteSettings();
