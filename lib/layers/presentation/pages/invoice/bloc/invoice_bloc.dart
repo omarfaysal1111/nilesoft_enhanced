@@ -16,6 +16,7 @@ import 'package:nilesoft_erp/layers/presentation/pages/invoice/bloc/invoice_stat
 class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   List<SalesDtlModel> chosenItems = []; // Central storage of chosen clients
   String myDocNo = "";
+
   /// Sales invoice only: when settings `instock` is 1, item pickers and QR use in-stock items only.
   Future<bool> _restrictSalesToInStockItems() async {
     final SettingsRepoImpl settingsRepo = SettingsRepoImpl();
@@ -83,8 +84,9 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     ItemsModel itemsModel = await itemsRepoImpl.getItemByBarcode(
         barcode: event.qrCode, tableName: DatabaseConstants.itemsTable);
     if (await _restrictSalesToInStockItems()) {
-      final double q = itemsModel.qty ?? 0;
-      if (q <= 0) {
+      final double availableBase =
+          (itemsModel.qty ?? 0) * (itemsModel.factor ?? 1.0);
+      if (availableBase <= 0) {
         emit(QRCodeFailure('لا يوجد رصيد كافٍ لهذا الصنف'));
         return;
       }
@@ -124,12 +126,12 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
   Future<void> _onFetchClients(
       FetchClientsEvent event, Emitter<InvoiceState> emit) async {
     emit(InvoiceLoading());
-    
+
     // Retry logic with exponential backoff
     int maxRetries = 10;
     int retryCount = 0;
     Duration delay = const Duration(milliseconds: 500);
-    
+
     while (retryCount < maxRetries) {
       try {
         ItemsRepoImpl customersRepoImpl = ItemsRepoImpl();
@@ -161,12 +163,26 @@ class InvoiceBloc extends Bloc<InvoiceEvent, InvoiceState> {
     DatabaseHelper databaseHelper = DatabaseHelper();
     DatabaseConstants.startDB(databaseHelper);
 
+    SettingsRepoImpl settingsRepoImpl = SettingsRepoImpl();
+    double maxDis = 0;
+
+    List<SettingsModel> mySettings = await settingsRepoImpl.getSettings(
+        tableName: DatabaseConstants.settingsTable);
+
+    maxDis = mySettings[0].maxDis ?? 0;
+    
+    if (maxDis > 0 && event.salesHeadModel.disratio! > maxDis) {
+      emit(SaveFailed('الخصم علي الفاتورة اكبر من الحد المسموح به'));
+      return;
+    }
+
     int id = await invoiceRepoImpl.addInvoiceHead(
         invoiceHead: event.salesHeadModel,
         tableName: DatabaseConstants.salesInvoiceHeadTable);
     for (var i = 0; i < event.salesDtlModel.length; i++) {
       event.salesDtlModel[i].id = id.toString();
     }
+    maxDis = mySettings[0].maxDis ?? 0;
     await invoiceRepoImpl.addInvoiceDtl(
         invoiceDtl: event.salesDtlModel,
         tableName: DatabaseConstants.salesInvoiceDtlTable);
@@ -204,12 +220,12 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
     DatabaseHelper dbHelper = DatabaseHelper();
     DatabaseConstants.startDB(dbHelper);
     emit(InvoicePageLoading());
-    
+
     // Retry logic with exponential backoff
     int maxRetries = 10;
     int retryCount = 0;
     Duration delay = const Duration(milliseconds: 500);
-    
+
     while (retryCount < maxRetries) {
       try {
         CustomersRepoImpl customersRepoImpl = CustomersRepoImpl();
@@ -217,7 +233,8 @@ E/flutter (20811): [ERROR:flutter/runtime/dart_vm_initializer.cc(41)] Unhandled 
             tableName: DatabaseConstants.customersTable);
         String s2 =
             "SELECT MAX(id) as latestId FROM ${DatabaseConstants.salesInvoiceHeadTable}";
-        List<Map<String, Object?>> queryResult2 = await dbHelper.db.rawQuery(s2);
+        List<Map<String, Object?>> queryResult2 =
+            await dbHelper.db.rawQuery(s2);
         final int? latest = parseLatestIdFromMaxQuery(queryResult2);
         final int id = latest != null ? latest + 1 : 1;
         emit(InvoicePageLoaded(

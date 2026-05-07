@@ -73,7 +73,7 @@ class MyResalesState {
 
       // Add discounts and tax
       dis += (item.disam! * item.qty!);
-      tax += item.tax! * item.qty! * item.price! / 100;
+      tax += item.tax! * item.qty! * (item.price!-item.disam!)  / 100;
     }
 
     // Calculate final net amount
@@ -744,7 +744,12 @@ class _ResalesPageContentState extends State<ResalesPageContent> {
     if (state is ReSaveSuccess) {
       await _handleSaveSuccess(context, state);
     }
-
+if( state is ReSaveFailed){
+      setState(() {
+        _isSaving = false;
+      });
+      _showSnackBar("حدث خطأ أثناء حفظ الفاتورة");
+    } 
     if (state is ResaleUpdateSucc) {
       _handleUpdateSuccess(context);
     }

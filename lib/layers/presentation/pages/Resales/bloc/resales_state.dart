@@ -11,7 +11,10 @@ class ResalesPageInitial extends ResalesState {}
 class ResalesPageLoading extends ResalesState {}
 
 class ResalesLoading extends ResalesState {}
-
+class ReSaveFailed extends ResalesState{
+  String msg;
+  ReSaveFailed(this.msg);
+}
 class ReEditState extends ResalesState {
   final SalesDtlModel salesDtlModel;
   final int index;

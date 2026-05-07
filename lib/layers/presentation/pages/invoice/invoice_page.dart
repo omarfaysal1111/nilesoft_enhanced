@@ -71,7 +71,7 @@ class MyInvoiceState {
         double itemTotal = (item.qty ?? 0) * (item.price ?? 0);
         total += itemTotal;
         dis += (item.disam! * item.qty!);
-        tax += item.tax! * item.qty! * item.price! / 100;
+        tax += item.tax! * item.qty! * (item.price!-item.disam!) / 100;
       }
     }
     net = total - dis + tax;
@@ -549,6 +549,7 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
       setState(() {
         _isSaving = true;
       });
+     
       var uuid = const Uuid();
       String mobileUuid = uuid.v1().toString();
       String formattedDate =
@@ -627,7 +628,7 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
       for (int i = 0; i < invoiceState.dtl!.length; i++) {
         invoiceState.dtl![i].serial = i + 1;
       }
-
+// 
       bloc.add(SaveButtonClicked(
         salesHeadModel: salesHeadModel,
         salesDtlModel: invoiceState.dtl!,
@@ -867,6 +868,13 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
     if (state is SaveSuccess) {
       _handleSaveSuccess(context, state);
     }
+    if (state is SaveFailed) {
+      setState(() {
+        _isSaving = false;
+      });
+      _showSnackBar("لم يتم حفظ الفاتورة: ${state.msg}");
+      
+    }
 
     if (state is UpdateSucc) {
       _handleUpdateSuccess(context);
@@ -913,7 +921,7 @@ class _InvoicePageContentState extends State<InvoicePageContent> {
 
     SalesHeadModel salesHeadModel = SalesHeadModel(
       accid: invoiceState.selected!.id,
-      dis1: invoiceState.dis * invoiceState.total,
+      dis1: invoiceState.dis,
       invoiceno: invoiceState.docNo,
       invType: invoiceState.selectedValue,
       sent: 0,

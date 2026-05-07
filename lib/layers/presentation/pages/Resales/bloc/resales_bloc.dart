@@ -2,12 +2,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:nilesoft_erp/layers/data/local/data_source_local.dart';
 import 'package:nilesoft_erp/layers/data/local/database_constants.dart';
 import 'package:nilesoft_erp/layers/data/local/sqflite_row_utils.dart';
+import 'package:nilesoft_erp/layers/data/repositories/local_repositories/settings_repo_impl.dart' show SettingsRepoImpl;
 import 'package:nilesoft_erp/layers/domain/models/customers_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/invoice_model.dart';
 import 'package:nilesoft_erp/layers/domain/models/items_model.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/customers_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/invoice_repo_impl.dart';
 import 'package:nilesoft_erp/layers/data/repositories/local_repositories/items_repo_impl.dart';
+import 'package:nilesoft_erp/layers/domain/models/settings_model.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
 
@@ -195,6 +197,18 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
       ReSaveButtonClicked event, Emitter<ResalesState> emit) async {
     try {
       InvoiceRepoImpl invoiceRepo = InvoiceRepoImpl();
+      SettingsRepoImpl settingsRepoImpl = SettingsRepoImpl();
+    double maxDis = 0;
+
+    List<SettingsModel> mySettings = await settingsRepoImpl.getSettings(
+        tableName: DatabaseConstants.settingsTable);
+
+    maxDis = mySettings[0].maxDis ?? 0;
+    
+    if (maxDis > 0 && event.salesHeadModel.disratio! > maxDis) {
+      emit(ReSaveFailed('الخصم علي الفاتورة اكبر من الحد المسموح به'));
+      return;
+    }
       int id = await invoiceRepo.addInvoiceHead(
           invoiceHead: event.salesHeadModel,
           tableName: DatabaseConstants.reSaleInvoiceHeadTable);
@@ -202,6 +216,7 @@ class ResalesBloc extends Bloc<ResalesEvent, ResalesState> {
       for (var i = 0; i < event.salesDtlModel.length; i++) {
         event.salesDtlModel[i].id = id.toString();
       }
+
       await invoiceRepo.addInvoiceDtl(
           invoiceDtl: event.salesDtlModel,
           tableName: DatabaseConstants.reSaleInvoiceDtlTable);

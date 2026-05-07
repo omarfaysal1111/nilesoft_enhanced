@@ -88,25 +88,33 @@ class SummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+             
               SizedBox(
-                  width: 70,
-                  height: 60,
-                  child: CustomTextField(
-                      controller: disratController,
-                      hintText: "نسبة",
-                      //readonly: true,
-                      hintStyle: const TextStyle(fontSize: 8),
-                      onChanged: ratChanged)),
-              SizedBox(
-                  width: 70,
+                  width: 90,
                   height: 60,
                   child: CustomTextField(
                     controller: disamController,
                     hintText: "قيمة",
+                    textDirection: TextAlign.left,
+                    fontColor: Colors.white,
                     //readonly: true,
+                    //fontColor: Colors.white,
                     hintStyle: const TextStyle(fontSize: 8),
                     onChanged: amChanged,
                   )),
+                  SizedBox(width: 10,),
+                   SizedBox(
+                  width: 90,
+                  height: 60,
+                  child: CustomTextField(
+                      controller: disratController,
+                      hintText: "نسبة",
+                                          fontColor: Colors.white,
+
+                      //readonly: true,
+                      
+                      hintStyle: const TextStyle(fontSize: 6),
+                      onChanged: ratChanged)),
             ],
           ),
           SizedBox(

@@ -21,7 +21,7 @@ class DatabaseHelper {
   Future<void> initDB() async {
     String path = await getDatabasesPath();
     db = await openDatabase(
-      join(path, 'NileSoftv16.db'),
+      join(path, 'NileSoftv17.db'),
       onCreate: (database, version) async {
         await database.execute(
           """
@@ -273,6 +273,7 @@ CREATE TABLE settings (
   visaId TEXT ALLOW NULL,
   invoiceserial ALLOW NULL,
   multiunit INTEGER ALLOW NULL,
+  usermaaxdis NUM ALLOW NULL,
   instock INTEGER ALLOW NULL,
   salesinvoicegomladefault TEXT ALLOW NULL,
   disableitemdiscount INTEGER ALLOW NULL

@@ -13,19 +13,24 @@ Future<bool> salesInvoiceRestrictsToInStock() async {
   return settings.first.inStock == 1;
 }
 
-/// When [restrictToInStock] is true, ensures total qty per item on [lines] does not exceed `items.qty`.
+/// When [restrictToInStock] is true, ensures line quantities do not exceed stock.
+///
+/// [SalesDtlModel.factor] is the same multiplier used for pricing (base unit × factor).
+/// Required and available amounts are both converted to that base so different UOM lines
+/// compare correctly to [ItemsModel.qty] × [ItemsModel.factor] from inventory.
 Future<String?> validateSalesInvoiceLinesAgainstStock({
   required List<SalesDtlModel> lines,
   required bool restrictToInStock,
 }) async {
   if (!restrictToInStock || lines.isEmpty) return null;
 
-  final Map<String, double> qtyByItem = {};
+  final Map<String, double> baseQtyByItem = {};
   for (final SalesDtlModel line in lines) {
     final String? id = line.itemId;
     if (id == null || id.isEmpty) continue;
-    final double q = line.qty ?? 0;
-    qtyByItem[id] = (qtyByItem[id] ?? 0) + q;
+    final double lineBase =
+        (line.qty ?? 0) * (line.factor ?? 1.0);
+    baseQtyByItem[id] = (baseQtyByItem[id] ?? 0) + lineBase;
   }
 
   final ItemsRepoImpl itemsRepo = ItemsRepoImpl();
@@ -38,12 +43,13 @@ Future<String?> validateSalesInvoiceLinesAgainstStock({
       if (i.itemid != null) i.itemid!: i,
   };
 
-  for (final MapEntry<String, double> e in qtyByItem.entries) {
+  for (final MapEntry<String, double> e in baseQtyByItem.entries) {
     final ItemsModel? item = byId[e.key];
     if (item == null) continue;
-    final double available = item.qty ?? 0;
-    if (e.value > available) {
-      return 'الرصيد غير كافٍ للصنف "${item.name ?? e.key}" (المطلوب ${e.value.toStringAsFixed(2)} — المتاح ${available.toStringAsFixed(2)})';
+    final double availableBase =
+        (item.qty ?? 0) * (item.factor ?? 1.0);
+    if (e.value > availableBase) {
+      return 'الرصيد غير كافٍ للصنف "${item.name ?? e.key}" (المطلوب ${e.value.toStringAsFixed(2)} — المتاح ${availableBase.toStringAsFixed(2)})';
     }
   }
   return null;

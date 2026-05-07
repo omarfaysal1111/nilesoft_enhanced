@@ -16,6 +16,7 @@ import 'package:nilesoft_erp/layers/presentation/components/dropdown/units_dropd
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
+import 'package:nilesoft_erp/layers/presentation/pages/invoice/sales_invoice_stock_validation.dart';
 
 import '../bloc/resales_bloc.dart';
 
@@ -595,9 +596,14 @@ class _AddnewPopupState extends State<AddnewPopup> {
     );
   }
 
-  void _handleConfirm(BuildContext context, ResalesBloc bloc) {
+  Future<void> _handleConfirm(BuildContext context, ResalesBloc bloc) async {
     if (widget.isEdit) {
-      SalesDtlModel salesDtlModel = SalesDtlModel(
+      final double? qtyEdit = double.tryParse(qtyControlleer.text);
+      if (qtyEdit == null || qtyEdit <= 0) {
+        _showSnackBar("برجاء إدخال كمية صحيحة", context);
+        return;
+      }
+      final SalesDtlModel salesDtlModel = SalesDtlModel(
         innerid: widget.toEdit!.innerid,
         price: double.tryParse(priceControlleer.text),
         disam: double.tryParse(disControlleer.text),
@@ -605,33 +611,76 @@ class _AddnewPopupState extends State<AddnewPopup> {
         id: widget.headid.toString(),
         itemId: selectedItem?.itemid.toString(),
         itemName: selectedItem?.name.toString(),
-        qty: double.tryParse(qtyControlleer.text),
+        qty: qtyEdit,
         tax: double.tryParse(taxControlleer.text),
         unitid: selectedUnit?.unitid,
         unitname: selectedUnit?.unitname,
         factor: selectedUnit?.factor,
       );
-      bloc.add(ReEditResalesItemEvent(salesDtlModel, idx));
-    } else if (selectedItem != null) {
-      if ((selectedItem!.price ?? 0) > 0) {
-        SalesDtlModel salesDtlModel = SalesDtlModel(
-          price: double.tryParse(priceControlleer.text),
-          disam: double.tryParse(disControlleer.text),
-          disratio: double.tryParse(disRatioControlleer.text),
-          id: widget.headid.toString(),
-          itemId: selectedItem?.itemid.toString(),
-          itemName: selectedItem?.name.toString(),
-          qty: double.tryParse(qtyControlleer.text),
-          tax: double.tryParse(taxControlleer.text),
-          unitid: selectedUnit?.unitid,
-          unitname: selectedUnit?.unitname,
-          factor: selectedUnit?.factor,
+
+     
+        final List<SalesDtlModel> projected =
+            List<SalesDtlModel>.from(widget.allDtl);
+        projected[idx] = salesDtlModel;
+        final String? err = await validateSalesInvoiceLinesAgainstStock(
+          lines: projected,
+          restrictToInStock: true,
         );
-        bloc.add(ReAddClientToResalesEvent(salesDtlModel, widget.allDtl));
-      } else {
-        _showSnackBar("لا يمكن اضافة صنف سعره صفر", context);
+        if (err != null) {
+          if (!context.mounted) return;
+          _showSnackBar(err, context);
+          return;
+        }
+ 
+
+      if (!context.mounted) return;
+      bloc.add(ReEditResalesItemEvent(salesDtlModel, idx));
+      Navigator.pop(context);
+      return;
+    }
+
+    if (selectedItem == null) {
+      return;
+    }
+    if ((selectedItem!.price ?? 0) <= 0) {
+      _showSnackBar("لا يمكن اضافة صنف سعره صفر", context);
+      return;
+    }
+    final double? qtyParsed = double.tryParse(qtyControlleer.text);
+    if (qtyParsed == null || qtyParsed <= 0) {
+      _showSnackBar("برجاء إدخال كمية صحيحة", context);
+      return;
+    }
+    final SalesDtlModel salesDtlModel = SalesDtlModel(
+      price: double.tryParse(priceControlleer.text),
+      disam: double.tryParse(disControlleer.text),
+      disratio: double.tryParse(disRatioControlleer.text),
+      id: widget.headid.toString(),
+      itemId: selectedItem?.itemid.toString(),
+      itemName: selectedItem?.name.toString(),
+      qty: qtyParsed,
+      tax: double.tryParse(taxControlleer.text),
+      unitid: selectedUnit?.unitid,
+      unitname: selectedUnit?.unitname,
+      factor: selectedUnit?.factor,
+    );
+
+    if (await salesInvoiceRestrictsToInStock()) {
+      final List<SalesDtlModel> projected =
+          List<SalesDtlModel>.from(widget.allDtl)..add(salesDtlModel);
+      final String? err = await validateSalesInvoiceLinesAgainstStock(
+        lines: projected,
+        restrictToInStock: true,
+      );
+      if (err != null) {
+        if (!context.mounted) return;
+        _showSnackBar(err, context);
+        return;
       }
     }
+
+    if (!context.mounted) return;
+    bloc.add(ReAddClientToResalesEvent(salesDtlModel, widget.allDtl));
     Navigator.pop(context);
   }
 

@@ -33,8 +33,13 @@ class InvoiceError extends InvoiceState {
   InvoiceError(this.message);
 }
 
-class SaveSuccess extends InvoiceState {}
-
+class SaveSuccess extends InvoiceState {
+  
+}
+class SaveFailed extends InvoiceState{
+  String msg;
+  SaveFailed(this.msg);
+}
 class DiscountChanged extends InvoiceState {
   final double ratio;
   final double amount;

@@ -11,12 +11,14 @@ class CustomTextField extends StatelessWidget {
   final Duration debounceDuration;
   final bool? readonly;
   final TextStyle? hintStyle;
-
+  final TextAlign? textDirection;
+final Color? fontColor;
   final VoidCallback? onTap;
   const CustomTextField({
     super.key,
     required this.hintText,
     this.controller,
+    this.fontColor,
     this.readonly,
     this.debounceDuration = const Duration(milliseconds: 900),
     this.keyboardType = TextInputType.text,
@@ -24,6 +26,7 @@ class CustomTextField extends StatelessWidget {
     required this.onChanged,
     this.onTap,
     this.hintStyle,
+    this.textDirection,
   });
 
   @override
@@ -38,13 +41,18 @@ class CustomTextField extends StatelessWidget {
     }
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection:  TextDirection.rtl,
       child: TextFormField(
         readOnly: readonly ?? false,
         controller: controller,
         keyboardType: keyboardType,
+        
+        style: TextStyle(
+          color: fontColor ?? Colors.black,
+          fontSize: 14,
+        ),
         obscureText: obscureText,
-        textAlign: TextAlign.right,
+        textAlign: textDirection?? TextAlign.right,
         onChanged: onTextChanged,
         onTap: () {
           controller!.selection = TextSelection(
@@ -55,6 +63,7 @@ class CustomTextField extends StatelessWidget {
           labelText: hintText,
           hintStyle: hintStyle,
           alignLabelWithHint: true,
+          
           labelStyle: const TextStyle(
             color: Color(0xff434343),
             fontWeight: FontWeight.bold,
@@ -65,15 +74,15 @@ class CustomTextField extends StatelessWidget {
               const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
+            borderSide: BorderSide(color: Colors.grey.shade400, width: .5),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
+            borderSide: BorderSide(color: Colors.grey.shade400, width: .5),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
+            borderSide: const BorderSide(color: Colors.blue, width: 0.7),
           ),
         ),
       ),

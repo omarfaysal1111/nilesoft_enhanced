@@ -82,8 +82,8 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString("user_token", token);
 
-          // حفظ باقي البيانات في SQLite — اقرأ من mysetting عند توفرها
           bool multiunitValue = false;
+          double maxDis=0;
           int? inStockFromSetting;
           String? salesGomlaDefault;
           int? disableLineDiscount;
@@ -97,6 +97,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
                   multiunit == 1 ||
                   multiunit == "true" ||
                   multiunit == "1";
+                  maxDis=double.parse( mysetting["usermaaxdis"].toString());
               final dynamic stockM = mysetting["instock"] ??
                   mysetting["showsalesinvenbal"];
               if (stockM != null) {
@@ -135,6 +136,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
             mobileUserId: userMap["mobileinvoiceid"].toString(),
             visaId: userMap["visaid"],
             inStock: resolvedInStock,
+            maxDis: maxDis,
             multiunit: multiunitValue,
             salesInvoiceGomlaDefault: salesGomlaDefault,
             disableItemDiscount: disableLineDiscount,

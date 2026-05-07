@@ -9,6 +9,7 @@ class SettingsModel implements BaseModel {
   int? invoiceSerial;
   bool? multiunit;
   int? inStock;
+  double? maxDis;
   /// "1" consumer, "2" wholesale, "3" half — drives price/discount list column choice.
   String? salesInvoiceGomlaDefault;
   /// When 1, line-item discount fields are read-only in sales invoice add popup.
@@ -23,6 +24,7 @@ class SettingsModel implements BaseModel {
       this.visaId,
       this.inStock,
       this.multiunit,
+      this.maxDis,
       this.salesInvoiceGomlaDefault,
       this.disableItemDiscount});
 
@@ -32,6 +34,7 @@ class SettingsModel implements BaseModel {
     coinPrice = res["coinPrice"];
     invId = res["invid"];
     visaId = res["visaId"];
+    maxDis=double.parse(res["usermaaxdis"].toString());
     invoiceSerial = res["invoiceserial"];
     final dynamic stockRaw = res["instock"] ?? res["showsalesinvenbal"];
     if (stockRaw == null) {
@@ -68,6 +71,7 @@ class SettingsModel implements BaseModel {
       "visaId": visaId,
       "instock": inStock,
       "invoiceserial": invoiceSerial,
+      "usermaaxdis":maxDis??0,
       "multiunit": multiunit == true ? 1 : 0,
       "salesinvoicegomladefault": salesInvoiceGomlaDefault,
       "disableitemdiscount": disableItemDiscount,
