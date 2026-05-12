@@ -16,7 +16,6 @@ import 'package:nilesoft_erp/layers/presentation/components/dropdown/units_dropd
 import 'package:nilesoft_erp/layers/presentation/components/rect_button.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_state.dart';
 import 'package:nilesoft_erp/layers/presentation/pages/Resales/bloc/resales_event.dart';
-import 'package:nilesoft_erp/layers/presentation/pages/invoice/sales_invoice_stock_validation.dart';
 
 import '../bloc/resales_bloc.dart';
 
@@ -618,20 +617,6 @@ class _AddnewPopupState extends State<AddnewPopup> {
         factor: selectedUnit?.factor,
       );
 
-     
-        final List<SalesDtlModel> projected =
-            List<SalesDtlModel>.from(widget.allDtl);
-        projected[idx] = salesDtlModel;
-        final String? err = await validateSalesInvoiceLinesAgainstStock(
-          lines: projected,
-          restrictToInStock: true,
-        );
-        if (err != null) {
-          if (!context.mounted) return;
-          _showSnackBar(err, context);
-          return;
-        }
- 
 
       if (!context.mounted) return;
       bloc.add(ReEditResalesItemEvent(salesDtlModel, idx));
@@ -664,20 +649,6 @@ class _AddnewPopupState extends State<AddnewPopup> {
       unitname: selectedUnit?.unitname,
       factor: selectedUnit?.factor,
     );
-
-    if (await salesInvoiceRestrictsToInStock()) {
-      final List<SalesDtlModel> projected =
-          List<SalesDtlModel>.from(widget.allDtl)..add(salesDtlModel);
-      final String? err = await validateSalesInvoiceLinesAgainstStock(
-        lines: projected,
-        restrictToInStock: true,
-      );
-      if (err != null) {
-        if (!context.mounted) return;
-        _showSnackBar(err, context);
-        return;
-      }
-    }
 
     if (!context.mounted) return;
     bloc.add(ReAddClientToResalesEvent(salesDtlModel, widget.allDtl));
